@@ -6,7 +6,7 @@
 
 推荐一个网站：[HelloGithub][hellogithub]
 
-[hellogithub][https://www.hellogithub.com/]
+[hellogithub]: [https://www.hellogithub.com/]
 
 ## Cpp
 
