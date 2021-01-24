@@ -7,12 +7,12 @@
 首先Github的Markdown文档：[GitHub Flavored Markdown Spec](https://github.github.com/gfm/)。
 
 
-#### 图片插入
+### 图片插入
 
 - 简单粗暴。
 - 繁琐，需要图床，Github放图片的话大一点就很慢。
 
-#### 装插件
+### 装插件
 
 Chrome浏览器插件：[mathjax-plugin-for-github](https://github.com/orsharir/github-mathjax)。
 
@@ -20,7 +20,7 @@ Chrome浏览器插件：[mathjax-plugin-for-github](https://github.com/orsharir/
 - 不需要图床。
 - 保留公式全部信息，编辑修改方便。
 
-#### 外链
+### 外链
 
 **其一**：Codecogs
 ```
@@ -41,7 +41,7 @@ https://render.githubusercontent.com/render/math?math=
 优缺点：
 - 相对截图省力，外链图片，Github直接可预览。
 - 过长，繁琐，需要转义，效果不算那么完美。
-- 被绑定到了某个平台，不在是纯粹的![](https://render.githubusercontent.com/render/math?math=LaTeX)了。
+- 被绑定到了某个平台，不再是纯粹的![](https://render.githubusercontent.com/render/math?math=LaTeX)了。
 
 找个python脚本[latex2pic.py](https://github.com/blmoistawinde/ml_equations_latex/blob/master/latex2pic.py)专门来做，自动化起来：
 ```python
