@@ -1,12 +1,16 @@
-# Git使用教程
+# Git学习笔记
+
+## 目录
+
+[TOC]
+
 
 ## Git学习资料
 
 - Git官网书籍资料：[ProGit](https://git-scm.com/book/en/v2)
-- [ProGit中文翻译](http://iissnan.com/progit/)
-- [菜鸟教程](https://www.runoob.com/git/git-tutorial.html)
+- [ProGit中文翻译](http://iissnan.com/progit/)（本文参考）
+- [菜鸟教程](https://www.runoob.com/git/git-tutorial.html)（极简使用教程）
 - [廖雪峰Git教程](https://www.liaoxuefeng.com/wiki/896043488029600)
-
 
 ## 安装与配置（Get Started）
 
@@ -199,13 +203,42 @@ Git的版本管理操作：
 ```
 选项                说明
 -(n)                仅显示最近的 n 条提交
---since, --after	仅显示指定时间之后的提交。
---until, --before	仅显示指定时间之前的提交。
+--since, --after    仅显示指定时间之后的提交。
+--until, --before   仅显示指定时间之前的提交。
 --author            仅显示指定作者相关的提交。
 --committer         仅显示指定提交者相关的提交。
 ```
 
-不得不说，使用命令行去显示，查看和搜索记录就不是那么的方便，显得有点繁琐且选项众多，增大了记忆负担。使用图形化的界面查看提交历史可能看起来会更清晰简单一些。使用`gitk`或者`git-gui`也可以清晰的使用图形界面查看提交信息。这两个好像还不是一个东西，值得研究一下。
+不得不说，使用命令行去显示，查看和搜索记录就不是那么的方便，显得有点繁琐且选项众多，增大了记忆负担。使用图形化的界面查看提交历史可能看起来会更清晰简单一些。使用`gitk`或者`git-gui`也可以清晰的使用图形界面查看提交信息。这两个好像还不是一个东西，值得研究一下，后续再展开。
 
+### 撤销操作
 
-TODO: 撤销操作，远程仓库，标签，etc.
+- 修正最后一次提交：`git commit --amend`
+- 取消暂存的文件：`git restore --staged <file>`。执行`git status`是有已暂存的文件时提示中便会显示这个命令。或者`git reset head <file>`。我的提示前者，可能老版本会提示后者，都能用。
+- 取消对文件修改：`git restore <file>`，或者`git checkout -- <file>`。所以同一个功能为什么有不同命令，版本更新追加的吗？
+- 所有已经提交的数据都会被记录，都可以被恢复。可能失去的数据，只可能是没有提交的数据。当然前提是你不能把版本库删了，而且其他人也没有克隆。
+
+### 远程仓库
+
+- 要和别人协助开发，版本库当然不能只位于本地。远程仓库指托管到网络上的仓库。可能只读，可能可以写。管理远程仓库，以便推送拉取数据，分享各自最新工作进展。
+- 查看当前远程仓库：`git remote`。克隆一个项目后，默认远程仓库名是`origin`。如果本地通过`git init`创建，则没有远程仓库。
+    - 远程仓库不一定非得位于远程，同样可以从本地仓克隆，被克隆的仓库就是`origin`。
+    - 一个本地仓库可以有多个远程仓库。`-v`可以全部列出。
+- 添加远程仓库：`git remote add [remote-name] [url]`。此时就可以用这个`[remote-name]`指代远程仓库了。
+- 从远程仓库抓取数据：`git fetch [remote-name]`。
+- 如果设置了某个分支用于跟踪远程仓库的某个分支（如何设置？注意观察提示信息。），那么使用`git pull`将会自动抓取远程分支合并到本地仓库中当前分支。完成命令`git pull [remote-name] [branch-name]`。
+- 默认情况下`git clone`就是自动创建本地`master`分支用于追踪远程`master`分支。克隆会自动使用`master`分支和远程仓库`origin`名称。（关于分支，暂时不清楚，后续详细了解。）
+- 推送数据到远程仓库：`git push [remote-name] [branch-anme]`。
+- 查看远程仓库详细信息：`git remote show [remote-name]`。
+- 远程仓库重命名：`git remote rename [old-remote] [new-remote]`。
+- 移除远程仓库：`git remote rm/remove [remote-name]`。
+
+## TODO
+
+- 标签
+- 分支
+- SSH
+- GUI
+- 工具
+- 底层
+- etc
