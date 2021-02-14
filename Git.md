@@ -305,7 +305,7 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 - 创建新分支同时切换：`git checkout -b [new-branch]`。
 - 合并分支到当前分支：`git merge [branch-name]`。
 
-合并是如果当前HEAD指向的版本是要合并的版本的祖先的话，那么就代表要合并的分支是直接在当前版本上做的修改，中间未进行过其他修改，直接将当前分支的指针移动到要合并的提交对象即可，不会有冲突。但如果当前分支有提交，并且有冲突（比如两条线中都修改了同一个文件的同一个位置），逻辑上来说冲突只能由人来解决。Git做了合并，但没有提交，会停下来等待你来解决冲突，此时文件状态是**unmerged/未合并**。可以使用`git mergetool [file]`来编辑文件处理冲突，默认合并工具是`vimdiff`（暂时不会用）。
+合并时如果当前HEAD指向的版本是要合并的版本的祖先的话，那么就代表要合并的分支是直接在当前版本上做的修改，中间未进行过其他修改，直接将当前分支的指针移动到要合并的提交对象即可，不会有冲突。但如果当前分支有提交，并且有冲突（比如两条线中都修改了同一个文件的同一个位置），逻辑上来说冲突只能由人来解决。Git做了合并，但没有提交，会停下来等待你来解决冲突，此时文件状态是**unmerged/未合并**。可以使用`git mergetool [file]`来编辑文件处理冲突，默认合并工具是`vimdiff`（暂时不会用）。
 
 管理分支：
 - `git branch`
@@ -341,7 +341,7 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 
 把一个分支的修改整合到另一个分支有两种方法，`merge`合并和`rebase`衍合。
 
-前面提到过，如果要合并的两个分支沿共同祖先产生了分叉，那么合并时就会产生一个新的提交对象。如果没有分叉，俺么就只是单纯的分支指针移动。
+前面提到过，如果要合并的两个分支沿共同祖先产生了分叉，那么合并时就会产生一个新的提交对象。如果没有分叉，那么就只是单纯的分支指针移动。
 
 ![合并分叉的分支](http://iissnan.com/progit/book_src/figures/18333fig0328-tn.png)
 
@@ -349,7 +349,7 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 
 ![rebase](http://iissnan.com/progit/book_src/figures/18333fig0329-tn.png)
 
-- 命令：`git rebase master`。执行效果是将当前分支衍合到master分支的上去。此时再执行合并直接移动master指针即可完成。然后再执行merge即可
+- 命令：`git rebase master`。执行效果是将当前分支衍合到`master`分支的上去。此时再执行合并直接移动`master`指针即可完成。
 
 
 衍合操作得到了一个整洁的提交历史，看起来所有修改都是在一条线上顺序进行的，但同样将分支中的提交历史提到了`master`中。`rebase`之后`master`和其他分支的提交历史是完全一致的，分支也就没有了存在的必要。从这个角度来看，这个操作可以在要删除分支的前提下保留提交历史。
@@ -360,7 +360,7 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 
 - 衍合的风险：**一旦分支中的提交对象发布到公共仓库，就千万不要对该分支进行衍合操作。**
 
-在进行衍合的时候，实际上抛弃了一些现存的提交对象而创造了一些类似但不同的新的提交对象。如果你把原来分支中的提交对象发布出去，并且其他人更新下载后在其基础上开展工作，而稍后你又用 git rebase 抛弃这些提交对象，把新的重演后的提交对象发布出去的话，你的合作者就不得不重新合并他们的工作，这样当你再次从他们那里获取内容时，提交历史就会变得一团糟。所以`rebase`原则上只应该在本地分支上做，做完之后即删掉本地分支。
+在进行衍合的时候，实际上抛弃了一些现存的提交对象而创造了一些类似但不同的新的提交对象。如果你把原来分支中的提交对象发布出去，并且其他人更新下载后在其基础上开展工作，而稍后你又用 `git rebase` 抛弃这些提交对象，把新的重演后的提交对象发布出去的话，你的合作者就不得不重新合并他们的工作，这样当你再次从他们那里获取内容时，提交历史就会变得一团糟。所以`rebase`原则上只应该在本地分支上做，做完之后即删掉本地分支。
 
 如果把衍合当成一种在**推送之前清理提交历史的手段**，而且仅仅衍合那些**尚未公开的提交对象**，就没问题。如果衍合那些已经公开的提交对象，并且已经有人基于这些提交对象开展了后续开发工作的话，就会出现叫人沮丧的麻烦。
 
@@ -368,11 +368,11 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 - `rebase`操作把当前分支衍合到目标分支上。也就是说仅修改被衍合分支的提交对象。
 - `rebase`仅修改被衍合的分支指针和该分支的提交对象，不修改衍合到的分支的任何对象。
 - 衍合之后没有分叉，即可直接合并。
-- 衍合再合并和合并得到的结果是相同的，仅历史提交的关系不同。
+- 衍合再合并和合并得到的结果是相同的，仅历史提交的拓扑关系不同。
 - 衍合再合并之后两个分支是完全相同的，即可把被衍合的分支删掉。
 - 衍合会修改提交对象，重算SHA-1校验和，和衍合前分支上的历史提交不是同一个提交对象。
-- 如果有冲突，衍合是在衍合时处理冲突，并且衍合后衍合到的分支同样会被移动，没有冲突则不会移动（是这样吗？），合并则是在合并时处理冲突。
-- 使用下来VSCode的Git支持做得是真的方便。图形化操作减少脑力负担，就算硬要敲命令也可以在内部终端里面做，一点都不割裂。
+- 如果有冲突，衍合是在衍合时处理冲突，并且衍合后衍合到的分支同样会被移动，没有冲突则不会移动（是这样吗？本地测试是这样的），合并则是在合并时处理冲突。
+- 使用下来VSCode的Git支持做得是真的方便。图形化操作减少脑力负担，就算硬要敲命令内部也集成了终端，一点也不割裂。
 
 
 ## 4. 服务器上的Git
@@ -462,11 +462,126 @@ git clone user@git.example.com:/opt/git/my_project.git
 
 ### 4.3 生成SSH公钥
 
-大多数 Git 服务器都会选择使用 SSH 公钥来进行授权。系统中的每个用户都必须提供一个公钥用于授权，没有的话就要生成一个。生成公钥的过程在所有操作系统上都差不多。 首先先确认一下是否已经有一个公钥了。SSH 公钥默认储存在账户的主目录下的`~/.ssh`目录下的`id_rsa.pub`或者`id_dsa.pub`文件。有`.pub`后缀的是公钥，另一个同名文件是密钥。
+大多数 Git 服务器都会选择使用 SSH 公钥来进行授权。系统中的每个用户都必须提供一个公钥用于授权，没有的话就要生成一个。生成公钥的过程在所有操作系统上都差不多。 首先先确认一下是否已经有一个公钥了。SSH 公钥默认储存在账户的主目录下的`~/.ssh`目录下的`id_rsa.pub`或者`id_dsa.pub`文件。有`.pub`后缀的是公钥，另一个同名文件是密钥/私钥。
 
 如果还没有或者甚至还没有`.ssh`目录，那么可以使用`ssh-keygen`命令生成，生成过程中会提示输入密码，如果输入了，则使用这个ssh key推送到远程仓库是需要输入密码，也就是生成过程中指定的那个。否则的话不需要，用户名则是不需要输入。
 
 注册了Github之后，将这个SSH key配置到Github上（Setting -> SSH and GPG keys）之后就可以本地推送到github了。
+
+### 4.4 Git服务器架设流程
+
+假设你已经有了一台服务器，还没有的话那就去[腾讯云](https://cloud.tencent.com/)或者[阿里云](https://cn.aliyun.com/)百元一年左右的价格就可以购买一台入门级的VPS，这时候会得到一个公网IP。一般选择Linux操作系统，如Ubuntu/CentOS等，和本地虚拟机、实体机上的装的Linux系统、WSL等操作起来并没有区别。使用[XShell](https://www.netsarang.com/en/xshell/)，[Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/)等远程连接工具即可连接使用。当然在做下面所有事情之前你需要确保已经安装`git`与`openssh-server`。
+
+1. 首先创建名为`git`的用户，也就是ssh路径里`@`符号前的那个用户名。创建`.ssh`目录。
+    ```bash
+    sudo adduser git
+    su git
+    cd ~
+    mkdir .ssh
+    ```
+2. 把要授权的开发者的公钥添加到`git`用户的`~/.ssh/authorized_keys`文件。公钥看起来是这样的（就是本地用`ssh-keygen`生成的`id_rsa.pub`文件内容）：
+    ```
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCB007n/ww+ouN4gSLKssMxXnBOvf9LGt4L
+    ojG6rs6hPB09j9R/T17/x4lhJA0F3FR1rP6kYBRsWj2aThGw6HXLm9/5zytK6Ztg3RPKK+4k
+    Yjh6541NYsnEAZuXz0jTTyAUfrtU3Z5E003C4oxOj6H0rfIF1kKI9MAQLMdpGW1GYEIgS9Ez
+    Sdfd8AcCIicTDWbqLAcU4UpkaX8KyGlLwsNuuGztobF8m72ALC/nLF6JLtPofwFBlgc+myiv
+    O7TCUSBdLQlgMVOFq1I2uPWQOkOWQAHukEOmfjy2jctxSDBQ220ymjaNsHT4kgtZg2AYYgPq
+    dAv8JggJICUvax2T9va5 gsg-keypair
+    ```
+    逐个添加到文件尾部即可。
+3. 创建裸仓库之后本地克隆下来或者添加远程仓库就可以推送修改了。远程：
+    ```bash
+    cd /opt/git # 当然可以在任何有权限可以读写的目录创建
+    mkdir project.git
+    cd project.git
+    git --bare init
+    ```
+    本地：（用`gitserver`替代主机，实际使用时替换为你的服务器IP）
+    ```bash
+    git clone git@gitserver:/opt/git/project.git
+    cd myproject
+    touch Readme.md
+    git commit -am 'first commit : add Readme.md'
+    git push origin master
+    ```
+    再登录到服务器上`git log`即可看到提交记录了。
+4. 至此就搭建完毕了，非常快捷与简单。然后再做一些权限配置，使用`git`自带的`git-shell`工具限制`git`用户的活动范围。只要把它设置为`git`用户的登录shell，那么该用户就无法使用普通的bash或者其他shell程序。编辑`/etc/passwd`文件：
+    ```bash
+    sudo vim /etc/passwd
+    ```
+    找到文件末尾类似`git:x:1000:1000::/home/git:/bin/sh`这样的行，将其中的`bin/sh`改为`usr/bin/git-shell`。
+    现在`git`用户只能通过SSH连接来推送和获取Git仓库，而不能直接使用主机Shell。如果`ssh git@gitserver`直接进行普通SSH登录则会报错。这样的话就只能通过其他用户远程连接，连接后也不能切换到`git`用户来创建仓库。
+
+### 4.5 公共访问
+
+配置好了ssh协议访问，如果是开源项目，可能还需要你匿名的读取访问。或许对小型的配置来说最简单的方法是运行一个静态Web服务（任何Web服务都可以达到同样的效果：Apache, Nginx, etc.）。将根目录设定为Git仓库所在位置，使用前面提到的`post-update`钩子。
+
+1. 首先开启钩子，就是重命名`post-update`的样本文件。
+    ```bash
+    cd project.git/hooks
+    mv post-update.sample post-update
+    chmod a+x ./post-update
+    ```
+    该文件核心内容如下：
+    ```
+    exec git-update-server-info
+    ```
+    意思是当通过 SSH 向服务器推送时，Git 将运行这个 `git-update-server-info `命令来更新匿名 HTTP 访问获取数据时所需要的文件。
+
+2. 把文档根目录设为 Git 项目所在的根目录。然后假定DNS服务已经配置好后，会把`.gitserver`请求发送到这台主机。另外需要将仓库所在目录的Unix用户组设置为`www-data`，这样web服务才可以读取仓库。
+    ```bash
+    chgrp -R www-data /opt/git
+    ```
+    接下来就可以在本地匿名使用HTTP协议访问仓库了：
+    ```bash
+    git clone http://git.gitserver/project.git # http://gitserver/git/project.git 这样可以吗？
+    ```
+    当然这需要配置服务器设置。这里省略了，根据具体使用的Web服务器配置方法不同。
+
+另一个提供非授权访问的简单方法是开启一个 Git 守护进程，也就是使用Git协议来匿名访问。
+
+### 4.6 GitWeb
+
+现在已经可以读写或者匿名只读访问了，如果能有一个简单的Web界面访问的话就更好了。
+
+Git自带了一个命令可以做到，使用类似`lighttpd`或者`webrick`这样轻量级的服务器启动一个临时进程，，可以到项目目录中键入`git instaweb`来启动。
+
+如果要用 `lighttpd` 以外的程序来启动 `git instaweb`，可以通过 `--httpd` 选项指定：
+```bash
+git instaweb -httpd=webrick # 这会在1234端口开一个HTTPD服务
+git instaweb -httpd=webrick --stop # 关闭服务时添加--stop选项即可
+```
+
+- 这里暂时还没有跑起来：还缺一些前置知识，待后续不补充。
+- TODO：了解Web服务器相关内容。什么是CGI？Web服务器的配置和使用，Apache和Nginx？
+
+### 4.7 Gitosis
+
+把用户公钥保存在`authorized_keys`中，对团队人数不多时，是比较有效的，当团队达到一定规模，管理起来可能就会非常痛苦。并且这种情况所有用户都会拥有对Git仓库的读写权限，无法更为有效精细的管理。
+
+这时候就需要使用Gitosis了，有趣的是权限的修改并非通过网页设置，而是通过管理一个特殊的Git仓库来实现。
+
+安装Gitosis：
+```bash
+# 依赖
+apt install python-setuptools
+# 从 Gitosis 项目主页克隆并安装
+git clone https://github.com/tv42/gitosis.git
+cd gitosis
+sudo python setup.py install
+
+# 待补全，暂时没有需求，属于具体应用，需要修改现有的authorized_keys
+```
+TODO：后续的Gitolite和Git守护进程（使用Git协议提供匿名访问）暂不涉及。
+
+
+### 4.8 Git托管服务
+
+[托管服务列表](https://git.wiki.kernel.org/index.php/GitHosting)
+
+当然最最最大的最广闻人知的必然是世界上最大的程序员交友网站[Github](https://github.com).
+
+当然使用就不必多说了，添加SSH Key，创建仓库，克隆或者添加远程仓库，提交。和Git服务器并无二致，也不需要操心去配置Git服务器。
 
 
 ## TODO
