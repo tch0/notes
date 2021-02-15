@@ -1,9 +1,47 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**目录**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Git学习笔记](#git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0)
+  - [0. Git学习资料](#0-git%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99)
+  - [1. Git初见：安装与配置（Get Started）](#1-git%E5%88%9D%E8%A7%81%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AEget-started)
+    - [1.1 Git核心特点](#11-git%E6%A0%B8%E5%BF%83%E7%89%B9%E7%82%B9)
+    - [1.2 安装Git](#12-%E5%AE%89%E8%A3%85git)
+    - [1.3 安装后配置Git](#13-%E5%AE%89%E8%A3%85%E5%90%8E%E9%85%8D%E7%BD%AEgit)
+    - [1.4 获取帮助](#14-%E8%8E%B7%E5%8F%96%E5%B8%AE%E5%8A%A9)
+  - [2. Git基本功：基础功能](#2-git%E5%9F%BA%E6%9C%AC%E5%8A%9F%E5%9F%BA%E7%A1%80%E5%8A%9F%E8%83%BD)
+    - [2.1 创建Git仓库](#21-%E5%88%9B%E5%BB%BAgit%E4%BB%93%E5%BA%93)
+    - [2.2 忽略列表](#22-%E5%BF%BD%E7%95%A5%E5%88%97%E8%A1%A8)
+    - [2.3 记录更新到git仓库](#23-%E8%AE%B0%E5%BD%95%E6%9B%B4%E6%96%B0%E5%88%B0git%E4%BB%93%E5%BA%93)
+    - [2.4 查看提交历史](#24-%E6%9F%A5%E7%9C%8B%E6%8F%90%E4%BA%A4%E5%8E%86%E5%8F%B2)
+    - [2.5 撤销操作](#25-%E6%92%A4%E9%94%80%E6%93%8D%E4%BD%9C)
+    - [2.6 远程仓库](#26-%E8%BF%9C%E7%A8%8B%E4%BB%93%E5%BA%93)
+    - [2.7 标签](#27-%E6%A0%87%E7%AD%BE)
+    - [2.8 Git技巧](#28-git%E6%8A%80%E5%B7%A7)
+  - [3. Git必杀技：分支](#3-git%E5%BF%85%E6%9D%80%E6%8A%80%E5%88%86%E6%94%AF)
+    - [3.1 什么是分支](#31-%E4%BB%80%E4%B9%88%E6%98%AF%E5%88%86%E6%94%AF)
+    - [3.2 管理分支](#32-%E7%AE%A1%E7%90%86%E5%88%86%E6%94%AF)
+    - [3.3 如何利用分支管理开发的工作流程](#33-%E5%A6%82%E4%BD%95%E5%88%A9%E7%94%A8%E5%88%86%E6%94%AF%E7%AE%A1%E7%90%86%E5%BC%80%E5%8F%91%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B)
+    - [3.4 远程分支](#34-%E8%BF%9C%E7%A8%8B%E5%88%86%E6%94%AF)
+    - [3.5 分支的衍合](#35-%E5%88%86%E6%94%AF%E7%9A%84%E8%A1%8D%E5%90%88)
+  - [4. 服务器上的Git](#4-%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8A%E7%9A%84git)
+    - [4.1 协议](#41-%E5%8D%8F%E8%AE%AE)
+    - [4.2 通过ssh协议架设Git服务器](#42-%E9%80%9A%E8%BF%87ssh%E5%8D%8F%E8%AE%AE%E6%9E%B6%E8%AE%BEgit%E6%9C%8D%E5%8A%A1%E5%99%A8)
+    - [4.3 生成SSH公钥](#43-%E7%94%9F%E6%88%90ssh%E5%85%AC%E9%92%A5)
+    - [4.4 Git服务器架设流程](#44-git%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E8%AE%BE%E6%B5%81%E7%A8%8B)
+    - [4.5 公共访问](#45-%E5%85%AC%E5%85%B1%E8%AE%BF%E9%97%AE)
+    - [4.6 GitWeb](#46-gitweb)
+    - [4.7 Gitosis](#47-gitosis)
+    - [4.8 Git托管服务](#48-git%E6%89%98%E7%AE%A1%E6%9C%8D%E5%8A%A1)
+  - [5. 分布式Git](#5-%E5%88%86%E5%B8%83%E5%BC%8Fgit)
+    - [5.1 分布式工作流程](#51-%E5%88%86%E5%B8%83%E5%BC%8F%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B)
+    - [5.2 为项目做贡献](#52-%E4%B8%BA%E9%A1%B9%E7%9B%AE%E5%81%9A%E8%B4%A1%E7%8C%AE)
+    - [5.3 管理自己的项目](#53-%E7%AE%A1%E7%90%86%E8%87%AA%E5%B7%B1%E7%9A%84%E9%A1%B9%E7%9B%AE)
+  - [TODO](#todo)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Git学习笔记
-
-## 目录
-
-[TOC]
-
 
 ## 0. Git学习资料
 
