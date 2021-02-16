@@ -27,12 +27,14 @@
 
 # Nginx
 
-## 0. Nginx简介
+![Nginx](https://pic4.zhimg.com/v2-e68d524210343613129267bd2cb75a0d_1440w.jpg)
 
+## 0. Nginx简介
 
 ### 0.1 什么是Nginx
 
 发音：engine X
+
 简介：
 - Nginx是一款轻量级的Web服务器、反向代理服务器及电子邮件（IMAP/POP3）代理服务器，在BSD-like 协议下发行。
 - 其特点是占有内存少，并发能力强，高性能，
@@ -93,7 +95,7 @@ Tomcat服务器资源：
 - Ubuntu: `apt install nginx`
 - CentOS: `yum install nginx`
 
-我的环境：Ubuntu18.04 Server，什么环境不重要，甚至可以在本地的WSL上安装
+我的环境：Ubuntu18.04 Server，什么环境不重要，也可以在本地的WSL或者虚拟机上安装
 - 查看软件安装路径：`whereis nginx`
 - 查看运行文件路径：`which nginx`, 路径是`usr/sbin/nginx`
 - 配置文件路径：`/etc/nginx/`
@@ -228,7 +230,7 @@ http {
     - `http`全局块配置的指令包括文件引入、`MIME-TYPE` 定义、日志自定义、连接超时时间、单链接请求数上限等。
     - `server`块：这块和虚拟主机有密切关系，虚拟主机从用户角度看，和一台独立的硬件主机是完全一样的，该技术的产生是为了节省互联网服务器硬件成本。
     - 每个`http`块可以包括多个`server`块，而每个`server`块就相当于一个虚拟主机。
-    - 而每个`server`块也分为全局`server`块，以及可以同时包含多个`locaton`块。
+    - 而每个`server`块也分为全局`server`块，以及可以同时包含多个`location`块。
         - 全局`server`块：最常见的配置是本虚拟机主机的监听配置和本虚拟主机的名称或IP配置。
         - `location`块：一个`server`块可以配置多个`location`块。这块的主要作用是基于 Nginx 服务器接收到的请求字符串（例如 `server_name/uri-string`），对虚拟主机名称（也可以是 IP 别名）之外的字符串（例如 前面的 `/uri-string`）进行匹配，对特定的请求进行处理。地址定向、数据缓存和应答控制等功能，还有许多第三方模块的配置也在这里进行。
 

@@ -7,7 +7,11 @@
 - [LaTex.md](https://github.com/aojueliuyun/notes/blob/master/LaTeX.md)：LaTex学习笔记，暂无实质内容。
 - [Git.md](https://github.com/aojueliuyun/notes/blob/master/Git.md)：Git学习笔记。
 - [MathFunc.md](https://github.com/aojueliuyun/notes/blob/master/MathFunc.md)：`<math.h>`函数分析与实现。
-- [Nginx.md](https://github.com/aojueliuyun/notes/blob/master/Nginx.md)：Nginx Web服务器了解。
+- [Nginx.md](https://github.com/aojueliuyun/notes/blob/master/Nginx.md)：Nginx Web服务器入门。
 
 提交指南：
 - 不接受额外的文件提交，接受任何对现有内容错误的修正与补充。
+
+镜像仓库：
+- Github: [aojueliuyun/notes](https://github.com/aojueliuyun/notes)
+- Gitee: [tikot/notes](https://gitee.com/tikot/notes)
