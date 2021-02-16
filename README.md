@@ -1,3 +1,11 @@
+## 内容目录
+
+- [Repos.md](Repos.md)：Github上的可以学习的仓库，随性记录，不是都看过。
+- [LaTex.md](LaTeX.md)：LaTex学习笔记，暂无实质内容。
+- [Git.md](Git.md)：Git学习笔记。
+- [MathFunc.md](MathFunc.md)：`<math.h>`常用数学函数分析与实现。
+- [Nginx.md](Nginx.md)：Nginx Web服务器了解与配置入门。
+
 ## 关于这个仓库
 
 关于这个仓库：
@@ -22,13 +30,7 @@
 - 因为是个人性质的仓库，所以不接受额外的文件提交，需要确实是自己了解的东西之后才会添加进来。
 - 接受所有对已有内容的补充与修正。
 
-## 内容目录
 
-- [Repos.md](Repos.md)：Github上的可以学习的仓库，随性记录，不是都看过。
-- [LaTex.md](LaTeX.md)：LaTex学习笔记，暂无实质内容。
-- [Git.md](Git.md)：Git学习笔记。
-- [MathFunc.md](MathFunc.md)：`<math.h>`常用数学函数分析与实现。
-- [Nginx.md](Nginx.md)：Nginx Web服务器了解与配置入门。
 
 
 ## 镜像仓库
