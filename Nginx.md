@@ -127,14 +127,14 @@ events {
 
 http {
 	server {
-                keepalive_requests 120;
-                listen 80;
-                server_name 127.0.0.1;
-                location / {
-                        root /ver/www/blog;
-                        index index.html;
-                }
-        }
+		keepalive_requests 120;
+		listen 80;
+		server_name 127.0.0.1;
+		location / {
+			root /var/www/blog;
+			index index.html;
+		}
+	}
 
 	##
 	# Basic Settings
@@ -211,7 +211,6 @@ http {
 #		proxy      on;
 #	}
 #}
-
 ```
 
 其中分为三个块：
@@ -236,7 +235,46 @@ http {
 
 ## 3. Nginx配置实例
 
-### 3.1 反向代理实现
+### 3.1 反向代理实例
+
+**实现效果**：浏览器地址栏输入`www.123.com`，跳转到linux系统tomcat主页面。
+
+**装备工作**：
+1. Linux中安装tomcat，使用默认端口8080。
+    - [官网下载](https://tomcat.apache.org/)，有好几个版本，不同的版本好像对应不同的Servlet/JSP/WebSocket版本。姑且先装一个10.0.x吧，当然也不一定越新越好，这里测试用啥版本都行。本地下载后传输到Linux服务器比较方便，使用`rz`（服务器received）命令上传，`sz`（服务器send）下载文件到本地，使用`apt install lrzsz`安装。如果在WSL里面的话，是可以直接在`/mnt`找到挂载的硬盘的，直接`cp`过去即可。VMware虚拟机的话安装了VMTools，直接拖进去就行。
+    - 得到`apache-tomcat-10.0.2.tar.gz`之后，放到`/opt`，解压`tar -xvf [file]`。
+    - 进入解压后的`bin/`目录，执行`./startup.sh`启动tomcat。
+    - 未安装JDk的话需要安装JDK才能成功执行。（TODO: Java相关的东西不了解，先挖坑，以后填了记得更新这里。）这里装`apt install openjdk11-jre-headless`，只要tomcat支持这个版本就行，都是向后支持，安装最新的JDK则一定是支持的（这里服务器包管理上最新只有这个，应该不算最新的版本）。执行`java -version`查看版本。 
+    - 然后回到tomcat的`bin`目录执行`./startup.sh`启动tomcat，就可以在`yourhost:8080`上看到tomcat页面了，端口是必不可少的。
+    ![tomcat page](./Images/first_tomcat10.0.2_page.png)
+2. 检查8080端口是否开放，防火墙相关，如果禁用了需要开放8080端口，不赘述，但要这个意识。
+3. 修改Host文件(管理员权限打开`C:\Windows\System32\drivers\etc\hosts`)添加`your_host_ip www.123.com`项。无论是局域网IP还是公网IP都是可行的。
+4. **Nginx配置反向代理**：
+    - 编辑配置文件`/etc/nginx/nginx.conf`。
+    - `http`域中的`server`域添加或修改：
+    ```conf
+    server { # 将发送给Nginx服务器192.168.35.1:80的请求转发到127.0.0.1:8080
+        listen 80;
+        server_name 192.168.35.1; # 主机IP
+        location \ {
+            # root html;
+            proxy_pass http://127.0.0.1:8080; # 转发到8080端口
+            index index.html index.htm;
+        }
+    }
+    ```
+    - `nginx`启动Nginx，浏览器输入`www.123.com`即可访问。
+    - 网页的数据一般放在：`/var/www/`。
+
+**访问过程分析**：
+- 三个部分：客户端（浏览器），代理服务器（Nginx），Web服务器（tomcat）。
+- 套接字：Nginx（`you_host_ip:80`），tomcat（`127.0.0.1:8080`）。
+- 浏览器不能直接访问到tomcat，而是通过Nginx反向代理来访问到tomcat。
+- 需要修改本地host文件，将`www.123.com`指向你的主机IP，也就是说本地host文件优先于DNS解析。实际建立网站的话有了服务器之后还需要购买域名，解析到对应的IP即可。
+
+
+
+
 
 ### 3.2 负载均衡实例
 
@@ -249,5 +287,5 @@ http {
 ## 5. 参考资料
 
 - [Bilibili-尚硅谷Nginx教程](https://www.bilibili.com/video/BV1zJ411w7SV?from=search&seid=6880208276596727856)(本文主要参考)
-- [NginX中文文档](https://www.nginx.cn/doc/)
+- [Nginx中文文档](https://www.nginx.cn/doc/)
 
