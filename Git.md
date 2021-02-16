@@ -167,7 +167,7 @@ Git仓库中的文件状态：
 1. 已跟踪（tracked）：已纳入版本管理。
 2. 未跟踪（untracked）：未纳入版本管理。
 
-![Git的文件状态变化周期](https://git-scm.com/book/en/v2/images/lifecycle.png)
+![Git的文件状态变化周期](Images/git_file_lifecycle.png)
 
 Git的版本管理操作：
 - 检查当前Git仓库文件状态：`Git status`。
@@ -315,25 +315,25 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 
 然后使用`git commit`新建一个提交对象前，Git会先计算每一个子目录的校验和，然后将这些目录存储为Git仓库中的树（tree）对象。然后创建的提交对象，除了包含相关提交信息之外，还包含指向这个树对象（这个树对象可能不是根目录吗？如果只更改了一个子目录中的内容。）的指针。有了树对象，就可以重现快照的内容了。
 
-![单个提交对象在仓库中的数据结构](http://iissnan.com/progit/book_src/figures/18333fig0301-tn.png)
+![单个提交对象在仓库中的数据结构](Images/git_commit_object.png)
 
 做一些修改后再次提交，本地提交对象会包含一个指向上次提交的指针。
 
-![多个提交对象链接关系](http://iissnan.com/progit/book_src/figures/18333fig0302-tn.png)
+![多个提交对象链接关系](Images/git_commit_object_link.png)
 
 现在来看什么是**分支**（branch），分支本质上就是指向某个提交对象的可变指针。
 
-![分支](http://iissnan.com/progit/book_src/figures/18333fig0303-tn.png)
+![分支](Images/git_commit_object_branch.png)
 
 那么创建分支其实就是创建一个新的指向当前提交对象的指针。也就是说创建一个分支只需要写入一个40字节的SHA-1校验和的成本。这就和其他新建分支需要备份所有项目文件到特定目录的VCS区别开来。
 - 创建新分支命令：`git branch [branch-name] [commit]`。
 
-![当前版本上创建新分支](http://iissnan.com/progit/book_src/figures/18333fig0304-tn.png)
+![当前版本上创建新分支](Images/git_commit_object_branches.png)
 
 那么Git如何知道当前在那个分支上工作呢？答案是**HEAD指针**，HEAD指针是指向当前正在工作的本地分支的指针。`git branch`只会创建新分支，但并不会自动切换到新分支，
 - 切换到分支：`git checkout [branch-name]`。
 
-![创建并切换到testing分支之后进行了一次提交](http://iissnan.com/progit/book_src/figures/18333fig0307-tn.png)
+![创建并切换到testing分支之后进行了一次提交](Images/git_commit_obejct_HEAD_pointer.png)
 
 ### 3.2 管理分支
 
@@ -381,11 +381,11 @@ Git鼓励在工作流程中频繁使用分支与合并，理解分支并熟练�
 
 前面提到过，如果要合并的两个分支沿共同祖先产生了分叉，那么合并时就会产生一个新的提交对象。如果没有分叉，那么就只是单纯的分支指针移动。
 
-![合并分叉的分支](http://iissnan.com/progit/book_src/figures/18333fig0328-tn.png)
+![合并分叉的分支](Images/git_rebase_merge.png)
 
 还有一种选择就是`rebase`，效果就是把C3（要合并的分支`experiment`的所有提交对象）的变化在C4（当前`master`分支的最后一个提交对象）中打一个补丁(patch)，生成一个新的合并提交对象C3'（每一个分支的提交对象打一次补丁在`master`生成一个对应提交对象），然后**改写**`expriment`的提交历史，使之成为`master`的直接下游。
 
-![rebase](http://iissnan.com/progit/book_src/figures/18333fig0329-tn.png)
+![rebase](Images/git_rebase_rebase.png)
 
 - 命令：`git rebase master`。执行效果是将当前分支衍合到`master`分支的上去。此时再执行合并直接移动`master`指针即可完成。
 
@@ -633,19 +633,19 @@ Git与传统的集中式版本控制系统（CVCS）不同，因为是分布式�
 
 **集中式工作流**：单点协作模型，一个存放代码仓库的中心服务器，可以接受所有开发者提交代码。所有开发者都是普通节点，作为仓库的消费者，平时工作就是和中心仓库同步数据。
 
-![集中式工作流](http://iissnan.com/progit/book_src/figures/18333fig0501-tn.png)
+![集中式工作流](Images/git_workflow_centralized.png)
 
 那么当两个人同时修改了同一个地方，就有可能产生冲突，第二个提交的人就需要在推送之前先拉取数据解决冲突。团队不大的话完全可以采用这种工作流程，使用也非常广泛。
 
 **集成管理员工作流**：由于Git允许使用多个远程仓库，开发者可以建立自己的公共仓库，将数据共享给其他人。这种情况通常有一个代表官方发布的项目仓库（blessed repository），开发者由此仓库克隆自己的公共仓库（developer public），推送自己的提交。维护者有自己本地的克隆仓库，将所有公共仓库作为远程仓库添加进来，测试无误后合并到主干，再推送到官方仓库。
 
-![集成管理员工作流](http://iissnan.com/progit/book_src/figures/18333fig0502-tn.png)
+![集成管理员工作流](Images/git_workflow_Integrated_administrator.png)
 
 GitHub网站上多采用这种工作流，要贡献代码时先fork项目到自己的列表，成为自己的公共仓库，然后更新提交之后，然后提起Pull Request，等待维护者接受你的贡献。这种工作方式下你可以按照你自己的节奏工作，不必等待维护者处理你的更新，维护者也可以按照自己的节奏，任何时候都可以来处理别人贡献的代码。
 
 **司令官与副官工作流**：一般超大型项目才会采用，比如Linux内核。各个集成管理员分别负责集中项目中的特定部分，称为副官（lieutenant）。这些集成管理员上方还有负责统筹的总集成管理员，成为司令官（dictator），维护仓库以提供所有协作者拉取最新集成的项目代码。
 
-![司令官与副官工作流](http://iissnan.com/progit/book_src/figures/18333fig0503-tn.png)
+![司令官与副官工作流](Images/git_workflow_dictator_and_lieutenaut.png)
 
 这种分而治之的项目管理职责也清晰，不易出错，项目极为庞杂或者需要多级别管理时才会体现出优势。
 
@@ -670,7 +670,7 @@ Git如此灵活，人们的协作方式也可以各种各样，没有固定不�
 
 **私有小型团队**：仅在一台服务器上提交的话其实与使用SVN等CVCS工作流并无太大差别。但还是有一些区别，比如如果你当前版本不是最新，那么需要先`git fetch origin`之后合并到本地(`git merge origin/master`)之后再提交，而SVN提交后会自动在服务器进行合并。有冲突的的话需要先解决再提交。最后的本地的仓库历史类似于：
 
-![仓库](http://iissnan.com/progit/book_src/figures/18333fig0505-tn.png)
+![仓库](Images/git_work_with_git_rebase.png)
 
 当然也可以`rebase`，那就成一条直线了。
 

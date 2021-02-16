@@ -27,7 +27,7 @@
 
 # Nginx
 
-![Nginx](https://pic4.zhimg.com/v2-e68d524210343613129267bd2cb75a0d_1440w.jpg)
+![Nginx](Images/nginx_logo.png)
 
 ## 0. Nginx简介
 
@@ -246,7 +246,7 @@ http {
     - 进入解压后的`bin/`目录，执行`./startup.sh`启动tomcat。
     - 未安装JDk的话需要安装JDK才能成功执行。（TODO: Java相关的东西不了解，先挖坑，以后填了记得更新这里。）这里装`apt install openjdk11-jre-headless`，只要tomcat支持这个版本就行，都是向后支持，安装最新的JDK则一定是支持的（这里服务器包管理上最新只有这个，应该不算最新的版本）。执行`java -version`查看版本。 
     - 然后回到tomcat的`bin`目录执行`./startup.sh`启动tomcat，就可以在`yourhost:8080`上看到tomcat页面了，端口是必不可少的。
-    ![tomcat page](./Images/first_tomcat10.0.2_page.png)
+    ![tomcat page](Images/nginx_first_tomcat10.0.2_page.png)
 2. 检查8080端口是否开放，防火墙相关，如果禁用了需要开放8080端口，不赘述，但要这个意识。
 3. 修改Host文件(管理员权限打开`C:\Windows\System32\drivers\etc\hosts`)添加`your_host_ip www.123.com`项。无论是局域网IP还是公网IP都是可行的。
 4. **Nginx配置反向代理**：
