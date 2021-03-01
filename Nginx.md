@@ -16,12 +16,13 @@
     - [2.2 常用命令](#22-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4)
     - [2.3 配置文件](#23-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
   - [3. Nginx配置实例](#3-nginx%E9%85%8D%E7%BD%AE%E5%AE%9E%E4%BE%8B)
-    - [3.1 反向代理实现](#31-%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E5%AE%9E%E7%8E%B0)
+    - [3.1 反向代理实例](#31-%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E5%AE%9E%E4%BE%8B)
     - [3.2 负载均衡实例](#32-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E5%AE%9E%E4%BE%8B)
     - [3.3 动静分离实例](#33-%E5%8A%A8%E9%9D%99%E5%88%86%E7%A6%BB%E5%AE%9E%E4%BE%8B)
     - [3.4 Nginx配置高可用集群](#34-nginx%E9%85%8D%E7%BD%AE%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4)
   - [4. Nginx原理](#4-nginx%E5%8E%9F%E7%90%86)
   - [5. 参考资料](#5-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
+  - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -37,7 +38,7 @@
 
 简介：
 - Nginx是一款轻量级的Web服务器、反向代理服务器及电子邮件（IMAP/POP3）代理服务器，在BSD-like 协议下发行。
-- 其特点是占有内存少，并发能力强，高性能，
+- 其特点是占有内存少，并发能力强，高性能。
 - 专为性能而开发，性能是其最重要的考量，实现上非常注重效率。
 
 ### 0.2 Nginx基本特性
@@ -88,10 +89,9 @@ Tomcat服务器资源：
 
 ## 2. Nginx使用
 
-
 ### 2.1 安装Nginx
 
-- [下载地址](http://nginx.org/)
+- [官网下载地址](http://nginx.org/)
 - Ubuntu: `apt install nginx`
 - CentOS: `yum install nginx`
 
@@ -108,7 +108,11 @@ Tomcat服务器资源：
 - 启动：`nginx`
 - 版本：`nginx -v`
 - 关闭：`nginx -s stop`
-- 重新加载：`nginx -s reload`, 修改了配置使用
+- 安全退出: `nginx -s quit`
+- 重新加载配置文件：`nginx -s reload`
+- 检查配置文件语法：`nginx -t`
+- 执行`nginx`启动后就可以在主机地址上看到Nginx默认页面了。
+- `ps -aux | grep nginx`查看nginx进程
 
 ### 2.3 配置文件
 
@@ -247,34 +251,31 @@ http {
     - 未安装JDk的话需要安装JDK才能成功执行。（TODO: Java相关的东西不了解，先挖坑，以后填了记得更新这里。）这里装`apt install openjdk11-jre-headless`，只要tomcat支持这个版本就行，都是向后支持，安装最新的JDK则一定是支持的（这里服务器包管理上最新只有这个，应该不算最新的版本）。执行`java -version`查看版本。 
     - 然后回到tomcat的`bin`目录执行`./startup.sh`启动tomcat，就可以在`yourhost:8080`上看到tomcat页面了，端口是必不可少的。
     ![tomcat page](Images/nginx_first_tomcat10.0.2_page.png)
-2. 检查8080端口是否开放，防火墙相关，如果禁用了需要开放8080端口，不赘述，但要这个意识。
+2. 检查8080端口是否开放，防火墙相关，如果禁用了需要开放8080端口，不赘述，但要有这个意识。
 3. 修改Host文件(管理员权限打开`C:\Windows\System32\drivers\etc\hosts`)添加`your_host_ip www.123.com`项。无论是局域网IP还是公网IP都是可行的。
-4. **Nginx配置反向代理**：
-    - 编辑配置文件`/etc/nginx/nginx.conf`。
-    - `http`域中的`server`域添加或修改：
-    ```conf
-    server { # 将发送给Nginx服务器192.168.35.1:80的请求转发到127.0.0.1:8080
-        listen 80;
-        server_name 192.168.35.1; # 主机IP
-        location \ {
-            # root html;
-            proxy_pass http://127.0.0.1:8080; # 转发到8080端口
-            index index.html index.htm;
-        }
+
+**Nginx配置反向代理**：
+- 编辑配置文件`/etc/nginx/nginx.conf`。
+- `http`域中的`server`域添加或修改：
+```conf
+server { # 将发送给Nginx服务器192.168.35.1:80的请求转发到127.0.0.1:8080
+    listen 80;
+    server_name 192.168.35.1; # 主机IP
+    location \ {
+        # root html;
+        proxy_pass http://127.0.0.1:8080; # 转发到8080端口
+        index index.html index.htm;
     }
-    ```
-    - `nginx`启动Nginx，浏览器输入`www.123.com`即可访问。
-    - 网页的数据一般放在：`/var/www/`。
+}
+```
+- `nginx`启动Nginx，浏览器输入`www.123.com`即可访问。
+- 网页的数据一般放在：`/var/www/`。
 
 **访问过程分析**：
 - 三个部分：客户端（浏览器），代理服务器（Nginx），Web服务器（tomcat）。
 - 套接字：Nginx（`you_host_ip:80`），tomcat（`127.0.0.1:8080`）。
-- 浏览器不能直接访问到tomcat，而是通过Nginx反向代理来访问到tomcat。
+- 浏览器不能直接访问到tomcat，而是通过Nginx反向代理来访问到tomcat。Nginx负责转发请求到tomcat。
 - 需要修改本地host文件，将`www.123.com`指向你的主机IP，也就是说本地host文件优先于DNS解析。实际建立网站的话有了服务器之后还需要购买域名，解析到对应的IP即可。
-
-
-
-
 
 ### 3.2 负载均衡实例
 
@@ -289,3 +290,7 @@ http {
 - [Bilibili-尚硅谷Nginx教程](https://www.bilibili.com/video/BV1zJ411w7SV?from=search&seid=6880208276596727856)(本文主要参考)
 - [Nginx中文文档](https://www.nginx.cn/doc/)
 
+## TODO
+
+- 相关内容了解学习：Java，tomcat，Web服务器
+- Nginx深入，如阅读源码
