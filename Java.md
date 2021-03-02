@@ -131,6 +131,56 @@ public class Hello
 
 - 输出：`System.out.print`
 - 换行输出：`System.out.println`
-- 格式化输出：`System.out.printf`，占位符`%d`十进制 `%x`十六进制 `%f`浮点数 `%e`科学计数法 `%s`字符串，`%%`转义表示`%`本身
+- 格式化输出：`System.out.printf`，占位符`%d`十进制 `%x`十六进制 `%f`浮点数 `%e`科学计数法 `%s`字符串，`%%`转义表示`%`本身。详细信息见文档[java.util.Formatter](https://docs.oracle.com/en/java/javase/15/docs/api/java.base/java/util/Formatter.html)。
 - 输入：
+```java
+import java.util.Scanner;
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String sInputStr = scanner.nextLine(); // 下一行
+        int iNextInt = scanner.nextInt(); // 下一个输入解析为整数
+    }
+}
+```
+很好理解，但也感觉很啰嗦，可能的确需要啰嗦才能好理解吧。
+
+### 1.8 流程控制——条件
+
+和C/C++如出一辙：同样，只有一条语句时`{}`可以省略。
+```java
+if (condition) {
+}
+else if (other-condition) {
+}
+else {
+}
+```
+
+对引用变量`==`判等时，含义是判断是否指向同一个对象。判断内容相等需要使用`equals`方法。在java中，通常称函数为方法(mtthod)，因为函数必定是某个类的成员，不管是不是静态。
+
+浮点数不要直接判等，通常判断差值是否在精度范围内。
+
+`switch`语句: 同C，不赘述，可以使用整型、枚举。不同的是java中`String`也可以作为`switch`的判断条件，这就很方便了。因为C/C++其实并没有语法层面的字符串抽象类型。
+```java
+ switch (option) {
+        case 1:
+            System.out.println("Selected 1");
+            break;
+        case 2:
+            System.out.println("Selected 2");
+            break;
+        case 3:
+            System.out.println("Selected 3");
+            break;
+        }
+```
+语法糖：`case -> statement;`执行结束退出，不需要`break`。Java12开始。
+并且还可以直接返回一个值：
+```java
+double d = switch(i) {
+		case 1 -> 1.0;
+		default -> 100;
+		};
+```
 
