@@ -150,13 +150,17 @@ public class Hello
 
 ### 1.6 数组
 
-- 定义：`type[] value;`
-- 数组是引用类型，也就是说需要初始化：`int[] A = new int[size];`
 - 创建后大小即固定，也就是指向的那个数组大小就固定，但是可以将其指向新的数组。
-- `length`获取长度。
 - 数组下标越界将引发运行时错误，抛出`java.lang.ArrayIndexOutOfBoundsException`异常。
 - 初始化时直接指定元素值，则编译器会自动推导大小：`int[] A = new int[] {1,2};`，初始化时必须指定大小或者提供初始值，两者选一者，不能同时存在。可以进一步简写为`int[] A = {1,2}`。
-
+- 定义: `type[]`
+- 长度: `length`
+- 取成员: `[]`
+- range-for: `for(type val : arr)`
+- 转换为`String`: `Arrays.toString()`，输出`[elem1, elem2, ..., elemLast]`，需要`import java.util.Arrays;`
+- 排序: `Arrays.sort()`
+- 多维数组: `type[][]`，即是数组的数组，不要求每个元素统一大小。
+- 多为数组转字符串: `Arrays.deepToString()`
 
 ### 1.7 输入输出
 
@@ -239,18 +243,7 @@ for (type val : valArr) { // iterate iterable type, like array([])/String/etc.
 同样可以用`break`/`continue`。
 
 
-### 1.10 数组
-
-- 定义: `type[]`
-- 长度: `length`
-- 取成员: `[]`
-- range-for: `for(type val : arr)`
-- 转换为`String`: `Arrays.toString()`，输出`[elem1, elem2, ..., elemLast]`，需要`import java.util.Arrays;`
-- 排序: `Arrays.sort()`
-- 多维数组: `type[][]`，即是数组的数组，不要求每个元素统一大小。
-- 多为数组转字符串: `Arrays.deepToString()`
-
-### 1.11 命令行参数
+### 1.10 命令行参数
 
 ```java
 public class Main {
@@ -291,11 +284,11 @@ class Person {
 - 调用其他构造：`this(args);`。
 - 调用基类构造：`super(args);`
 - 除了构造函数之外，从各种意义上我们都需要有一个析构函数，因为不需要管理内存，好像析构存在的意义就没有那么大了。但用不用另说，必须有是确定的。java中扮演这个角色的就是`void finalize()`方法。
-- 访问限定符：
+- 访问权限：
     - `public`
     - `private`
     - `protected`
-    - `default`
+    - 默认，不写访问修饰符
 - 思考与探索：有没有类似于C++中`=default`,`=delete`那种显式使用或者禁用默认构造/`=`运算符的语法呢？
 
 ### 2.2 方法
@@ -373,12 +366,163 @@ class Person {
 - 其实写了构造也能编过，会被识别为一个普通方法提示缺少返回值，而不是构造。写了字段也没有问题，貌似被当做了静态字段来处理。别说细节还挺多。经过求证接口的字段会自动`public final static`。
 - 实现接口类时，需要使用`implements`。
 - 同时派生一个类，并实现接口：`class A extends B implements C,D`。`super`将指代B，没有B的话就是默认的`Object`。
-- `default`方法：接口中也可以有实现了的方法，此时就需要加`default`关键字，当然没有字段可以给它访问。目的是实现没必要在所有子类中重写的接口。
+- `default`方法：接口中也可以有实现了的方法，此时就需要加`default`关键字，当然没有字段可以给它访问。目的是实现没必要在所有子类中重写的接口。派生类中可以不进行重写。
+- 接口中所有方法默认`public abstract`，不需要显示写出。
+- 接口可以继承另一个接口，同样使用`extends`。
+
+### 2.7 静态字段与方法
+
+- 只有一个独立的内存空间，属于整个类，并不属于某个实例。所有实例都可以使用。
+- 通过`className.staticFieldOrMethod`来访问，当然也可以通过`aInstance.staticFieldOrMethod`访问，等价于前者，但最好使用类名来访问，更加清晰。这点与C++是相同的。
+- 静态方法无法使用`this`变量，只能访问静态字段。
+- `interface`是可以有静态字段的，并且只能是`final`的。所以编译器会自动为interface的字段加上`public final static`。
+- 常用于工具类辅助类等。
+
+### 2.8 包
+
+- Java中使用Package来解决名称冲突，因为不同的人写的代码是完全可能出现名称重复的。C++中则是使用`namespace`，但是C++的`namespace`仅仅是加了一层作用域而已，仅用于解决名称冲突问题。而java的包功能则更多。
+- 调用方式：`Package.class`。
+- 声明：`package packageName;`，必须写在程序有效代码第一行。
+- 虚拟机运行时，JVM只看完整的类名，只要包名不同，类就不同。包可以是多层结构，用`.`隔开，类似于`java.util`。
+- 包不存在任何父子关系，所以`java.util`和`java.util.zip`是不同的包。C++的namespce也可以嵌套，而且是有关系的。
+- 不使用包名，那么就是使用默认包，类似于使用全局作用域。
+- Java中包还要求和目录层次完全统一，不然就是语法错误。生成的`.class`也会是同样的结构。由衷感叹java真省心啊！
+- 在一个类中引用了其他类时，可以使用完整包名，也可以使用`import`将包中的类导入进来。类似于C++中的`using namespace XXX;`。
+- `import`用法：
+    - 导入一个包所有`class`：`import package.*;`
+    - 导入一个类：`import package.class;`
+    - 导入一个类中的所有静态字段和方法：`import static pacakge.class.*;`，使用较少。
+- Java编译器最终编译出的`.class`只使用完整类名，编译器遇到一个类名时查找顺序：
+    - 当前包中查找。
+    - 导入的包中查找。
+    - `java.lang`包查找。
+    - 还无法确定类名就报错。
+- 编写一个类是，编译器默认做的事情：
+    - 默认自动导入当前包所有类。
+    - 默认自动导入`java.lang.*`。但像`java.lang.reflect`这种其实和`java.lang`不是一个包，也没有父子关系，还是需要手动导入的。
+- 不同包中两个类有相同的类名，都导入就会名称冲突，因为包没有嵌套这个说法所以最多只能导入其中一个，另一个需要写完整类名。
+- 要移动或者一个文件所在的包时，IDE都会自动完成文件操作，还提供一键更新引用这种操作，可以说很方便了。
+- 相比C++的继承自C的原始的头文件包含方式、头文件宏定义保护防止重复包含、接口实现分离、交叉引用、前向声明，java可以算的上很无脑很方便了。
+
+### 2.9 作用域
+
+- 访问修饰符限定了访问作用域：
+- `public`
+    - `public`的类和接口可以被其他任何类访问。
+    - `public`的方法和字段可以被其他类访问，前提是拥有类的访问权限。
+- `private`
+    - `private`字段和方法无法被其他类访问。仅内类可以访问。
+    - Java支持嵌套类，嵌套的类也在类内，也可以访问该类的私有字段和方法。
+- `protected`
+    - 派生类中可访问。
+- 总结：清晰明了，比起C++，搞出了各种东西，例如友元，加上三种
+- 包作用域/默认作用域
+    - 一个类不添加访问修饰符，可以访问包内所有`public`和没有访问修饰符包作用域的类。
+    - 一个包不可访问另一个包内默认作用域的类。
+- `private`和`protected`不能用来修饰类，但可以用来修饰嵌套类。一个最外层的非嵌套类只能用`public`/`final`/`abstract`修饰。或者不用`public`包内使用。
+
+### 2.10 嵌套类
+
+- 内部类(Inner Class)
+    ```java
+    class Outer {
+        class Inner {
+        }
+    }
+    ```
+    - Inner类实例不能单独存在，必须依附于一个Outer的实例。
+    ```java
+    public class Main {
+        public static void main(String[] args) {
+            Outer outer = new Outer("Nested"); // 实例化一个Outer
+            Outer.Inner inner = outer.new Inner(); // 实例化一个Inner
+            inner.hello();
+        }
+    }
+
+    class Outer {
+        private String name;
+        Outer(String name) {
+            this.name = name;
+        }
+        class Inner {
+            void hello() {
+                System.out.println("Hello, " + Outer.this.name);
+            }
+        }
+    }
+
+    ```
+    - 要实例化一个Inner，我们必须首先创建一个Outer的实例，然后调用``Outer``实例的`new`来创建Inner   实例。因为Inner Class除了有一个`this`指向它自己，还隐含地持有一个Outer Class实例，可以用   `Outer.this`访问这个实例。所以，实例化一个Inner Class不能脱离Outer实例。
+    - `Outer`类被编译为`Outer.class`，而`Inner`类被编译为`Outer$Inner.class`
+
+- 匿名类(Anonymous Class)
+    - 不需要在Outer Class中明确地定义这个Class，而是在方法内部，通过匿名类（Anonymous Class）来定义。
+    ```java
+    public class Main {
+        public static void main(String[] args) {
+            Outer outer = new Outer("Nested");
+            outer.asyncHello();
+        }
+    }
+
+    class Outer {
+        private String name;
+
+        Outer(String name) {
+            this.name = name;
+        }
+
+        void asyncHello() {
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("Hello, " + Outer.this.name);
+                }
+            };
+            new Thread(r).start();
+        }
+    }
+    ```
+    - `Runnable`是一个接口，`asyncHello`方法内`new`的时候定义了一个没有类名的匿名类重写了`run`方法，重写`run`接口之后实例化并给了`r`。
+    - `Outer`类被编译为`Outer.class`，而匿名类被编译为`Outer$1.class`，如果有多个匿名类，那么被编译为`Outer$2.class` etc
+    - 除了接口外，匿名类也完全可以继承自普通类。
+- 静态嵌套类(Static Nested Class)
+    - 和Inner Class类似，但是使用`static`修饰，称为静态内部类。
+    - 用static修饰的内部类和Inner Class有很大的不同，它不再依附于Outer的实例，而是一个完全独立的类，因此无法引用`Outer.this`，但它可以访问`Outer`的`private`静态字段和静态方法。
+    - 就是一个独立的类，只是有Outer Class的private访问权限。
+    - 果然我觉得这才比较正常，像内部类，一个类依赖于一个对象感觉有点奇怪。但可能也的确有用处。
+
+### 2.11 classpath
+
+- classpath是什么？
+- JVM用到的一个环境变量，它用来指示JVM如何搜索class。
+- 因为Java是编译型语言，源码文件是.java，而编译后的.class文件才是真正可以被JVM执行的字节码。因此，JVM需要知道，如果要加载一个abc.xyz.Hello的类，应该去哪搜索对应的Hello.class文件。
+- 设定方法
+    - 系统环境变量中设置`classpath`环境变量，不推荐，会污染整个系统环境。
+    - 启动JVM时设置`classpath`变量，推荐。启动时添加`-classpath`或者`-cp`选项，添加`;`分割的路径作为参数（Windows中）。
+- IDE中运行时，自动传入的`-cp`参数就是工程`bin`目录和引入的`jar`包。
+- 更好的做法是，不要设置`classpath`！默认的当前目录`.`对于绝大多数情况都够用了。
 
 
+### 2.12 jar包
+
+- 如果有多个`.class`文件，散落在各层目录中，肯定不便于管理。如果能把目录打一个包，变成一个文件，就方便多了。
+- `jar`包就是用来干这个事的，它可以把package组织的目录层级，以及各个目录下的所有文件（包括`.class`文件和其他文件）都打成一个`jar`文件。
+- `jar`包实际上是一个zip格式的压缩包文件，jar包相当于目录。执行一个jar包里的class，就可以把jar包放到classpath中。
+```shell
+java -cp ./hello.jar abc.xyz.hello
+```
+- 因为`jar`包就是zip文件，所以直接将`bin`目录中的目录和文件压缩成`zip`文件，更改后缀为`.jar`就算制作成功了一个`jar`包。值得注意的是，`bin`目录不应该比包含到压缩包的路径中。
+
+- jar包还可以包含一个特殊的`/META-INF/MANIFEST.MF`文件，`MANIFEST.MF`是纯文本，可以指定Main-Class和其它信息。JVM会自动读取这个`MANIFEST.MF`文件，如果存在Main-Class，我们就不必在命令行指定启动的类名，而是用更方便的命令：`java -jar hello.jar`。
+- 到这里我只能说，Java也太太太方便了吧！
+- 果然**你永远可以通过增加一个中间层来解决一些问题**。
+
+### 2.13 模块
 
 ## TODO
-- 包、作用域、模块
+- 模块
 - java核心类
 - 异常处理
 - 反射
