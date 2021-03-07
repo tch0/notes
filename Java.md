@@ -16,8 +16,7 @@
     - [1.7 输入输出](#17-%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA)
     - [1.8 流程控制——条件](#18-%E6%B5%81%E7%A8%8B%E6%8E%A7%E5%88%B6%E6%9D%A1%E4%BB%B6)
     - [1.9 流程控制——循环](#19-%E6%B5%81%E7%A8%8B%E6%8E%A7%E5%88%B6%E5%BE%AA%E7%8E%AF)
-    - [1.10 数组](#110-%E6%95%B0%E7%BB%84)
-    - [1.11 命令行参数](#111-%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0)
+    - [1.10 命令行参数](#110-%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0)
   - [2. java面向对象](#2-java%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1)
     - [2.1 类和对象](#21-%E7%B1%BB%E5%92%8C%E5%AF%B9%E8%B1%A1)
     - [2.2 方法](#22-%E6%96%B9%E6%B3%95)
@@ -25,6 +24,15 @@
     - [2.4 多态](#24-%E5%A4%9A%E6%80%81)
     - [2.5 抽象类](#25-%E6%8A%BD%E8%B1%A1%E7%B1%BB)
     - [2.6 接口](#26-%E6%8E%A5%E5%8F%A3)
+    - [2.7 静态字段与方法](#27-%E9%9D%99%E6%80%81%E5%AD%97%E6%AE%B5%E4%B8%8E%E6%96%B9%E6%B3%95)
+    - [2.8 包](#28-%E5%8C%85)
+    - [2.9 作用域](#29-%E4%BD%9C%E7%94%A8%E5%9F%9F)
+    - [2.10 嵌套类](#210-%E5%B5%8C%E5%A5%97%E7%B1%BB)
+    - [2.11 classpath](#211-classpath)
+    - [2.12 jar包](#212-jar%E5%8C%85)
+    - [2.13 模块](#213-%E6%A8%A1%E5%9D%97)
+  - [3. Java核心类](#3-java%E6%A0%B8%E5%BF%83%E7%B1%BB)
+    - [3.1 字符串与编码](#31-%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%8E%E7%BC%96%E7%A0%81)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -32,16 +40,16 @@
 
 # 入门一下Java
 
-教程：
-- [廖雪峰Java教程](https://www.liaoxuefeng.com/wiki/1252599548343744)
-
+Java教程：[廖雪峰Java教程](https://www.liaoxuefeng.com/wiki/1252599548343744)
+Eclipse教程：[Eclipse 教程](https://www.runoob.com/eclipse/eclipse-tutorial.html)
+写在前面：仅仅是关键性知识点的笔记，用来串联和查阅，并不系统也并不细节。
 
 ## 0. 简介
 
 ### 0.1 关于Java
 - 1995年发布1.0版本，Java之父[James Gosling](https://en.wikipedia.org/wiki/James_Gosling)，SUN公司财产，2009年被Orcale收购。
 - Java源文件编译为字节码后运行在虚拟机（JVM）上，字节码与指令集或者操作系统无关，通过在多平台实现虚拟机来实现跨平台。
-- JVM解释执行字节码，也就是所谓的解释器，并不会最终生成不依赖于JVM的目标平台的可执行文件。那么从理解上来说Java的跨平台就可以通过Java源码或者Java字节码来实现。
+- JVM解释执行字节码，也就是所谓的解释器， 并不会最终生成不依赖于JVM的目标平台的可执行文件。那么从理解上来说Java的跨平台就可以通过Java源码或者Java字节码来实现。
 - Java字节码是二进制文件，可以理解为一层不依赖于硬件平台的指令集。
 - Java即要编译也要解释执行，所以称其为混合型语言。那么可预见的多了一层之后Java的性能应该要优于解释型语言如Python，劣于编译型语言如C/C++。
 - Java字节码向下兼容，低版本字节码可运行在高版本的JVM上。那么Java语言语法是否向下兼容呢？标准库是否向下兼容呢？
@@ -406,7 +414,7 @@ class Person {
 
 ### 2.9 作用域
 
-- 访问修饰符限定了访问作用域：
+- 访问修饰符限定了访问作用域
 - `public`
     - `public`的类和接口可以被其他任何类访问。
     - `public`的方法和字段可以被其他类访问，前提是拥有类的访问权限。
@@ -491,13 +499,13 @@ class Person {
     - 和Inner Class类似，但是使用`static`修饰，称为静态内部类。
     - 用static修饰的内部类和Inner Class有很大的不同，它不再依附于Outer的实例，而是一个完全独立的类，因此无法引用`Outer.this`，但它可以访问`Outer`的`private`静态字段和静态方法。
     - 就是一个独立的类，只是有Outer Class的private访问权限。
-    - 果然我觉得这才比较正常，像内部类，一个类依赖于一个对象感觉有点奇怪。但可能也的确有用处。
+    - 果然我觉得这才比较正常，像内部类，一个类依赖于一个对象感觉有一点点奇怪，暂不清楚应用场景。
 
 ### 2.11 classpath
 
 - classpath是什么？
 - JVM用到的一个环境变量，它用来指示JVM如何搜索class。
-- 因为Java是编译型语言，源码文件是.java，而编译后的.class文件才是真正可以被JVM执行的字节码。因此，JVM需要知道，如果要加载一个abc.xyz.Hello的类，应该去哪搜索对应的Hello.class文件。
+- 因为Java是编译型语言，源码文件是`.java`，而编译后的`.class`文件才是真正可以被JVM执行的字节码。因此，JVM需要知道，如果要加载一个`abc.xyz.Hello`的类，应该去哪搜索对应的`Hello.class`文件。
 - 设定方法
     - 系统环境变量中设置`classpath`环境变量，不推荐，会污染整个系统环境。
     - 启动JVM时设置`classpath`变量，推荐。启动时添加`-classpath`或者`-cp`选项，添加`;`分割的路径作为参数（Windows中）。
@@ -513,13 +521,79 @@ class Person {
 ```shell
 java -cp ./hello.jar abc.xyz.hello
 ```
-- 因为`jar`包就是zip文件，所以直接将`bin`目录中的目录和文件压缩成`zip`文件，更改后缀为`.jar`就算制作成功了一个`jar`包。值得注意的是，`bin`目录不应该比包含到压缩包的路径中。
+- 因为`jar`包就是zip文件，所以直接将`bin`目录中的目录和文件压缩成`zip`文件，更改后缀为`.jar`就算制作成功了一个`jar`包。值得注意的是，`bin`目录不应该被包含到压缩包的路径中。
+- `jar`包还可以包含一个特殊的`/META-INF/MANIFEST.MF`文件，`MANIFEST.MF`是纯文本，可以指定`Main-Class`和其它信息。JVM会自动读取这个`MANIFEST.MF`文件，如果存在`Main-Class`，我们就不必在命令行指定启动的类名，而是用更方便的命令：`java -jar hello.jar`。
+- 举例来说，如果写了两个包一个`Main`一个`Hello`，编译后`bin`目录下生成了两个目录`Main/`和`Hello/`，选中这两个目录，zip格式压缩到文件`Main.jar`，文件名无关紧要。执行时：`java -cp ./Main.jar Main.Main`。jar文件位置随意，路径给对就行，包中的类名随意，只要你定义了`public static main`即可执行。没有这个类或者依赖了其他类但是打包时没有加进去则解释执行时JVM会抛出`java.lang.ClassNotFoundException`。
+- 一个包中可以有多个类有`public static main`方法，甚至可以互相调用。执行时通过参数指定想执行哪一个就执行哪一个。
 
-- jar包还可以包含一个特殊的`/META-INF/MANIFEST.MF`文件，`MANIFEST.MF`是纯文本，可以指定Main-Class和其它信息。JVM会自动读取这个`MANIFEST.MF`文件，如果存在Main-Class，我们就不必在命令行指定启动的类名，而是用更方便的命令：`java -jar hello.jar`。
-- 到这里我只能说，Java也太太太方便了吧！
-- 果然**你永远可以通过增加一个中间层来解决一些问题**。
+- 清单文件
+    - 如果没有`jar`包中`/META-INF/MANIFEST.MF`，那么是不能通过`java -jar`来执行的。
+    - 清单文件中定义了许多内容，但不必全部关心。
+    - 手动创建清单文件：注意最后要有一个空行。
+    ```
+    Manifest-Version: 1.0
+    Main-Class: package.mainClass
+
+    ```
+    只要给出入口类`Main-Class`就可以通过`java -jar`来执行了。
+- 使用Eclipse导出`jar`包：
+    - 包资源管理器中选择包右键导出->Java->JAR文件，选择要导出的一个或多个包，填写入口类，即可导出。
+    - 不设置其他选项的话，导出的清单文件中也就只有版本和入口类的信息。
+    - 当然还可以导出其他文件，清单文件也可以有很多其他配置内容，尚不清楚，有需求再了解。
+- 到这里只能说，Java的确很方便。无论是项目配置，编译，执行，依赖，打包发布都如此简单方便。怪不得是时下最流行的编程语言。
+- **你永远可以通过增加一个中间层来解决一些问题**。永远可以通过减少一个中间层来提升一些性能。
+- 现在这个时代，硬件性能已经普遍强大到绝大部分情况下我们并不需要去抠一个程序是到底是多占了几个字节的内存还是多执行了几条指令。愉快地开始java之旅吧！
+- 最后，JVM是世界上最好的虚拟机！
+
 
 ### 2.13 模块
+
+- `.class`是JVM看到的最小执行文件，`jar`包就是与`.class`的容器。但写一个大型程序时是可能需要依赖其他第三方的jar包的。最后执行时就需要将所有jar放在一起来执行，少了或者写漏了某个jar就可能会`ClassNotFoundException`。
+    ```java
+    java -cp 1.jar;2.jar;...;last.jar package.mainClass
+    ```
+- 引入了模块解决**依赖**的问题。如果`a.jar`依赖`b.jar`，那我们应该给`a.jar`加点东西说明这个信息。让程序编译运行时自动定位到`b.jar`，这种自带依赖关系的`class`容器就是模块。始于Java 9。
+- 创建模块：与创建Java项目一致，在`src/`目录一级下创建`module-info.java`文件，即是**模块描述文件**。文件内容类似与下面这样：使用`module`和`requires`说明模块和依赖。
+```java
+module hello.world {
+	requires java.base; // 可不写，任何模块都会自动引入java.base
+	requires java.xml;
+}
+```
+- `module-info.java`经过编译后会在`bin`下生成`module-info.class`。
+- 下一步把`bin`目录所有`class`文件打包成`jar`。使用`jar`命令。
+- 模块还可以导入导出。使用`jmod`命令从`jar`生成模块。
+- 更详细的理解和说明：TODO。
+
+## 3. Java核心类
+
+### 3.1 字符串与编码
+
+- String是一个引用类型，本身也是一个class，Java编译器对String有特殊处理，可以直接用字符串字面值`"string-literal"`来表示。
+- 实际上字符串内部是通过字符数组来表示，这点很多编程语言应该都是一样的。
+- Java字符串的重要特性就是不可变，内部保存字符串的字段是`private final`的字符数组，赋值后即**不可变**。`String`类中没有实现任何修改这个数组的方法。使用Eclipse的话F3到定义里面可以看到其实是一个字节数组`private final byte[] value;`，并不是`char[]`。
+- 用字符串字面值创建就相当于使用字符数组创建。java的语法层面支持使我们可以简写。
+```java
+String s = "yes";
+String s2 = new String(new char[] {'y', 'e', 's'});
+```
+- 对字符串判等应该用`equals`方法，如果使用`==`则是判断两个字符串引用变量是否引用同一个对象。
+- 忽略大小写判等：`equalsIgnoreCase`
+- 搜索提取子串的接口：`idnexOf` `lastIndexOf` `startsWith` `endsWith` `substring`
+- 下标从0开始，遗憾的是不支持像数组一样使用`[]`来引用字符串中的字符。可能是因为不允许改变的原因。还是说因为内建的字符类型不支持引用，就算获取了也无法设置，没有理由提供语法层面支持。获取某一个字符使用`public char charAt(int index)`。
+- 字符串操作不改变原字符串内容，而是返回新字符串。
+- 去除收尾空字符：`trim()`，返回去除后的新字符串。包括`\t` `\t` `\n` `\0`。
+- `stricp()`也是去除首位空字符，在`trim()`基础上还会去除像`\u3000`中文空格这样的字符。只移除首或尾：`stricpLeading` `stripTrailing`
+- 判空：`isEmpty`
+- 判断是否是空白：`isBlank`
+- 替换：`replace`
+- 分割：`split`
+- 拼接：`join`
+- 格式化：`formatted` `format`
+- 将任意类型转换为`String`：`valueOf`
+- 转换为`char[]`：`toCharArray`
+- 字符编码
+
 
 ## TODO
 - 模块
