@@ -6,6 +6,7 @@
   - [0. 简介](#0-%E7%AE%80%E4%BB%8B)
     - [0.1 关于Java](#01-%E5%85%B3%E4%BA%8Ejava)
     - [0.2 开发环境](#02-%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
+    - [0.3 基本Eclipse使用](#03-%E5%9F%BA%E6%9C%ACeclipse%E4%BD%BF%E7%94%A8)
   - [1. Java语言基础](#1-java%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80)
     - [1.1 hello,world!](#11-helloworld)
     - [1.2 基本约定](#12-%E5%9F%BA%E6%9C%AC%E7%BA%A6%E5%AE%9A)
@@ -33,6 +34,15 @@
     - [2.13 模块](#213-%E6%A8%A1%E5%9D%97)
   - [3. Java核心类](#3-java%E6%A0%B8%E5%BF%83%E7%B1%BB)
     - [3.1 字符串与编码](#31-%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%8E%E7%BC%96%E7%A0%81)
+    - [3.2 String操作类](#32-string%E6%93%8D%E4%BD%9C%E7%B1%BB)
+    - [3.3 包装类型](#33-%E5%8C%85%E8%A3%85%E7%B1%BB%E5%9E%8B)
+    - [3.4 JavaBean](#34-javabean)
+    - [3.5 枚举类](#35-%E6%9E%9A%E4%B8%BE%E7%B1%BB)
+    - [3.6 记录类](#36-%E8%AE%B0%E5%BD%95%E7%B1%BB)
+    - [3.7 BigInteger](#37-biginteger)
+    - [3.8 BigDecimal](#38-bigdecimal)
+    - [3.9 常用工具类](#39-%E5%B8%B8%E7%94%A8%E5%B7%A5%E5%85%B7%E7%B1%BB)
+    - [3.10 BigInteger实现分析](#310-biginteger%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -85,7 +95,41 @@ Eclipse教程：[Eclipse 教程](https://www.runoob.com/eclipse/eclipse-tutorial
 - 使用Eclipse：
     - 安装：下载[Eclipse IDE for Java Developers](https://www.eclipse.org/downloads/packages/)，无需安装，解压即可使用。
     - 汉化：下载中文汉化包，[地址](https://www.eclipse.org/babel/downloads.php)，找到IDE对应版本汉化包，找到简体中文的包全部下载下来共20个左右，批量解压提取到当前位置，复制得到的两个文件夹`features/`和`plugins/`到安装目录。
-    - 具体使用配置等略过不谈。
+    - 具体配置等略过不谈，网上一大把。
+
+### 0.3 基本Eclipse使用
+
+Eclipse基本调试操作：
+- `Ctrl+Shift+B` 添加移除断点
+- `Ctrl+F11` 开始运行
+- `F11` 开始调试
+- `F5` 单步跳入，能跳入(语句有函数调用)就跳入，不能就下一条语句
+- `Ctrl+F5` 单步执行选择，能跳入就跳入，不能就不执行
+- `F6` 单步跳过，下一条语句
+- `F7` 单步跳出，跳出这个函数执行(只执行完这个函数调用，回到调用语句)
+- `F8` 继续，执行到下一个断点
+- `Ctrl+F2` 终止调试，结束调试
+- `Ctrl+R` 运行至行
+- `Ctrl+Alt+B` 跳过所有断点，也就是无效化所有断点
+- `Drop to Frame` 拖放至帧(这什么破翻译，真就直译？)，跳转到当前执行函数的开头开始执行，不会改变一个全局数据原有的值，只是切换了栈帧。
+- 跳过、跳出、运行至行等能够运行多行的操作执行过程中遇到断点都会断住。
+- 首选项-调试-单步执行过滤，过滤不需要关注的类。
+- 配合调用堆栈(调试窗口)、本地变量监视、条件断点、表达式求值，常用的调试操作也就这些了。
+
+其他提高效率的快捷键：
+- `Ctrl+O` 右键快速大纲，用于搜索当前文件中的字段或者方法以快速跳转
+- `Ctrl+F3` 显示当前符号的快速大纲
+- `Ctrl+T` 右键快速类型层次结构，显示派生层次结构
+- `F3` 转到一个符号的声明
+- `Ctrl+F` 查找符号
+- `Ctrl+Shift+G` 搜索当前工作空间所有该符号引用位置
+- `Alt + ->/<-` 代码浏览位置跳转
+- `Ctrl+H` 搜索，有精细的搜索选项，类型、方法、包等。
+- `Ctrl+Shift+R` 文件搜索
+- `Alt+Shift+R` 重命名符号
+- IDE内运行终端：`Ctrl+Alt+Shift+T`
+
+说实话有些快捷键感觉有点太啰嗦，一点都起不到快捷的作用，说的就是`Alt+Sift+Q`加上一个键的那一堆，也懒得自己改，不要增加太多心智负担，记住常用的就好。如`Ctrl+O`, `F3`, `Ctrl+T`加上常用的调试快捷键就行。说句实话没有VS用起来那么舒服。
 
 ## 1. Java语言基础
 
@@ -594,12 +638,466 @@ String s2 = new String(new char[] {'y', 'e', 's'});
 - 格式化：`formatted` `format`
 - 将任意类型转换为`String`：`valueOf`
 - 转换为`char[]`：`toCharArray`
-- 字符编码
+- 字符编码：
+- java的`String`和`char`在内存中总是用UniCode表示。
+- 可以调用`String`的方法手动将字符串转换为其他编码，结果为`byte[]`
+    ```java
+    String s = "你好，世界！";
+    printBytes(s.getBytes()); // 系统默认编码，最好不要这么写
+    printBytes(s.getBytes(StandardCharsets.UTF_8));
+    printBytes(s.getBytes(StandardCharsets.UTF_16));
+    printBytes(s.getBytes(StandardCharsets.UTF_16BE));
+    printBytes(s.getBytes(StandardCharsets.UTF_16LE));
+    ```
+- 进入到`String`的声明里面可以看到内部是怎么存储一个字符串的，早期可能会直接使用`char`数组，但那样的话对于只有ASCII字符构成的字符串内存空间不够友好，现在内部有区分编码，但可以发现都是`final`修饰的，也就是赋值之后即不可变。而我们在外部不需要关心`String`内是怎么存储的。
+```java
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence,
+               Constable, ConstantDesc {
+     private final byte[] value;
+     private final byte coder; // 0 - LATIN1, 1 - UTF16
+    // ...
+}
+```
+
+### 3.2 String操作类
+
+StringBuilder：频繁编辑字符串，位于`java.lang`
+- Java字符串赋值之后即不可变，对字符串的编辑的操作都返回一个新的字符串，指向新的内存，如果需要对字符串频繁编辑，那么频繁构造也就会频繁分配内存，也会影响GC效率。所以Java标准库提供了`StringBuilder`，它是一个可变的对象，编辑操作改变自身，而不是新构造对象。
+- 看看它都有些什么方法：`compare` `append` `delete` `replace` `insert` `indexOf` `lastIndexOf` `resverse` `toString` 都是一些字符串应该有的操作，都有不同参数的重载，操作完之后使用`toString`得到字符串。
+```java
+StringBuilder sb = new StringBuilder(2048);
+sb.append(100).append(',').append(" your princess!");
+sb.insert(3, "%");
+sb.replace(0, 3, "99");
+sb.delete(sb.length()-1, sb.length());
+System.out.println(sb.toString());
+```
+- 总感觉参数的含义怪怪的，不是很好用的感觉。
+- 因为编辑操作修改直接，并返回`this`，所以可以连起来调用，就像`std::cout <<`一样。
+
+StringJoiner：用来高效拼接字符串，位于`java.util`
+- 能用的方法不多：
+```java
+public StringJoiner(CharSequence delimiter, CharSequence prefix, CharSequence suffix)
+public StringJoiner setEmptyValue(CharSequence emptyValue) // 为空时的默认值
+public String toString() // 转字符串
+public StringJoiner add(CharSequence newElement) // 添加
+public int length() // 长度
+public StringJoiner merge(StringJoiner other) // 合并
+```
+- 这也能单独实现为一个类是我没有想到的。
+
+### 3.3 包装类型
+
+- 简单来说就是把基本类型如`boolean` `byte` `short` `int` `long` `float` `double` `char`等类型变为**引用**的手段。
+- 为`int`定义包装类：类似于这样包装一层之后就可以将其当做对象来用。
+```java
+class Integer {
+	private int value;
+	public Integer(int value) {
+		this.value = value;
+	}
+	public int intValue() {
+		return value;
+	}
+}
+```
+- java核心库`java.lang`为每种基本类型都定义了包装类型，分别为 `Boolean` `Byte` `Short` `Integer`  `Long` `Float` `Double` `Character`
+- 可以`new`包装对象传数值对象来创建，但会提示从java 9开始就弃用了，会有Warning。正常用应该用类似于`Integer.valueOf(int n)`这种静态方法来创建。
+- 提供了很多操作：与字符串的互相转换，解析，比较，进制转换，该类型的常量边界值，编码等。其中大部分是静态方法，感觉的确还是有点用的。
+- 将`Integer.valueOf()`这种方法成为静态工厂方法，创建新对象时应该优先选择静态工厂方法，而不是`new`运算符。看一下实现可以知道某些情况下会返回缓存的实例而不是`new`的新实例。
+```java
+public static Integer valueOf(int i) {
+    if (i >= IntegerCache.low && i <= IntegerCache.high)
+        return IntegerCache.cache[i + (-IntegerCache.low)];
+    return new Integer(i);
+}
+```
+- 包装也成为装箱(Boxing)，自动装箱和自动拆箱都是在编译器完成的，装箱拆箱会影响执行效率，且拆箱是可能会`NullPointerException`。
+- 包装类型比较应该使用`equals`，整数和浮点数的包装类型都继承自`Number`。
+
+### 3.4 JavaBean
+
+Java中，很多时候为了封装，都会这样去写一个类：
+- 若干`private`字段。
+- 通过`public`方法去读写实例字段。
+
+如果读写方法符合以下的命名规范，那么这种类被称为`JavaBean`，其中的字段是`xyz`。
+```java
+// 字段
+private Type xyz;
+// 读方法getter
+public Type getXyz()
+// 写方法setter
+public void setXyz(Type value)
+```
+通常将读方法(`getter`)和写方法(`setter`)称之为属性(`property`)。
+- 只写`getter`的属性称为只读(read-only)属性，比较常见。
+- 只有`setter`的属性称为只写(write-only)属性，不常见。
+- 属性是一种通用叫法、实践约定，不是语法规定，本质上其实就是一个方法。
+
+作用：
+- 用来传输数据，把一组数据组合成一个`JavaBean`来传输。
+- 方便被IDE分析，直接生成读写属性的接口。就不需要自己来慢慢写了。Eclipse中，右键->源码->生成getter和setter，选择要生成属性的字段和读写接口，访问修饰符等就可以直接生成了。
+
+使用`java.beans`提供的`Introspector`可以枚举出一个`JavaBean`的所有属性。
+```java
+public static void main(String[] args) throws IntrospectionException {
+	BeanInfo info = Introspector.getBeanInfo(Person.class);
+	for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+		System.out.println(pd.getName());
+		System.out.println("\t" + pd.getReadMethod());
+		System.out.println("\t" + pd.getWriteMethod());
+	}
+}
+```
+因为可能抛异常所以最后声明中必须加上`throws`语句，不然会报错，异常暂时没有了解，后续详解。其中的`class`字段是继承自`Object`而来。得到的结果中对于`class`字段有一个只读属性：`public final native java.lang.Class java.lang.Object.getClass()`。
+
+`Introspector`称之为**内省**，使用方法一般是：
+>内省(IntroSpector)是Java 语言针对 Bean 类属性、事件的一种缺省处理方法。一般的做法是通过类 `Introspector` 的 `getBeanInfo` 方法来获取某个对象的 `BeanInfo` 信息,然后通过 `BeanInfo` 来获取属性的描述器(`PropertyDescriptor`)，通过这个属性描述器就可以获取某个属性对应的 getter/setter 方法，然后我们就可以通过反射机制来调用这些方法，这就是内省机制。
+
+当然现在还未接触**反射**，后续详解。
+
+
+### 3.5 枚举类
+
+要用常量时，java暂时没有`const`(预留关键字，但还没有使用)，定义局部常量的话使用`final`即可。定义全局常量的话定义为`static final`就行，使用时`ClassName.staticFinalVar`这样来用就行。某些时候要做判断时，无法通过编译器来检查值的合理性，当然这时候枚举就必须要有了。
+
+枚举类定义：
+```java
+enum WorkingState {
+    coding, testing, takeABreak, slacking, drinkingCoffee, watchingVideos, playingGame, snapping
+}
+```
+- 比较枚举值是编译器会进行类型检查，确保了枚举值的有效性。不同类型的枚举不能互相比较或者赋值。
+- `enum`是引用类型，比较值时应该使用`equals`方法，但是由于`enum`类型的所有常量在JVM中只有一个实例，所以使用`==`比较也不会有问题。
+```java
+if (state == WorkingState.coding) {
+    state = WorkingState.takeABreak;
+}
+```
+
+`enum`和`class`有什么区别呢，答案是本质上没有区别，只是具有几个特点：
+- 定义的`enum`总是从`java.lang.Enum`派生，且无法比继承。
+- 只能定义`enum`的实例，而无法通过`new`运算符创建实例。
+- 定义的每个实例都是引用的该枚举类型的唯一实例。
+- 可以用于`switch`语句。
+
+编译后得到的`class`类似于这样：
+```java
+public final class WorkingState extends Enum { // 继承自Enum，标记为final class
+    // 每个实例均为全局唯一:
+    public static final Color coding = new WorkingState();
+    public static final Color testing = new WorkingState();
+    public static final Color takeABreak = new WorkingState();
+    // ...
+    // private构造方法，确保外部无法调用new操作符:
+    private WorkingState() {}
+}
+```
+
+每个枚举的值都是`class`的一个实例，所以可以使用一些从`Enum`继承而来的方法：
+```java
+WorkingState state = WorkingState.coding;
+String s = state.name(); // 获取枚举名称：coding
+int order = state.ordinal(); // 获取枚举常量定义的顺序(从0开始)：0
+```
+
+可以为枚举定义自己的构造，字段和方法。例如自己定义枚举的值：因为`enum`就是`class`，所以定义`enum`常量时可以调用自己的构造。要加字段建议声明为`final`因为你也没办法`new`一个`enum`去改它。
+```java
+enum Weekday {
+    MON(1), TUE(2), WED(3), THU(4), FRI(5), SAT(6), SUN(0);
+    public final int dayValue;
+    private Weekday(int dayValue) {
+        this.dayValue = dayValue;
+    }
+}
+```
+默认情况下`toString`方法会返回和`name`一样的值(也就是是这个枚举常量的名称)，但是是可以重写实现自己的`toString`的，目的一般在于使输出更具可读性。所以如果要判断枚举常量的名字，应该始终使用`name`。
+
+
+### 3.6 记录类
+
+不变类：
+- 定义时使用`final`，无法派生子类。
+- 每个字段使用`final`，保证创建实例后无法修改任何字段。
+- 为了保证不变类比较，还需要重写`equals`和`hashCode`方法。这样才能在集合类中使用。
+
+这样写起来很繁琐，所以语法糖又来了。java14开始，引入了`Record`类，使用关键字`record`:
+```java
+public record Point(int x, int y) {}
+```
+上述定义改写为`class`后类似于：
+```java
+public final class Point extends Record {
+    private final int x;
+    private final int y;
+
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int x() {
+        return this.x;
+    }
+
+    public int y() {
+        return this.y;
+    }
+
+    public String toString() {
+        return String.format("Point[x=%s, y=%s]", x, y);
+    }
+
+    public boolean equals(Object o) {
+        ...
+    }
+    public int hashCode() {
+        ...
+    }
+}
+```
+啊这，java的繁琐真是不无道理呢！
+
+和`Enum`类似，不能人为的从`Record`派生，只需要使用`record`关键字由编译器来处理就行。
+- 简单来说，`record`就是为了定义纯数据载体类。
+- 可以添加自己的静态方法。
+- 可以给一个Compact Constructor添加逻辑。
+- 一种典型静态方法就是`of`方法，实现静态工厂，用来创建新对象。`Point p = Point.of(1, 2)`这样写还是挺方便的。
+```java
+public record Point(int x, int y) {
+     public Point { // 没有参数列表，赋值的逻辑由编译器负责补全
+        if (x < 0 || y < 0) {
+            throw new IllegalArgumentException();
+        }
+    }
+    public static Point of() {
+        return new Point(0, 0);
+    }
+    public static Point of(int x, int y) {
+        return new Point(x, y);
+    }
+}
+```
+java15版本中，这好像还是preview feature：
+- 打开编译开关：`--source 15 --enable-preview`才能不适用，不然会报错。
+- Eclipse中首选项—Java编译器—Enable preview features for Java15。
+
+经过测试以上选项都并不会解决问题。TODO，理解就行。
+
+### 3.7 BigInteger
+
+Java提供的原生类型中表示范围最大的整型是64为整型`long`，和其他任何语言中一样，内置类型计算一般来说都可以由CPU指令直接提供支持，基本上一条指令就可以搞定。但是表示范围超过了64位的范围，那么就必须自己造轮子实现高精度整数了，用空间和时间来换表示范围和精度。
+
+java提供了高精度大整数实现：`java.math.BigInteger`。其中用`int[]`数组来模拟大整数，做算术运算时需要通过调用其方法来实现，编译器没有提供运算符支持。这时候就不得不提一句C++的运算符重载了。
+
+定义：
+- `public class BigInteger extends Number implements Comparable<BigInteger>`
+- 继承自`Number`
+- 不可变对象。
+
+方法：
+- 构造：任意进制`public BigInteger(String val, int radix)`，十进制`public BigInteger(String val)`，字节数组`public BigInteger(byte[] val, int off, int len)`，静态工厂`public static BigInteger valueOf(long val)`，等。
+- 比较操作
+```java
+public int compareTo(BigInteger val) // return -1, 0, 1 - less, equal, greater
+public boolean equals(Object x)
+public BigInteger min(BigInteger val)
+public BigInteger max(BigInteger val)
+```
+- 算术运算：尚未列完全，该有的都有了，加减乘除、相反数、取余求模、开方乘方、绝对值、位运算。
+```java
+ public BigInteger add(BigInteger val)
+ public BigInteger subtract(BigInteger val)
+ public BigInteger multiply(BigInteger val)
+ public BigInteger divide(BigInteger val)
+ public BigInteger[] divideAndRemainder(BigInteger val)
+ public BigInteger remainder(BigInteger val)
+ public BigInteger pow(int exponent)
+ public BigInteger sqrt()
+ public BigInteger gcd(BigInteger val)
+ public BigInteger abs()
+ public BigInteger negate()
+ public int signum()
+ public BigInteger mod(BigInteger m)
+ public BigInteger shiftLeft(int n)
+ public BigInteger shiftRight(int n)
+ public BigInteger and(BigInteger val)
+ public BigInteger or(BigInteger val)
+ public BigInteger xor(BigInteger val)
+ public BigInteger not()
+```
+- 转换为算术类型：
+```java
+// 超过表示范围将丢失高位信息
+public int intValue()
+public long longValue()
+public float floatValue()
+public double doubleValue()
+// 超过表示范围抛异常
+public long longValueExact()
+public int intValueExact()
+public short shortValueExact()
+public byte byteValueExact()
+```
+- 其他转换
+```java
+public byte[] toByteArray()
+public String toString(int radix)
+public String toString()
+```
+
+### 3.8 BigDecimal
+
+对应于高精度整数，必然也应该有高精度浮点数。`java.math.BigDecimal`可以表示一个任意大小且精度完全准确的浮点数。
+
+定义：
+- `public class BigDecimal extends Number implements Comparable<BigDecimal>`
+- 继承自`Number`
+- 不可变对象。
+
+方法：
+- 构造和算术运算都和`BigInteger`差不多就不列除了。区别是都有包含指定保留小数位数与舍入规则的参数的重载版本。
+- `public int scale()` 用来表示小数位数。如果小数点后只有0那么会返回负值。
+- `public BigDecimal setScale(int newScale)`设置小数位数，精度会丢失时按指定方法舍入或截断。
+- `public BigDecimal stripTrailingZeros()`去除末尾0。
+
+比较：
+- `equals`会比较scale，如果值相等scale不等，则也会不等。
+- 忽略scale比较：`public int compareTo(BigInteger val)`，返回值-1,0,1。一般来说比较应该用`compareTo`而不是`equals`。
+
+实现：通过一个表示每一位值的大整数，和一个表示小数位数的`scale`实现。
+```java
+public class BigDecimal extends Number implements Comparable<BigDecimal> {
+    private final BigInteger intVal;
+    private final int scale;
+}
+```
+
+### 3.9 常用工具类
+
+**数学计算**：
+
+- `java.lang.Math`类提供了大量静态方法来执行常见的数学运算，比如指数、对数、开方、三角函数、取整舍入、绝对值、最大值，还定义了常见的常数(`e` `PI`)。
+
+- 很多时候它的实现是直接调用`java.lang.StrictMath`，他们的关系是：
+在`Math`类中，为了达到最快的性能，所有的方法都使用计算机浮点单元中的例程。如果得到一个完全可预测的结果比运行速度更重要的话，就应该使用`StrictMath`类。它使用“Freely Distributable Math Library”实现算法，以确保在所有平台上得到相同的结果。有关这些算法的源代码请参阅 [fdlibm](http://www.netlib.org/fdlibm/index.html)，都是常用数学函数的C实现。
+- 简单来说就是因为存在浮点计算误差，不同平台(如x86和ARM)计算结果不能不一样(指误差不同)，`StrictMath`保证所有平台计算结果一致，而`Math`会针对平台优化计算速度。大部分情况使用`Math`就足够了。
+- `java.lang.*`是默认导入的，但因为是静态方法，所以还是要在调用时加上`Math.`。如果不想要在调用时加上`Math.`，那么如前所述导入`Math`类的所有公有静态字段和方法即可:`import static java.lang.Math.*;`
+
+**伪随机数**：
+
+- `java.util.Random`包可用于生成伪随机数：所谓伪随机数，是指只要给定一个初始的种子，产生的随机数序列是完全一样的。
+- 要生成一个随机数，可以使用`nextInt()`、`nextLong()`、`nextFloat()`、`nextDouble()`。
+- 都是非静态方法，要生成随机数需要构造一个`Random`实例。
+```java
+Random r = new Random();
+System.out.println(r.nextInt());
+System.out.println(r.nextDouble());
+System.out.println(r.nextLong());
+```
+- 可以使用一个随机数种子作为参数构造`Random`对象，不给种子的话就会采用系统时间戳作为种子。也可以通过`public synchronized void setSeed(long seed)`设置种子。
+- 可以生成的随机数类型包括：`int` `long` `float` `double`
+- `Math.random`其实也是调用了内部的`Random`实现的。
+
+**真随机数**：
+
+有**伪随机数**，就有**真随机数**。实际上真正的真随机数只能通过量子力学原理来获取，而我们想要的是一个不可预测的安全的随机数，`SecureRandom`就是用来创建安全的随机数的
+```java
+SecureRandom sr = new SecureRandom();
+System.out.println(sr.nextInt(100));
+```
+- `SecureRandom`无法指定种子，使用RNG（random number generator）算法。JDK的`SecureRandom`实际上有多种不同的底层实现，有的使用安全随机种子加上伪随机数算法来产生安全的随机数，有的使用真正的随机数生成器。实际使用的时候，可以优先获取高强度的安全随机数生成器，如果没有提供，再使用普通等级的安全随机数生成器。
+```java
+public class Main {
+    public static void main(String[] args) {
+        SecureRandom sr = null;
+        try {
+            sr = SecureRandom.getInstanceStrong();
+        } catch (NoSuchAlgorithmException e) {
+            sr = new SecureRandom();
+        }
+        byte[] randomBuffer = new byte[64];
+        sr.nextBytes(randomBuffer);
+        System.out.println(Arrays.toString(randomBuffer));
+    }
+}
+```
+>`SecureRandom`的安全性是通过操作系统提供的安全的随机种子来生成随机数。这个种子是通过CPU的热噪声、读写磁盘的字节、网络流量等各种随机事件产生的“熵”。在密码学中，安全的随机数非常重要。如果使用不安全的伪随机数，所有加密体系都将被攻破。因此，时刻牢记必须使用`SecureRandom`来产生安全的随机数。
+- 需要使用安全随机数的时候，必须使用`SecureRandom`，绝不能使用`Random`！
+- 这里要提一句java的异常处理感觉很舒服，处理成本不高，如果调用了一个可能抛出异常的函数，那么就一定需要处理这个异常，可以向上抛出，也可以就地处理。并且IDE会给提示，不处理是不能编过的。而对于C++，抛异常要考虑的事情就多了，资源和内存的释放，接到了异常之后能否恢复正确的上下文继续执行？太多需要考虑的事情，而对于内存用光、下标越界这种事也不会去考虑，让其崩溃然后修BUG也许是更好的选择。就我个人在实践中C++的异常处理用的不算多，更多的实践是返回一个错误码。
+
+### 3.10 BigInteger实现分析
+
+插播一小节闲话，分析一下`BigInteger`的实现：
+
+
+
+`BigInteger`源码分析：
+- 包声明和导入：主要是异常、IO、数组、随机数、数学、以一些不知道的东西。
+```java
+package java.math;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
+import jdk.internal.math.DoubleConsts;
+import jdk.internal.math.FloatConsts;
+import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.Stable;
+import jdk.internal.vm.annotation.ForceInline;
+```
+
+- 声明：
+```java
+public class BigInteger extends Number implements Comparable<BigInteger>
+```
+- 基类`Number`：抽象类，可以和java原始类型`byte` `short` `int` `long` `float` `double` 互相转换的类型的基类。派生中应该实现这些转换方法。
+```java
+package java.lang;
+public abstract class Number implements java.io.Serializable {
+    public Number() {super();}
+    public abstract int intValue();
+    public abstract long longValue();
+    public abstract float floatValue();
+    public abstract double doubleValue();
+    public byte byteValue() {
+        return (byte)intValue();
+    }
+    public short shortValue() {
+        return (short)intValue();
+    }
+    @java.io.Serial
+    private static final long serialVersionUID = -8742448824652078965L;
+}
+```
+- 字段、常量
+```java
+final int signum; // 表示符号，取值-1,0,1，表示负数,0,正数
+final int[] mag; // 表示值，大端序存储，0元素表最大量级
+private int bitCountPlusOne; // 比特位之和+1
+private int bitLengthPlusOne; // 比特位长度+1
+private int lowestSetBitPlusTwo;
+private int firstNonzeroIntNumPlusTwo;
+```
+
+TODO...
+
+
+
+
 
 
 ## TODO
-- 模块
-- java核心类
+- 模块详解
 - 异常处理
 - 反射
 - 注解

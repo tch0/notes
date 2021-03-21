@@ -13,18 +13,18 @@
 
 # 学习SICP的笔记
 
-![SICP](./Images/SICP_book_cover.jpg)
+![SICP](Images/SICP_book_cover.jpg)
 
 写在前面：
 
-本来我的打算是直接动手学Lisp并尝试从0开始写一个解释器，但是明明有好的老师就在手边，明明就可以站在巨人肩膀上，那为什么要去闭门造车浪费时间制造垃圾呢？突然想起了第一章都还未看完的SICP。于是决定学习一下并结合实践完成以下目标：
+本来我的打算是直接动手学Lisp并尝试从0开始写一个解释器，但是明明有好的老师就在手边，明明就可以站在巨人肩膀上，那为什么要去闭门造车浪费时间制造垃圾呢？效率才是第一位的，突然想起了第一章都还未看完的SICP。于是决定学习一下并结合实践完成以下目标：
 1. 学懂Lisp语言，当然这里指的是Scheme。
 2. 使用Scheme实现一个Scheme解释器。
 3. 用C++实现Scheme解释器。
 4. 用Python实现Scheme解释器，可选。
-5. 理解所谓的抽象。
+5. 理解全书的题眼——所谓的抽象。
 
-SICP，Structure and Interpretation of Computer Programs，中文译为[计算及程序的构造和解释](https://book.douban.com/subject/1148282/)。MIT20年来的经典教材，以Lisp方言Scheme为教学语言，现在好像换成了Python。
+SICP，Structure and Interpretation of Computer Programs，中文译为[计算及程序的构造和解释](https://book.douban.com/subject/1148282/)。MIT20年来的经典教材，以Lisp方言Scheme为教学语言，现在好像换成了Python(仅指最后用Python来写Scheme解释器)。
 
 首先搜集足够的资料，供不时查阅参考以补充自己思考的漏洞：
 - [SICP Solutions](http://community.schemewiki.org/?SICP-Solutions)：SICP的课后习题解答。下方同时也列出了许多老哥自己的解答。
@@ -35,7 +35,7 @@ SICP，Structure and Interpretation of Computer Programs，中文译为[计算�
 - [*Yet Another Scheme Tutorial*](http://deathking.github.io/yast-cn/): 一本Scheme入门教程的中文版翻译。
 - [一个SICP开发环境配置教程](https://zhuanlan.zhihu.com/p/37056659)
 
-粗略的将SICP前三章讲软件工程(较为简单)，后两章讲编译原理（解释器）(略难)。Scheme语言简洁而简单，完全不需要惧怕一门新的编程语言而畏惧这本书。如果只用两个字来概括整本书，那么一定就是“抽象”。笔记的结构编排将会与SICP书籍完全一致。
+粗略地说SICP前三章讲软件工程(较为简单)，后两章讲编译原理（解释器）(略难)。Scheme语言简洁而简单，完全不需要惧怕一门新的编程语言而畏惧这本书。如果只用两个字来概括整本书，那么一定就是“抽象”。笔记的结构编排将会与SICP书籍完全一致。
 
 ## 0. 事前准备
 
@@ -45,6 +45,12 @@ SICP，Structure and Interpretation of Computer Programs，中文译为[计算�
 - 当今最广为人知的是它的两大方言：Common Lisp和Scheme。其中Scheme被人熟知是作为MIT的编程入门语言以及许多人推荐的儿童编程语言。SICP中使用Scheme语言进行教学。
 
 ### 0.2 环境搭建
+
+为了练习和实践，必须要搭建一个舒服的Scheme开发环境。
+
+1. 下载安装[DrRacket](https://racket-lang.org/)，当前最新版本为8.0。
+2. 下载安装SICP Package，[详细教程](https://docs.racket-lang.org/sicp-manual/)。文件，包管理，输入sicp点击安装即可。
+3. 安装完成后编辑框中第一行输入`#lang sicp`，就可以在编辑框中书写程序了。下方控制台也显示出语言并且可以交互式地执行Scheme语句。老实说不是那么好用，没有补全，没有提示，就很生硬。
 
 ## 1.0 构造过程抽象
 
@@ -79,10 +85,10 @@ SICP，Structure and Interpretation of Computer Programs，中文译为[计算�
 - 应用过程(也就是函数调用)的代换模型：
     - 当实际参数是组合式时，是先对组合式求值还是用组合式运用到过程就有了区别。
     - **应用序**：首先对组合式中的运算符和运算对象求值，然后将得到的过程应用于得到的实际参数。即先求参数值，而后应用。这样的话每个组合式的参数只会被计算一次。
-    - **正则序**：先不求出运算对象的值，直到实际需要时才去做，也就是将所有代换都展开，知道没有过程调用时再做计算。即完全展开后归约。这样可能会重复计算过程调用中组合式参数的值。
+    - **正则序**：先不求出运算对象的值，直到实际需要时才去做，也就是将所有代换都展开，直到没有过程调用时再做计算。即完全展开后归约。这样可能会重复计算过程调用中组合式参数的值。
     - 如果过程调用无法直接用替换模拟，那么正则序的处理可能会出现问题。所以Lisp采用应用序求值。但在另一方面，正则序也可以成为有价值的工具，后续会探究。
 - 条件表达式和谓词：
-    - `cond`条件表达式：`(cond (<p> <e>))`，由`cond`和多个谓词——表达式对，直到某一个谓词`<p>`为真时才返回对应`<e>`，如果没有找到真值的`<p>`，那么没有`cond`值没有定义。
+    - `cond`条件表达式：`(cond (<p> <e>))`，由`cond`和多个谓词——表达式对，直到某一个谓词`<p>`为真时才返回对应`<e>`，如果没有找到真值的`<p>`，那么没有`cond`值没有定义。可以在最后添加`e(else <exp>)`表示前面所有条件都不满足时执行的逻辑。
     - 绝对值函数的定义
     ```scheme
     (define (abs x)
@@ -98,3 +104,15 @@ SICP，Structure and Interpretation of Computer Programs，中文译为[计算�
     - 基本谓词：`<` `=` `>`
     - 构造复合谓词的逻辑复合运算符：`(and <e1> ... <en>)`, `(or <e1> ... <en>)`, `(not <e>)`，含义不言自明，需要指出的是`not`是一个普通的过程，而`and`和`or`具有短路求值特性，都是特殊形式，并不是每个子表达式都会被求值。
 
+经典习题：
+- 求三数中最大的两数的平方和：
+```scheme
+ (define (square x) (* x x)) 
+ (define (squareSum x y) (+ (square x) (square y))) 
+ (define (sumOfLargestTwoSquared x y z) 
+   (cond ((and (>= (+ x y) (+ y z)) (>= (+ x y) (+ x z))) (squareSum x y)) 
+         ((and (>= (+ x z) (+ y z)) (>= (+ x z) (+ x y))) (squareSum x z)) 
+         (else (squareSum y z)) 
+   ) 
+ )
+```
