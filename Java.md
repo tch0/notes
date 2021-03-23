@@ -43,6 +43,12 @@
     - [3.8 BigDecimal](#38-bigdecimal)
     - [3.9 常用工具类](#39-%E5%B8%B8%E7%94%A8%E5%B7%A5%E5%85%B7%E7%B1%BB)
     - [3.10 BigInteger实现分析](#310-biginteger%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90)
+  - [4. 异常处理](#4-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86)
+    - [4.1 Java异常](#41-java%E5%BC%82%E5%B8%B8)
+    - [4.2 捕获异常](#42-%E6%8D%95%E8%8E%B7%E5%BC%82%E5%B8%B8)
+    - [4.3 抛出异常](#43-%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8)
+    - [4.4 自定义异常](#44-%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BC%82%E5%B8%B8)
+    - [4.5 NullPointerException](#45-nullpointerexception)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -1089,9 +1095,280 @@ private int lowestSetBitPlusTwo;
 private int firstNonzeroIntNumPlusTwo;
 ```
 
-TODO...
+
+## 4. 异常处理
+
+### 4.1 Java异常
+
+为什么要有异常？
+- 错误不可避免：未获取到资源，用户错误操作，程序有BUG，随机错误等。
+- 需要处理错误，使用错误码返回值来标识出现的错误处理太麻烦。
+- Java语言层面上提供异常处理机制，用异常来表示错误。
+
+**异常**是一种类，本身带有类型信息。可以在任何地方抛出，只需要在上层捕获，和方法调用分离，不需要返回一个错误码来标识错误。
+
+使用`try-catch`块来捕获与处理异常：
+```java
+try {
+    // dosomething
+    // ok
+} catch (FileNotFoundException e) {
+    // file not found:
+} catch (SecurityException e) {
+    // no read permission:
+} catch (IOException e) {
+    // io error:
+} catch (Exception e) {
+    // other error:
+}
+```
+
+java的异常是类，派生关系如图如下：
+```
+                     ┌───────────┐
+                     │  Object   │
+                     └───────────┘
+                           ▲
+                           │
+                     ┌───────────┐
+                     │ Throwable │
+                     └───────────┘
+                           ▲
+                 ┌─────────┴─────────┐
+                 │                   │
+           ┌───────────┐       ┌───────────┐
+           │   Error   │       │ Exception │
+           └───────────┘       └───────────┘
+                 ▲                   ▲
+         ┌───────┘              ┌────┴──────────┐
+         │                      │               │
+┌─────────────────┐    ┌─────────────────┐  ┌───────────┐
+│OutOfMemoryError │... │RuntimeException │  │IOException│...
+└─────────────────┘    └─────────────────┘  └───────────┘
+                                ▲
+                    ┌───────────┴──────────────┐
+                    │                          │
+         ┌─────────────────────┐  ┌─────────────────────────┐
+         │NullPointerException │  │IllegalArgumentException │...
+         └─────────────────────┘  └─────────────────────────┘
+```
+
+`Throwable`有两个子类：`Error`和`Exception`，`Error`表示较为严重的错误，程序一般无法处理，比如：
+- `OutOfMemoryError` 内存用尽
+- `NoClassDefFoundError` 类定义未找到
+- `StackOverflowError` 栈溢出
+
+而`Exception`是运行时的错误，可以被捕捉并处理。某些异常是程序处理的一部分，比如：
+- `NumberFormatException` 数值类型的格式错误
+- `FileNotFoundException` 未找到文件
+- `SocketException` 读取网络失败
+
+某些异常是错误的程序逻辑导致的，应该修复程序。比如：
+- `NullPointerException` 对某个`null`的对象调用方法或字段
+- `IndexOutOfBoundsException` 数组索引越界
+
+Java规定：
+- 必须捕获的异常，包括`Exception`及其子类，但不包括`RuntimException`及其子类。这种类型的异常称为Checked Exception。必须捕捉也就是说编译器会强制调用方对异常进行处理，不然会直接编译报错。
+- 不需要捕获的异常，包括`Error`及其子类，`RuntimeException`及其子类。也成Unchecked Excetion。
+
+当然编译器并不强制要求程序捕获`RuntimeException`，但是否捕获应该视程序逻辑而定，具体情况具体分析。
+
+- 捕捉异常：使用`try-catch`块。
+- 抛出异常：`throws`语句，比如`throws new XXException(args);` 异常也是一个对象，也需要`new`。
+
+如果是Checked Exception，但是没有用`try-catch`捕捉，那么必须在方法定义时，使用`throw XXXException`表明该函数可能抛出某种异常，由上层调用者来处理。
+```java
+static byte[] stringToGBK(String s) throws UnsupportedEncodingException{
+    return s.getBytes("GBK");
+}
+```
+
+此时就表明`stringToGBK`可能抛出Checked Exception，调用者就必须处理：`try-catch`或向上抛出，当然也可以使用`try-catch`捕获到异常后再向上抛出。
+
+从编译器层面保证了Checked Exception必定能够得到处理，当然有助于保证程序的健壮性，但同时也使程序变得啰嗦起来。
+
+当然只捕获不处理也是行得通的，但那感觉就像把异常抛弃了一样的脱裤子放屁的作弊行为，并不值得推荐，至少应该将其记录下来，让人知道程序运行出现了什么问题，而不是发现了问题但包着拒不报告增加调试和纠错难度。程序并不只是为了运行而编写，程序首先是给人看让人理解的，其次才是给机器执行的。
+
+打印异常栈：`Throwable.printStackTrace()`方法。
+
+### 4.2 捕获异常
+
+使用`try-catch`语句来捕获异常，可以使用多个`catch`，每个`catch`分别捕获一个`Exception`的子类。捕获异常时从上到下匹配，匹配到后便不在继续，类似于`if - else if - else`逻辑。最后只能由一个`catch`语句能够被执行。
+
+所以说`catch`的顺序很重要，如果同时捕获的多个异常类具有派生关系，那么为了确保子类异常能够被捕捉到，就必须将其放在父类异常前面。
+
+如果无论是否有一场发生，都希望能够执行一些语句，做一些清理工作，那么应该放到`finally`中。
+```java
+try {
+    // do try things
+} catch (XXException e) {
+    // do XXexcetion things
+} catch (Exception e) {
+    // do exception things
+} finally {
+    // do finally things
+}
+```
+
+关于`finally`：
+- 可写可不写，可选。
+- `finally`总是最后执行。
+- 如果有异常被捕获，那么执行对应的`catch`，然后执行`finally`，如果没有异常被捕获，那么`try`语句执行完后直接执行`finally`。
+- 比较反直觉的一点是，如果在`catch`里面`return`了，同样会执行`fianlly`。并且如果`return`返回了一个表达式，那么会先计算这个表达式的值，然后再去执行`finally`中处理，然后返回原先计算得到的值，返回值是确定的，不会因为`finally`中有可能造成表达式值修改的处理而改变了返回的值。搞清楚这点即可。
+- 某些情况也可以没有`catch`，直接使用`try ... finally`保证能够有一些抛出异常时同样能够得到执行的语句，并将异常继续往上抛。
+
+甚至还可以合并多个类型的异常捕获：
+```java
+try {
+    // do try things
+} catch (XXXException | YYYException e) {
+    // do XXexcetion or YYYException things
+} catch (Exception e) {
+    // do exception things
+} finally {
+    // do finally things
+}
+```
+如果他们做的事情很类似的话，可以合并，否则感觉也没有多大必要。那么问题来了，合并处理的时候，异常对象`e`的类型是运行时才确定的吗？
 
 
+### 4.3 抛出异常
+
+异常的传播：
+- 如果抛出的异常在调用层没有被捕获，那么异常会一致沿着调用者向上抛。直到被某一层的`try ... catch`捕获到。
+- `try ... catch`可以嵌套，可以在`try`语句块里面再去`try ... catch`，如果没有里层`catch`没有捕获到，会被抛到外层来由外层的`catch`尝试捕获。
+- 可以通过基类的`Throwable.printStackTrace()`方法来打印出该异常传播的调用栈。从最底层抛出的那一层直到调用的最顶层。对于调试错误很有帮助，给出了源代码行号，可以直接定位。
+```java
+java.io.UnsupportedEncodingException: unknown
+	at java.base/java.lang.StringCoding.encode(StringCoding.java:440)
+	at java.base/java.lang.String.getBytes(String.java:960)
+	at Main.Main.stringToEncode(Main.java:41)
+	at Main.Main.test(Main.java:22)
+	at Main.Main.main(Main.java:13)
+```
+- 如果在某一层捕获了异常，但重新`new`了一个新的异常像上抛出，那么这个新的异常打印调用堆栈时就会丢失原始异常的信息。为了能够追踪原始的异常栈，可以把捕获到的异常作为参数，构造新的异常。
+- 作为参数传入的用来构造异常的原始异常会被保存在`Throwable.cause`字段中，通过`Throwable.getCause()`方法获取到。
+- 捕获到异常后，一定要**保留住原始异常**，以便定位最终的抛出位置。打印时你能够显示出原始异常信息。
+```java
+java.lang.IllegalArgumentException: java.lang.NumberFormatException: For input string: "abc"
+    at Main.Main.test(Main.java:29)
+    at Main.Main.main(Main.java:13)
+Caused by: java.lang.NumberFormatException: For input string: "abc"
+    at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.  java:68)
+    at java.base/java.lang.Integer.parseInt(Integer.java:652)
+    at java.base/java.lang.Integer.parseInt(Integer.java:770)
+    at Main.Main.test(Main.java:24)
+    ... 1 more
+```
+- 在`catch`中抛出异常，同`return`一样不会影响`finally`的执行，JVM会执行`finally`再抛出异常。那如果在`finally`抛出异常呢？那么既然是先执行`finally`自然是先抛出`finally`中的异常，`catch`中要跑出的异常就被屏蔽了。
+- 像上述描述那样如果有多个类型的异常需要抛出，但是由于只能抛出一个，怎么办呢？如果我们需要捕获所有的异常的话，方法是先用`origin`变量保存原始异常，然后调用`Throwable.addSuppressed()`，把原始异常添加进来，最后在`finally`抛出
+```java
+static int test() throws Exception {
+    Exception origin = null;
+    try {
+        System.out.println(Integer.parseInt("abc"));
+    } catch (Exception e) {
+        origin = e;
+        throw e;
+    } finally {
+        Exception e = new IllegalArgumentException();
+        if (origin != null) {
+            e.addSuppressed(origin);
+        }
+        throw e;
+    }
+}
+```
+最终打印出的异常信息会是这个样子的：两个异常的信息都会得到保留。感觉也同样可以将`origin`作为参数用来构造新异常，但表示的含义应该有点区别：导致的关系与并列的关系？
+```java
+java.lang.IllegalArgumentException
+    at Main.Main.test(Main.java:29)
+    at Main.Main.main(Main.java:13)
+    Suppressed: java.lang.NumberFormatException: For input string: "abc"
+        at java.base/java.lang.NumberFormatException.forInputString   (NumberFormatException.java:68)
+        at java.base/java.lang.Integer.parseInt(Integer.java:652)
+        at java.base/java.lang.Integer.parseInt(Integer.java:770)
+        at Main.Main.test(Main.java:24)
+        ... 1 more
+```
+通过`Throwable.getSuppressed()`可以获取到所有的Suppressed Exception，结果是一个`Throwable []`。绝大多数情况下，`finally`中不需要抛出异常，通常也不需要关心Suppressed Exception，但需要知道可以这么用。
+
+### 4.4 自定义异常
+
+Java标准库常用异常：
+```java
+Exception
+│
+├─ RuntimeException
+│  │
+│  ├─ NullPointerException
+│  │
+│  ├─ IndexOutOfBoundsException
+│  │
+│  ├─ SecurityException
+│  │
+│  └─ IllegalArgumentException
+│     │
+│     └─ NumberFormatException
+│
+├─ IOException
+│  │
+│  ├─ UnsupportedCharsetException
+│  │
+│  ├─ FileNotFoundException
+│  │
+│  └─ SocketException
+│
+├─ ParseException
+│
+├─ GeneralSecurityException
+│
+├─ SQLException
+│
+└─ TimeoutException
+```
+当我们要抛异常时，尽量使用标准库异常，然而在一个大型项目中，必然需要定义自己的异常。这是，保持一个合理的异常继承体系非常重要。
+
+常见做法是定义一个根异常，然后所有异常类从其派生，实现的话可以参照标准库`RuntimeException`:
+```java
+package java.lang;
+public class RuntimeException extends Exception {
+    public RuntimeException() {
+        super();
+    }
+    public RuntimeException(String message) {
+        super(message);
+    }
+    public RuntimeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    public RuntimeException(Throwable cause) {
+        super(cause);
+    }
+    protected RuntimeException(String message, Throwable cause,
+                               boolean enableSuppression,
+                               boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+}
+```
+应该要提供多种构造方法，好像也就构造了，其他具体问题具体看。
+
+### 4.5 NullPointerException
+
+派生于`RuntimeException`，异常类的定义都出人意料的简单。
+
+java语法层面没有指针的概念，指针当然源自于C，指针让使用者看见了地址，提供给使用去操作地址的手段，引用类型只是隐藏了内存地址让其对使用者不可见，但思想是完全相同的，并且使用起来更简单。java中还是能看见指针的影子的，比如打印一个引用变量的值就能够看到类似于地址的东西。
+
+如果使用了一个值为`null`的引用变量去调用它的非静态字段和方法，就会抛出`NullPointerException`。当然使用空引用操作静态字段或方法就等价于直接用类去使用，和引用的值没有半毛钱关系，是可以的，只是一般来说也不会去这么用。
+
+如果遇到了`NullPointerException`，那么正确的处理应该是找到抛出的位置，添加判空处理，修正逻辑错误，而不是将其捕捉后隐藏错误或向上抛。至少在C++中，使用一个指针前先判空是常识性的东西，通过空指针去操作对象会直接导致崩溃。相信任何语言都是一样的，一个可用的程序它必须是健壮的，不应该有空指针异常这样的低级错误。
+
+另一些避免该类问题的手段：当可以返回一个空字符串/空数组/其他空值或者返回一个`null`时，构造一个空值返回可以避免一部分这类问题。但不管怎么说，使用一个可能为空的东西前都应该是要判空的，难道不是吗？
+
+给JVM添加一个`-XX:+ShowCodeDetailsInExceptionMessages`参数启用`NullPointerException`的详细信息输出，说明是谁空掉了。在IDE里面一般是默认开启的。
+
+Eclispe给JRE指定参数：`window > preferences > java > Installed JREs > your JRE > edit > default VM arguments`。
 
 
 
