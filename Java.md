@@ -49,6 +49,11 @@
     - [4.3 抛出异常](#43-%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8)
     - [4.4 自定义异常](#44-%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BC%82%E5%B8%B8)
     - [4.5 NullPointerException](#45-nullpointerexception)
+    - [4.6 断言](#46-%E6%96%AD%E8%A8%80)
+    - [4.7 使用JDK Logging](#47-%E4%BD%BF%E7%94%A8jdk-logging)
+    - [4.8 Commons Logging](#48-commons-logging)
+    - [4.9 Log4j](#49-log4j)
+    - [4.10 SLF4J & Logback](#410-slf4j--logback)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -60,7 +65,7 @@ Java教程：[廖雪峰Java教程](https://www.liaoxuefeng.com/wiki/125259954834
 
 Eclipse教程：[Eclipse 教程](https://www.runoob.com/eclipse/eclipse-tutorial.html)
 
-写在前面：仅仅是关键性知识点的笔记，用来串联和查阅，并不系统也并不细节。
+写在前面：仅仅是关键性知识点的笔记，用来串联、查阅和回顾，并不系统也并不细节。
 
 ## 0. 简介
 
@@ -114,13 +119,13 @@ Eclipse基本调试操作：
 - `F6` 单步跳过，下一条语句
 - `F7` 单步跳出，跳出这个函数执行(只执行完这个函数调用，回到调用语句)
 - `F8` 继续，执行到下一个断点
-- `Ctrl+F2` 终止调试，结束调试
+- `Ctrl+F2` 终止调试
 - `Ctrl+R` 运行至行
 - `Ctrl+Alt+B` 跳过所有断点，也就是无效化所有断点
 - `Drop to Frame` 拖放至帧(这什么破翻译，真就直译？)，跳转到当前执行函数的开头开始执行，不会改变一个全局数据原有的值，只是切换了栈帧。
-- 跳过、跳出、运行至行等能够运行多行的操作执行过程中遇到断点都会断住。
-- 首选项-调试-单步执行过滤，过滤不需要关注的类。
-- 配合调用堆栈(调试窗口)、本地变量监视、条件断点、表达式求值，常用的调试操作也就这些了。
+- 跳过、跳出、运行至行等能够运行多行代码的操作执行过程中遇到断点都会断住。
+- 首选项，调试，单步执行过滤，过滤不需要关注的类。
+- 配合调用堆栈(位于调试窗口)、本地变量监视、条件断点、表达式求值，常用的调试操作也就这些了。
 
 其他提高效率的快捷键：
 - `Ctrl+O` 右键快速大纲，用于搜索当前文件中的字段或者方法以快速跳转
@@ -135,7 +140,12 @@ Eclipse基本调试操作：
 - `Alt+Shift+R` 重命名符号
 - IDE内运行终端：`Ctrl+Alt+Shift+T`
 
-说实话有些快捷键感觉有点太啰嗦，一点都起不到快捷的作用，说的就是`Alt+Sift+Q`加上一个键的那一堆，也懒得自己改，不要增加太多心智负担，记住常用的就好。如`Ctrl+O`, `F3`, `Ctrl+T`加上常用的调试快捷键就行。说句实话没有VS用起来那么舒服。
+说实话有些快捷键实在是有点太啰嗦，一点都起不到快捷的作用，说的就是`Alt+Sift+Q`加上一个键的那一堆，也懒得自己改，不要增加太多心智负担，记住常用的就好。如`Ctrl+O`, `F3`, `Ctrl+T`，加上常用的查找和调试快捷键就行。快捷键的使用必须要能够方便到在两秒钟内定位到想要的某个类、方法、文件、某个符号的所有引用、某个类的派生结构层次才算是舒服。
+
+Eclipse导入第三方库：
+- 右键项目，属性，Java构建路径，库，类路径(就是`classpath`)，添加外部JAR，选择JAR添加之后即可导入到该项目中。然后在包资源管理器中`src`、JRE系统同级的引用的库中就有这个库了。并且这个库的路径是绝对路径。
+- 也可以在项目中新建文件夹，然后将`jar`文件复制到这个目录中，右键选中该jar，构建路径，添加到构建路径后同样会被加入到引用的库中，此时`jar`被加入到了项目中，如果删除文件夹会移除依赖，库的路径是以相对路径保存的。或者类路径右边选择"添加JAR"就是添加项目内的`Jar`路径。
+
 
 ## 1. Java语言基础
 
@@ -278,9 +288,9 @@ double d = switch(i) {
 		default -> 100;
 		};
 ```
-如果要返回多个值，还可以用`{}`包起来，最后用`yield`返回。
+如果有多种情况，中间还有语句执行，还可以用`{}`包起来，执行多个语句后用`yield`返回，就像定义一个函数那样。
 
-这种结构存在的意义是什么呢？我感觉并没有那么清晰。算是一个语法糖，可用可不用。
+这种结构存在的意义是什么呢？我感觉并没有那么清晰。算是一个语法糖，完全可以找到等价的写法替代，可用可不用。
 
 
 ### 1.9 流程控制——循环
@@ -318,7 +328,7 @@ public class Main {
 
 ## 2. java面向对象
 
-不同于C++，Java中称数据成员为**字段**(field)，称成员函数为**方法**(method)。
+不同于C++，Java中称数据成员为**字段**(**field**)，称成员函数为**方法**(**method**)。
 
 
 ### 2.1 类和对象
@@ -645,8 +655,8 @@ String s2 = new String(new char[] {'y', 'e', 's'});
 - 将任意类型转换为`String`：`valueOf`
 - 转换为`char[]`：`toCharArray`
 - 字符编码：
-- java的`String`和`char`在内存中总是用UniCode表示。
-- 可以调用`String`的方法手动将字符串转换为其他编码，结果为`byte[]`
+    - java的`String`和`char`在内存中总是用UniCode表示。
+    - 可以调用`String`的方法手动将字符串转换为其他编码，结果为`byte[]`
     ```java
     String s = "你好，世界！";
     printBytes(s.getBytes()); // 系统默认编码，最好不要这么写
@@ -655,13 +665,13 @@ String s2 = new String(new char[] {'y', 'e', 's'});
     printBytes(s.getBytes(StandardCharsets.UTF_16BE));
     printBytes(s.getBytes(StandardCharsets.UTF_16LE));
     ```
-- 进入到`String`的声明里面可以看到内部是怎么存储一个字符串的，早期可能会直接使用`char`数组，但那样的话对于只有ASCII字符构成的字符串内存空间不够友好，现在内部有区分编码，但可以发现都是`final`修饰的，也就是赋值之后即不可变。而我们在外部不需要关心`String`内是怎么存储的。
+- 进入到`String`的声明里面可以看到内部是怎么存储一个字符串的，早期可能会直接使用`char`数组，但那样的话对于只有ASCII字符构成的字符串内存空间明显不够友好，现在都是用字节数组并且内部有区分编码，但可以发现都是`final`修饰的，也就是赋值之后即不可变。而我们在外部不需要关心`String`内是怎么存储的。
 ```java
 public final class String
     implements java.io.Serializable, Comparable<String>, CharSequence,
                Constable, ConstantDesc {
      private final byte[] value;
-     private final byte coder; // 0 - LATIN1, 1 - UTF16
+     private final byte coder; // 0 - LATIN1(即ISO-8859-1,单字节,向下兼容ASCII), 1 - UTF16
     // ...
 }
 ```
@@ -680,7 +690,7 @@ sb.delete(sb.length()-1, sb.length());
 System.out.println(sb.toString());
 ```
 - 总感觉参数的含义怪怪的，不是很好用的感觉。
-- 因为编辑操作修改直接，并返回`this`，所以可以连起来调用，就像`std::cout <<`一样。
+- 因为编辑操作修改自己，并返回`this`，所以可以连起来调用。
 
 StringJoiner：用来高效拼接字符串，位于`java.util`
 - 能用的方法不多：
@@ -700,7 +710,7 @@ public StringJoiner merge(StringJoiner other) // 合并
 - 为`int`定义包装类：类似于这样包装一层之后就可以将其当做对象来用。
 ```java
 class Integer {
-	private int value;
+	private final int value;
 	public Integer(int value) {
 		this.value = value;
 	}
@@ -888,10 +898,9 @@ public record Point(int x, int y) {
 }
 ```
 java15版本中，这好像还是preview feature：
-- 打开编译开关：`--source 15 --enable-preview`才能不适用，不然会报错。
-- Eclipse中首选项—Java编译器—Enable preview features for Java15。
+- 打开编译开关：`--source 15 --enable-preview`才能使用，不然会报错。
+- Eclipse中右键项目，属性，Java编译器，勾选`Enable preview features for Java15`才能使用。并且会有警告`You are using a preview language feature that may or may not be supported in a future release`。
 
-经过测试以上选项都并不会解决问题。TODO，理解就行。
 
 ### 3.7 BigInteger
 
@@ -1370,12 +1379,284 @@ java语法层面没有指针的概念，指针当然源自于C，指针让使用
 
 Eclispe给JRE指定参数：`window > preferences > java > Installed JREs > your JRE > edit > default VM arguments`。
 
+### 4.6 断言
+
+语法：`assert condition : "assertion message";`，其中的断言消息是一个字符串，可选。
+
+断言失败，会抛出`AssertionError`，程序结束退出，因此断言不能用于可恢复的程序错误，只应该用在开发和测试阶段。我的理解是断言只应该用在那种基本不会失败，一旦失败程序再执行下去就没有什么意义不如直接退出的地方，以帮助快速定位。
+
+那么如何区分测试阶段和正式上线，不让断言影响到用户体验呢？C/C++的方法一般是通过宏定义在DEBUG版本中断言是正常语义，在Release版本中断言不做任何事情。所以断言内部不应该有会修改变量的操作，去掉断言不应该会改变程序逻辑。绝对不应该写出这样的语句：`assert x++ > 0;`，当然这在任何语言中应该都是常识。
+
+JVM默认关闭断言，遇到`assert`语句直接就忽略了，要开启断言，需要给JVM传递`-enableassertions`(简写`-ea`)参数。还可以有选择的启用断言，比如参数`-ea:Main.Main`就是对`Main.Main`这个类启用断言，或者某一个函数也可以。
+
+实际开发中，很少使用断言，更好的做法是编写**单元测试**。以我有限的C++开发经验来说，在一个复杂的大型程序中，断言除了在调试版本中让你的程序崩溃之外没有任何作用。
 
 
+### 4.7 使用JDK Logging
+
+某些时候我们需要完整运行程序，而不是在调试环境下调试程序，但又想知道程序的详细运行状态。此时就需要知道一些中间过程执行情况，中间变量是否正确，这是可以怎么办呢？
+
+最简单的方式就是通过`System.out.println`打印我们需要输出的变量，但这样比较初级，也不好管理。如果想要更加详细的信息，那么可以实现一个日志系统，在程序中穿插日志的记录，日志记录不会影响也不应该影响程序的正常执行逻辑，只是记录程序的执行状态。并且可以设定输出样式、设置日志分级、重定向到文件等等功能。
+
+Java当然考虑到了这些东西，所以提供了内置的日志包`java.util.logging`，不需要我们来自己造轮子。
+
+`java.util.logging.Logger`类：
+```java
+import java.util.logging.Logger;
+
+LLogger logger = Logger.getGlobal();
+logger.severe("a fatal error occurred...");
+logger.warning("just a warining...");
+logger.info("started...");
+logger.config("config ...");
+logger.fine("just fine...");
+logger.finer("won't crash...");
+logger.finest("work normally...");
+```
+打印信息中包含了时间，调用类和方法，输出信息：
+```java
+3月 24, 2021 10:49:03 下午 Main.Main main
+严重: a fatal error occurred...
+3月 24, 2021 10:49:03 下午 Main.Main main
+警告: just a warining...
+3月 24, 2021 10:49:03 下午 Main.Main main
+信息: started...
+```
+
+JDK的`Logging`定义了7个日志级别，从严重到普通:
+- `SEVERE`
+- `WARNING`
+- `INFO`
+- `CONFIG`
+- `FINE`
+- `FINER`
+- `FINEST`
+
+默认级别是`INFO`，`INFO`及以下的信息不会被打印出来。使用日志级别的好处在于可以调整级别就可以筛选和屏蔽调很多调试相关的日志输出。
+
+局限：
+- JDK的`Logging`系统在JVM启动时读取配置文件完成初始化，一旦开始运行`main`方法，就无法修改配置。
+- 配置不太方便，需要在JVM启动时传递参数`-Djava.util.logging.config.file=<config-file-name>`以重定向到文件。
+
+好处：
+- 可以存档以追踪问题，将一次程序的运行状况记录下来分析。
+- 可以按级别分类，方别打开或关闭某些级别。
+- 可以根据配置文件调整日志，无需修改代码。
+
+TODO：使用参数`-Djava.util.logging.config.file=<config-file-name>`重定向到文件无论是IDE还是命令行都可以执行，但都没有成功输出到文件，更多细节待以后有需要来补充。
+
+### 4.8 Commons Logging
+
+Commons Logging是一个由Apache创建的第三方日志库，可以挂接不同的日志系统，通过配置文件指定挂接的日志系统。默认情况下自动搜索并使用Log4j，如果没有找到就再使用JDK Logging。
+
+使用方法：
+- 通过`LogFactory`获取`Log`类实例，然后使用`Log`实例来打印日志。
+
+```java
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+public class Main {
+    public static void main(String[] args) {
+        Log log = LogFactory.getLog(Main.class);
+        log.info("start...");
+        log.warn("end.");
+    }
+}
+```
+当然因为是第三方库，JDK里面是没有的，所以需要下载([下载地址](https://commons.apache.org/proper/commons-logging/download_logging.cgi)，最新版本1.2)后添加到`classpath`。
+
+命令行编译执行：
+- 将`commons-logging-1.2.jar`文件放在`Main.java`同一个目录。
+- 执行`javac -cp commons-logging-1.2.jar Main.java`编译得到`Main.class`。
+- 然后`java -cp .;commons-logging-1.2.jar Main`执行java程序。如果执行`.class`时指定了classpath，那么应该将当前目录也作为classpath，不然会找不到主类`Main`。注意classpth多个路径时Windows中使用`;`分割，Linux和MacOS使用`:`分割，Windows中如果在Powershell中执行，多个路径还要加上双引号包起来。
+- 也可以跳过编译，直接执行java文件，`java -cp commons-logging-1.2.jar Main.java`。
+
+Eclipse中导入第三方库见 [0.3 基本Eclipse使用](#03-%E5%9F%BA%E6%9C%ACeclipse%E4%BD%BF%E7%94%A8)。
+
+Common Logging定义了6个日志级别，默认级别是`INFO`：
+- `FATAL`
+- `ERROR`
+- `WARN`
+- `INFO`
+- `DEBUG`
+- `TRACE`
+
+`Log`的使用：
+- 如果在静态方法中使用`Log`，通常直接定义了一个静态成员给所有方法共用，使用`LogFactory.getLog(Main.class)`获取`Log`实例，只能在该类中使用。
+- 如果是在实例方法中使用，通常定义一个实例变量，使用`LogFactory.getLog(getClass())`获取实例，这样做的好处时，由于多态的特性子类的`getClass()`返回的是子类的类型，所以子类也可以直接使用该`Log`实例。最好定义为`protected`。
+- `Log`接口(interface)对每种级别的日志都声明了两个重载的方法，接口名称和上面列出的级别一致：
+```java
+void info(Object message)
+void info(Object message, Throwable t)
+```
+第二个重载可以传入异常，用在`catch`语句中很方便，结果除了输出`message`之外，还会调用异常的`printStackTrace`输出异常栈。
+```java
+public static void main(String[] args) {
+	try {
+		throw new RuntimeException();
+	} catch (Exception e) {
+		log.error("exception occureed", e);
+	}
+}
+```
+
+### 4.9 Log4j
+
+上面的Commons Logging可以作为“日志接口”来使用，而真正的“日志实现”可以使用Log4j。前面提到Commons Logging默认查找`classpath`下的Log4j来作为日志实现，没有的话则会使用JDK Logging。
+
+Log4j是一种非常流行的日志框架，当前最新版本2.14，[下载地址](https://logging.apache.org/log4j/2.x/download.html)，同样是Apache的。
+
+Log4j是一个组件化的日志系统，架构如下：
+```
+log.info("User signed in.");
+ │
+ │   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+ ├──>│ Appender │───>│  Filter  │───>│  Layout  │───>│ Console  │
+ │   └──────────┘    └──────────┘    └──────────┘    └──────────┘
+ │
+ │   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+ ├──>│ Appender │───>│  Filter  │───>│  Layout  │───>│   File   │
+ │   └──────────┘    └──────────┘    └──────────┘    └──────────┘
+ │
+ │   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+ └──>│ Appender │───>│  Filter  │───>│  Layout  │───>│  Socket  │
+     └──────────┘    └──────────┘    └──────────┘    └──────────┘
+```
+使用Log4j输出日志时，自动通过不同的Appender把日志输出到不同的目的地。
+- console: 屏幕/控制台
+- file: 文件
+- socket: 通过网络输出到远端计算机
+- jdbc: 输出到数据库
+
+输出日志时可以通过Filter过滤哪些日志要输出，哪些不输出。例如仅输出ERROR级别的日志，最后通过Layout来格式化日志信息。例如自动添加日期、时间、方法名称等。
+
+实际使用时，并不需要关心Log4j的API，而是通过配置文件来配置它。使用时，将一个`Log4j2.xml`文件放到`classpath`下就可以让Log4j读取配置文件并按照我们想要的输出方式输出日志。例子：
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+	<Properties>
+		<!-- 定义日志格式 -->
+		<Property name="log.pattern">%d{MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}%n%msg%n%n</Property>
+		<!-- 定义文件名变量 -->
+		<Property name="file.err.filename">log/err.log</Property>
+		<Property name="file.err.pattern">log/err.%i.log.gz</Property>
+	</Properties>
+	<!-- 定义Appender，即目的地 -->
+	<Appenders>
+		<!-- 定义输出到屏幕 -->
+		<Console name="console" target="SYSTEM_OUT">
+			<!-- 日志格式引用上面定义的log.pattern -->
+			<PatternLayout pattern="${log.pattern}" />
+		</Console>
+		<!-- 定义输出到文件,文件名引用上面定义的file.err.filename -->
+		<RollingFile name="err" bufferedIO="true" fileName="${file.err.filename}" filePattern="${file.err.pattern}">
+			<PatternLayout pattern="${log.pattern}" />
+			<Policies>
+				<!-- 根据文件大小自动切割日志 -->
+				<SizeBasedTriggeringPolicy size="1 MB" />
+			</Policies>
+			<!-- 保留最近10份 -->
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<!-- 对info级别的日志，输出到console -->
+			<AppenderRef ref="console" level="info" />
+			<!-- 对error级别的日志，输出到err，即上面定义的RollingFile -->
+			<AppenderRef ref="err" level="error" />
+		</Root>
+	</Loggers>
+</Configuration>
+```
+虽然配置Log4j比较繁琐，但一旦配置完成，使用起来就非常方便。对上面的配置文件，凡是INFO级别的日志，会自动输出到屏幕，而ERROR级别的日志，不但会输出到屏幕，还会同时输出到文件。并且，一旦日志文件达到指定大小（1MB），Log4j就会自动切割新的日志文件，并最多保留10份。更多配置参见[官方文档](https://logging.apache.org/log4j/2.x/manual/configuration.html)。
+
+使用：下载后将下面三个`jar`和配置文件`Log4j2.xml`添加到`classpath`:
+- `log4j-api-2.x.jar`
+- `log4j-core-2.x.jar`
+- `log4j-jcl-2.x.jar`
+
+将这三个包添加到classpath之后还要保证`Log4j.xml`在classpath根目录（也就是要放到Eclipse工程的`bin/`目录下，或者命令行执行时放到生成`.class`的根目录），这样就可以按照配置文件内容输出到日志文件。
+
+总结：
+- 通过Commons Logging输出日志，不用修改代码只需进行配置就可以使用Log4j。
+- 使用Log4j只需要将jar和配置文件Log4j2.xml添加到classpth。
+- 更换Log4j，只需要移除jar和Log4j2.xml。
+- 扩展Log4j时才需要使用Log4j的接口，例如自己开发将日志加密写入数据库的功能。
+- 当然其实也可以跳过Commons Logging这一层直接使用Log4j输出日志。
+
+### 4.10 SLF4J & Logback
+
+上面的Commons Logging和Log4j分别扮演日志API和日志实现的角色，搭配使用。同样的库还有SLF4J(API)和Logback(实现)。他们都是开源的第三方库，因为对Commons Logging的接口和Log4j的性能不满意，所以就分别有了[SLF4J](https://www.slf4j.org/download.html)和[Logback](https://logback.qos.ch/download.html)。
+
+那么SLF4J相较Commons Logging有什么优势呢？
+- 支持`logger.info("{},{}", str1, str2)`这样的字符串格式化。
+- 还有呢？
+
+事实上SLF4J的日志接口与Commons Logging几乎一波一样，对比：
+|Commons Logging|SLF4j|
+|:-|:-|
+|`org.apache.commons.logging.Log`|`org.slf4j.Logger`|
+|`org.apache.commons.logging.LogFactory`|`org.slf4j.LoggerFactory`|
+
+就是`Log`变成了`Logger`，`LogFactory`变成了`LoggerFactory`。
+
+配置SLF4J和Logback，需要下列三个jar包，目前使用的是`SLF4J 1.7.9`和`logback 1.2.3`：
+- `slf4j-api-1.7.x.jar`
+- `logback-classic-1.2.x.jar`
+- `logback-core-1.2.x.jar`
+
+添加到`classpath`，添加配置文件`logback.xml`到`classpath`根目录：
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+			<charset>utf-8</charset>
+		</encoder>
+		<file>log/output.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>log/output.log.%i</fileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>1MB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+	<root level="INFO">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="FILE" />
+	</root>
+</configuration>
+```
+
+然后使用时替换为对应的类型和接口接口：
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+public class Main {
+    public static void main(String[] args) {
+        Logger logger = LoggerFactory.getLogger(Main.class);
+        logger.info("start...");
+        logger.warn("end.");
+    }
+}
+```
+
+总结：
+- SLF4J和Logback可以取代Commons Logging和Log4j。
+- 始终使用SLF4J的接口写入日志，使用Logback只需要配置，不需要修改代码。
+
+知道大概用法即可，有需求时再去研究具体配置和细节用法。
 
 ## TODO
 - 模块详解
-- 异常处理
 - 反射
 - 注解
 - 泛型
