@@ -54,6 +54,10 @@
     - [4.8 Commons Logging](#48-commons-logging)
     - [4.9 Log4j](#49-log4j)
     - [4.10 SLF4J & Logback](#410-slf4j--logback)
+  - [5. 反射](#5-%E5%8F%8D%E5%B0%84)
+    - [5.1 Class类](#51-class%E7%B1%BB)
+    - [5.2 访问字段](#52-%E8%AE%BF%E9%97%AE%E5%AD%97%E6%AE%B5)
+    - [5.3 访问方法](#53-%E8%AE%BF%E9%97%AE%E6%96%B9%E6%B3%95)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -1654,6 +1658,203 @@ public class Main {
 - 始终使用SLF4J的接口写入日志，使用Logback只需要配置，不需要修改代码。
 
 知道大概用法即可，有需求时再去研究具体配置和细节用法。
+
+
+## 5. 反射
+
+### 5.1 Class类
+
+除了`int`等基本类型外，Java的其他类型都是`class`，包括`interface`。如`Runable`、`Object`、`String`、`Exception`等。
+
+类这种东西是由Java在执行过程中动态加载的，那么Java是如何实现RTTI的呢？每加载一个类，JVM会为其创建一个`Class`类实例，并将这个类和这个`Class`实例关联起来。这个`Class`类的定义大概是这样的：
+```java
+public final class Class {
+    private Class() {}
+}
+```
+
+在C++里面，如果我们要自己实现RTTI，其实也是这样来做的，具体做法大概是：
+- 当有新的类被添加到继承体系结构时，新的`Class`对象被创建，并被加到派生关系树的对应位置(叶子节点)，通过这个对象我们可以访问到他的所有直接与间接基类(向上遍历)。
+- 每个类中使用一个静态数据成员保存该类对应的`Class`对象(指针)，定义静态成员函数以获取到该指针。
+- 每个类中再定义非静态成员函数(`getClass()`)转调上面的静态成员函数，这个非静态成员函数需要是从根类继承来的**虚函数**，在每个类中重写已返回自己的`Class`对象，这是最关键的地方，通过该接口获取到对象真实类型的`Class`对象即可实现运行时类型识别。
+- 通常通过一个机制实现上面3个过程，一般来说就是写一个宏而已。典型的实现可以参考MFC(一个经典/过时的Windows界面库)。
+- 一般来说还会允许用户自己从指定的基类派生实现的类也有这个特性，那么还需要提供能够使类型动态加载和卸载的机制，也就是动态地从类型树上删除或者添加节点的机制，作为静态函数实现在类中，在模块加载和卸载时做即可。
+
+TODO：了解反射之后，可以尝试在C++上实现反射。
+
+能够预想到，java从语言层面就实现了这个机制，那么就来看一下对应的功能是如何实现的：
+- `Class`类构造是`private`的，也就是说只有JVM能够来创建`Class`实例。
+- JVM持有的每一个`Class`对象都对应一个数据类型(`class`或`interface`)。
+- `Class`实例包含了该类的所有信息(`String`为例)：
+    - 名称，`java.lang.String`
+    - 包，`java.lang`
+    - 基类，`java.lang.Object`
+    - 接口，`java.io.Serializable`,`Comparable<String>`,etc.
+    - 字段，`value[]`,etc.
+    - 方法，`String()`,`length()`,etc.
+
+这种通过该`Class`实例获取到类的信息的方法称为**反射(Reflection)**。
+
+那么要如何获取到一个类的`Class`对象呢：
+- 通过类的静态变量`calss`获取：`Class strClass = String.class`。
+- 通过实例的`getClass()`方法获取：
+    ```java
+    String s = "hello";
+    Class strClass = s.getClass();
+    ```
+- 如果知道一个`Class`实例的完整类名，可以通过静态方法`Class.fromName(String className) throws ClassNotFoundException`来获取：
+    ```java
+    try {
+        Class strCls = Class.forName("java.lang.String");
+    } catch (Exception e) {
+        System.out.println("no such a class: java.lang.String");
+    }
+    ```
+
+注意获取类的`Class`实例比较与`isntanceOf`的区别，如果要求是同一个类型，后者可以是基类。
+
+`Class`定义：
+```java
+public final class Class<T> implements java.io.Serializable,
+                              GenericDeclaration,
+                              Type,
+                              AnnotatedElement,
+                              TypeDescriptor.OfField<Class<?>>,
+                              Constable
+```
+
+
+通过`Class`对象获取类的基本信息：获取类名、去除包名后的简化类名、类型名、包、包名、基类、接口、字段、方法、判断是否是各种特殊的类型、通过类名得到对应`Class`对象等，这里并未列全。
+```java
+public String getName()
+public String getSimpleName()
+public String getTypeName()
+public String getCanonicalName()
+public Package getPackage() // If this class represents an array type, a primitive type or void, this method returns null
+public String getPackageName()
+public native Class<? super T> getSuperclass()
+public Class<?>[] getInterfaces()
+public boolean isAnonymousClass()
+public boolean isLocalClass()
+public boolean isMemberClass()
+public Class<?>[] getClasses()
+public Field[] getFields() throws SecurityException
+public Method[] getMethods() throws SecurityException
+public Constructor<?>[] getConstructors() throws SecurityException
+public Field getField(String name)
+public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException
+public Constructor<T> getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException
+public boolean isEnum()
+public boolean isRecord()
+public native boolean isArray();
+public native boolean isInterface();
+public native boolean isPrimitive();
+public boolean isAnnotation()
+public boolean isSynthetic()
+public static Class<?> forName(String className) throws ClassNotFoundException
+public T newInstance() throws InstantiationException, IllegalAccessException
+```
+
+JVM为每一种基本类型进行了特殊处理创建了`Class`对象，可以直接通过`int.class`这种方式访问。但是对内置类型的变量，因为没有从`Object`派生，所以是不能通过实例的`getClass`方法来获取`Class`对象的。
+
+获取到一个类型的`Class`对象之后，就可以用其来创建该类型对象：但是因为没有参数，所有只能调用无参构造函数。
+```java
+try {
+	Class cls = Student.class;
+	Student s  = (Student)cls.newInstance();
+	System.out.println(s);
+} catch (Exception e) {
+	System.out.println(e);
+}
+```
+如果传入的这个`Class`对象对应的类没有无参构造，那么会抛出`java.lang.InstantiationException`，如果无参构造无法访问或者使用`Class`类对应的`Class`对象，那么会抛出`java.lang.IllegalAccessException`。其中做了特殊处理，况且`Class`的无参构造是`private`的。`Class`对象只能由JVM在加载了新的类时来创建。
+
+JVM并不会在一次性把所有用到的类加载到内存中(即是不会一次性创建所有`Class`对象)，需要程序过程中用到了一个新的类，才会把这个类加载到内存(也就是创建它的`Class`对象)。这是JVM**动态加载**`class`的特性。
+
+因为动态加载特性，就可以用下面的函数来判断一个类是否存在，如果传入的类名在`classpath`中存在那么就会返回`true`，前面提到的Commons Logging判断Log4j是否存在就可以用这样的方法。
+```java
+static boolean isClassPresent(String name) {
+	try {
+		Class.forName(name);
+		return true;
+	} catch (Exception e) {
+		return false;
+	}
+}
+```
+
+我比较好奇的一点是`Class`对象是如何创建的，用什么样的数据结构来存储的，JVM会如何管理。当然这个可能需要了解JVM的实现，TODO。
+
+### 5.2 访问字段
+
+对任意的`Object`，有了它的`Class`对象，就可以获取这个它的一切信息。
+- `public Field getField(String name)` 根据字段名获取某个public的字段（包括父类和接口，找不到的话先按照声明顺序找接口，再找基类）
+- `public Field getDeclaredField(String name)` 根据字段名获取当前类的某个字段，包括所有访问权限的字段（不包括父类和接口）
+- `public Field[] getFields()` 获取所有public字段，包括所有基类和实现的接口，如果是内置类型或者数组，那么返回空数组
+- `public Field[] getDeclaredFields()` 获取当前类定义的所有访问权限的字段，不包括基类和接口
+
+`Field`类型：
+- 定义：`public final class Field extends AccessibleObject implements Member`
+- `public String getName()` 获取字段名称
+- `public Class<?> getType()` 获取字段类型的`Class`对象
+- `public native int getModifiers();` 获取字段修饰符，不同的bit表示不同含义
+    ```java
+    public static final int PUBLIC           = 0x00000001;
+    public static final int PRIVATE          = 0x00000002;
+    public static final int PROTECTED        = 0x00000004;
+    public static final int STATIC           = 0x00000008;
+    public static final int FINAL            = 0x00000010;
+    public static final int SYNCHRONIZED     = 0x00000020;
+    public static final int VOLATILE         = 0x00000040;
+    public static final int TRANSIENT        = 0x00000080;
+    public static final int NATIVE           = 0x00000100;
+    public static final int INTERFACE        = 0x00000200;
+    public static final int ABSTRACT         = 0x00000400;
+    public static final int STRICT           = 0x00000800;
+    ```
+
+获取字段的值：`public Object get(Object obj)`，参数为需要获取字段的对象，返回值被装箱到`Object`对象中，如果是内置类型，会自动包装为对应的包装类型。
+
+如果在没有访问该字段权限的地方用了`Field.get`那么可能会抛出`IllegalArgumentException`，如果非要访问，可以在前面加上`public void setAccessible(boolean flag)`调用传入`true`确保能够访问。
+- 反射是一个非常规用法，使用反射，代码会很繁琐，使用反射会破坏对象的封装。
+- 反射更多提供给工具或底层框架来使用，目的是在不知道目标实例任何信息的情况下，获取特定字段的值。
+- `setAccessible(true)`可能会失败，如果JVM运行期存在`SecurityManager`，那么它会根据规则进行检查，有可能阻止`setAccessible(true)`。
+
+设置字段值：`public void set(Object obj, Object value)`
+
+静态实例的话`get/set`的`obj`参数会被忽略，自动为`null`，建议写为`null`，就像调用实例静态方法是用类名而不是用实例一样，只为让代码更清晰。
+
+值得注意的是，反射相关类型位于`java.lang.reflect`包内，与`java.lang`不是一个包，不会自动导入。
+
+### 5.3 访问方法
+
+类似于访问字段，访问一个类的方法有如下方法：
+- `public Method getMethod(String name, Class<?>... parameterTypes)` public，包括基类
+- `public Method getDeclaredMethod(String name, Class<?>... parameterTypes)` 所有权限，不包括基类和接口
+- `public Method[] getMethods()` public，包括基类
+- `public Method[] getDeclaredMethods()` 所有权限，不包括基类和接口
+
+末尾的可变参数需要按顺序传入方法参数列表的`Class`对象，为空就是无参版本。
+
+`Method`类型：
+- 定义：`public final class Method extends Executable`
+- `public String getName()`
+- `public int getModifiers()`
+- `public int getParameterCount()`
+- `public TypeVariable<Method>[] getTypeParameters()`
+- `public Class<?> getReturnType()`
+- `public Class<?>[] getExceptionTypes()`
+
+见名知意，其中后面三个都还有一个`Generic`的方法，`getGenericParameterTypes` `getGenericReturnType()` `getGenericExceptionTypes()`返回值类型为`Type`，也就是`Class`实现的其中一个接口。这三个方法表示得到参数列表、返回值、异常的正式类型。
+
+使用反射调用方法：
+- `public Object invoke(Object obj, Object... args)` 第一个是对象实例，后面的是参数列表。
+- 对`Method`实例调用`invoke`方法，就等同与直接使用该对象调用该方法。
+- 调用静态方法的话第一个参数传入`null`即可，会被忽略。
+- 同理，调用非`public`字段需要`setAccessible(true)`。
+- 当然也遵守多态原则。
+
+
 
 ## TODO
 - 模块详解
