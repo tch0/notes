@@ -1999,12 +1999,230 @@ public class Main {
 
 更多理解TODO。
 
+## 6. 注解
+
+### 6.1 使用注解
+
+注解(Annotation)是放在Java源码的类、字段、方法、参数前的一种特殊“注释”。注释会被编译器直接忽略，但注解可以被编译器打包进`class`文件中，因此，注解是一种用作标注的“元数据”。比如重写基类方法时开头添加的`@Override`就是注解。
+
+注解的作用：
+
+从JVM的角度看，注解本身对代码逻辑没有任何影响，如何使用注解完全由工具决定。Java的注解可以分为三类：
+
+第一类是由编译器使用的注解，如：
+- `@Override`：让编译器检查方法是否正确实现了覆写。
+- `@SuppressWarnings`：告诉编译器忽略此处代码产生的警告。
+
+类注解不会被编译到`.class`文件中，编译后就被扔掉了。
+
+第二类是由工具处理的`.class`文件时使用的注解，比如某些工具加载class时候会对class做动态修改，实现一些特殊的功能。这类注解会被编译到`.class`文件中，但加载结束后不会存在于内存中。这类注解只会被一些底层库使用，一般我们不必处理。例如？
+
+第三类是程序运行期能够读取的注解，加载后一直存在JVM中，这也是**最常用**的注解。比如一个配置了`@PostConstruct`注解的方法会在调用构造方法后自动被调用，这是Java代码读取该注解实现的功能，JVM并不认识该注解。这里的Java代码是指的什么呢？
+
+定义一个注解时，还可以定义**配置参数**，配置参数可以包括：
+- 所有基本类型
+- `String`
+- 枚举
+- 基本类型、`String`、`Class`以及枚举的数组
+
+因为配置参数必须是常量，上述的限制保证了注解在定义时就已经确定了每个参数的值，就是说编译期就已经确定了。
+
+注解的配置参数可以有默认值，缺少某个配置参数时将使用默认值。大部分注解会有一个名为`value`的配置参数，对此参数赋值，可以只写常量，相当于省略了`value`参数。如果只写注解，相当于全部使用默认值。
+```java
+public class Hello {
+    @Check(min=0, max=100, value=55) // 定义了三个参数
+    public int n;
+
+    @Check(value=99) // 只定义了一个value参数
+    public int p;
+
+    @Check(99) // 等价于@Check(value=99)
+    public int x;
+
+    @Check // 全部使用默认值
+    public int y;
+}
+```
+
+### 6.2 定义注解
+
+注解当然不是从虚空中生长出来的，Java语言使用`@interface`语法来定义注解。格式如下：
+```java
+public @interface Report {
+    int type() default 0;
+    String level() default "info";
+    String value() default "";
+}
+```
+`@interface`定义注解名，注解的参数类似无参数方法，使用`类型 参数名() default 默认值;`这样的语法来定义，可以用`default`设定一个默认值（强烈推荐）。最常用的参数应当命名为`value`（这样使用时就可以不写参数名）。
+
+**元注解**：一些可以被用来修饰其他注解的注解（搁着套娃呢？），这些注解就被称为元注解（meta annotation）。元注解也是注解，当然也可以被元注解修饰。
+
+Java标准库定义了一些元注解，通常不需要自己去编写元注解，就是说其实也是可以的喽。
+
+**@Target**：最常用的元注解，使用`@Target`用来定义注解可以被用于源码的哪些位置：
+- 类或接口：`ElementType.TYPE`
+- 字段：`ElementType.FIELD`
+- 方法：`ElementType.METHOD`
+- 构造方法：`ElementType.CONSTRUCTOR`
+- 方法参数：`ElementType.PARAMETER`
+- 其他：`LOCAL_VARIABLE` `ANNOTATION_TYPE` `PACKAGE` `TYPE_PARAMETER` `TYPE_USE` `MODULE`
+
+例如定义`@Report`注解可以用于方法上，则需要加上元注解`@Target(ElementType.METHOD)`。
+```java
+@Target(ElementType.METHOD)
+public @interface Report {
+    int type() default 0;
+    String level() default "info";
+    String value() default "";
+}
+```
+
+`ElementType`是一个位于`java.lang.annotation`的枚举类型，和注解`@Target`一样使用时都需要导入。`@Target`的`value`参数是一个`ElementType[]`，如果可以用在多个位置，则需要使用数组`@Target({ElementType.METHOD, ElementType.TYPE})`，只用在一个位置则可以只使用一个枚举值。
+
+**@Retention**：定义注解的生命周期：
+- 仅编译期：`RetentionPolicy.SOURCE`
+- 仅`class`文件：`RetentionPolicy.CLASS`
+- 运行期：`RetentionPolicy.RUNTIME`
+
+如果`@Retention`不存在，则该注解默认为`CLASS`，通常我们自定义的注解都是`RUNTIME`，所以务必要加上`@Retention(RetentionPolicy.RUNTIME)`这个元注解。
+
+**@Repeatable**：使用这个元注解可以定义注解是否可以重复，应用不是很广泛。经过`@Repeatable`修饰之后，就可以在某个类型声明处添加多个注解。
+```java
+@Repeatable(Reports.class)
+@Target(ElementType.TYPE)
+@interface Report {
+    int type() default 0;
+    String level() default "info";
+    String value() default "";
+}
+
+@Target(ElementType.TYPE)
+@interface Reports {
+    Report[] value();
+}
+
+@Report(type=1, level="debug")
+@Report(type=2, level="warning")
+class Hello {
+}
+```
+
+**@Inherited**：定义子类是否可以继承父类的注解，`@Inherited`仅针对`@Target(ElementType.TYPE)`的注解有效，并且仅针对`class`继承，对`interface`继承无效。
+
+以上这些元注解都是定义在包`java.lang.annotation`中的，前面说到的标准库中的注解如`@Override`/`@SuppressWarnings`是定义在`java.lang`中自动导入的，并不是编译器或者JVM凭空生成的。
+
+总结：
+- 注解使用`@interface`定义。
+- 可定义多个参数和默认值，核心参数使用`value`名称。
+- 必须使用`@Target`来指定注解可以应用的范围。
+- 自定义注解时应当设置`@Retention(RetentionPolicy.RUNTIME)`以便运行期读取改注解。
 
 
+到这里其实我已经有一堆疑问了：
+- 为什么用`@interface`来定义，感觉这么暧昧，注解可以理解为一种特殊的类型/接口定义吗？
+- 注解到底是怎么起作用的？我自己定义的注解能够做到些什么？应该怎么编写逻辑来实现注解的功能？标准库的如`@Override`这种注解是怎么实现效果的？是写在代码中的逻辑？还是java编译器的特殊处理？
+- java编译器如何处理`RetentionPolicy.SOURCE`的注解？`.class`文件如何保存`RetentionPolicy.CLASS`的注解？JVM如何看待和处理`RetentionPolicy.RUNTIME`的注解？
+
+### 6.3 处理注解
+
+根据`@Retention`的配置：
+- `RetentionPolicy.SOURCE`类型的注解主要由编译器使用，因此我们一般只使用，不编写。
+- `RetentionPolicy.CLASS`的注解主要由底层工具使用，涉及到class的加载，一般我们很少用到。
+- `RetentionPolicy.RUNTIME`的注解会被经常用到，经常需要编写。
+
+这里只讨论如何读取`RetentionPolicy.RUNTIME`类型的注解。注解定义后也是一种`class`，所有注解都继承自`java.lang.annotation.Annotation`。读取注解需要使用反射API。
+
+java提供的使用反射API读取注解的方法包括：
+判断某个注解是否存在于`Class` `Field` `Method` `Constructor`：
+- `Class.isAnnotationPresent(Class)`
+- `Field.isAnnotationPresent(Class)`
+- `Method.isAnnotationPresent(Class)`
+- `Constructor.isAnnotationPresent(Class)`
+
+`Clss`是实现了这个方法的，后三者是直接或间接从基类`AccessibleObject`继承而来的该方法。最终都是实现的最顶层接口`AnnotatedElement`的方法。
+
+`AnnotatedElement`接口定义，主要是判断注解是否存在和获取注解：
+```java
+default boolean isAnnotationPresent(Class<? extends Annotation> annotationClass)
+<T extends Annotation> T getAnnotation(Class<T> annotationClass);
+Annotation[] getAnnotations();
+default <T extends Annotation> T[] getAnnotationsByType(Class<T> annotationClass)
+default <T extends Annotation> T getDeclaredAnnotation(Class<T> annotationClass)
+default <T extends Annotation> T[] getDeclaredAnnotationsByType(Class<T> annotationClass)
+Annotation[] getDeclaredAnnotations();
+```
+
+这里的`Annotation`接口的就是所有注解的基类。定义：
+```java
+public interface Annotation {
+    boolean equals(Object obj);
+    int hashCode();
+    String toString();
+    Class<? extends Annotation> annotationType();
+}
+```
+
+当然使用反射API读取注解：
+- 对于`Class` `Field` `Method` `Constructor`的话就是使用`AnnotatedElement.getAnnotation()`等相关接口了。`Class` `Field` `Method` `Constructor`都是有定义的。如果不存在对应的注解，会返回`null`。可以通过返回值是否为`null`来判断是否有传入的注解。
+- 而要获取到方法参数的注解就相对麻烦了，因为可能有多个参数，每个参数也可能有多个注解，所以结果使用一个二维数组来表示的。使用`public abstract Annotation[][] getParameterAnnotations();`方法，最顶层定义在`Executable`中(`Method`和`Constructor`的抽象基类)，在`Field`和`Constructor`做了实现。
+
+
+使用注解：我们要在运行期来使用注解，那必然是使用`RetentionPolicy.RUNTIME`类型的注解，那注解要怎么用呢？这完全由程序自己决定，也就是说我们必须编写代码来使用注解，使用方法就是通过反射去读取。JVM并不会对我们的注解添加任何额外的逻辑，应该说通过反射的统一处理仅仅是将其作为了一个类动态加载进来然后将一个编译期就已经确定内容的实例附加到对应的类、方法、字段等上而已。
+
+我的理解：不使用注解是完全OK的，但注解提供了一种方法让我们能够定义自己的关于类、构造、方法、实例等的“规则”，以提供给其他人使用。这个规则的解释完全由自己的程序进行解释。
+
+例子，定义一个`@Range`注解，希望用它来定义一个`String`字段的规则：字段长度必须满足`@Range`参数的定义：
+- 定义注解
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Range {
+    int min() default 0;
+    int max() default 255;
+}
+```
+- 使用注解
+```java
+public class Person {
+    @Range(min=1, max=20)
+    public String name;
+
+    @Range(max=10)
+    public String city;
+}
+```
+- 编写注解的规则
+```java
+void check(Person person) throws IllegalArgumentException, ReflectiveOperationException {
+    // 遍历所有Field:
+    for (Field field : person.getClass().getFields()) {
+        // 获取Field定义的@Range:
+        Range range = field.getAnnotation(Range.class);
+        // 如果@Range存在:
+        if (range != null) {
+            // 获取Field的值:
+            Object value = field.get(person);
+            // 如果值是String:
+            if (value instanceof String) {
+                String s = (String) value;
+                // 判断值是否满足@Range的min/max:
+                if (s.length() < range.min() || s.length() > range.max()) {
+                    throw new IllegalArgumentException("Invalid field: " + field.getName());
+                }
+            }
+        }
+    }
+}
+```
+这样配合`@Range`配合`check()`方法，就可以完成`Person`实例的检查。虽然就这个例子而言谁都能够想到替代的写法，但好像的确能够更方便一些的样子，比如说如果新增加了一个字段并且同样需要进行长度校验的话那么只需要在新字段上添加注解而不需要去修改`check`的逻辑。更多使用场景待挖掘，任何东西都需要结合使用场景才能够有深刻的理解。
+
+### 6.4 TODO
+
+梳理反射和注解相关的类、接口、方法，了解实现，了解`java.lang.relfect`包。
 
 ## TODO
 - 模块详解
-- 注解
 - 泛型
 - 集合
 - IO
