@@ -58,6 +58,9 @@
     - [5.1 Class类](#51-class%E7%B1%BB)
     - [5.2 访问字段](#52-%E8%AE%BF%E9%97%AE%E5%AD%97%E6%AE%B5)
     - [5.3 访问方法](#53-%E8%AE%BF%E9%97%AE%E6%96%B9%E6%B3%95)
+    - [5.4 调用构造方法](#54-%E8%B0%83%E7%94%A8%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95)
+    - [5.5 获取继承关系](#55-%E8%8E%B7%E5%8F%96%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB)
+    - [5.6 动态代理](#56-%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -404,8 +407,8 @@ class Person {
 - 使用`final`修饰类表明该类不能再被继承。同C++。`final calss A extends B`。
 - 类型转换：向上转换必然成功，向下转换如果类型匹配则可以成功，不匹配则会失败抛异常。很好理解。
 - 判断是否是指定类型：`instanceof`，返回`boolean`，完全匹配的类型或者基类都会返回`true`。RTTI有了，好耶！语法层面支持真棒！C++某些时候还要自己去实现RTTI就很烦了。
-    - 用法：`obj instanceOf Type`，返回`boolean`。
-    - Java14开始：`obj instanceOf Type s`，返回`boolean`。且可直接使用转换后的变量`s`。但是好像在本地Eclipse/Java SE15上显示`preview feature and disabled by default`呢？好吧。
+    - 用法：`obj instanceof Type`，返回`boolean`。
+    - Java14开始：`obj instanceof Type s`，返回`boolean`。且可直接使用转换后的变量`s`。但是好像在本地Eclipse/Java SE15上显示`preview feature and disabled by default`呢？好吧。
 - 继承与组合：is与has的关系要区分清楚当然不用多说。has关系不应该用继承。
 - 覆写(Override)：
     - 在C++中，只有虚函数可以重写，和重载一样，判断标准依然是函数参数列表（方法签名）。如果重写了一个并非虚函数的函数，那么也就不能称之为重写，非虚函数不会在虚表中，也就不会有多态，调用指针/引用/变量类型确定调用了哪一个。
@@ -1767,9 +1770,9 @@ try {
 	System.out.println(e);
 }
 ```
-如果传入的这个`Class`对象对应的类没有无参构造，那么会抛出`java.lang.InstantiationException`，如果无参构造无法访问或者使用`Class`类对应的`Class`对象，那么会抛出`java.lang.IllegalAccessException`。其中做了特殊处理，况且`Class`的无参构造是`private`的。`Class`对象只能由JVM在加载了新的类时来创建。
+如果传入的这个`Class`对象对应的类没有无参构造，那么会抛出`java.lang.InstantiationException`，如果无参构造无法访问或者使用的是`Class`类对应的`Class`对象，那么会抛出`java.lang.IllegalAccessException`。其中做了特殊处理，况且`Class`的无参构造是`private`的。`Class`对象只能由JVM在加载了新的类时来创建。
 
-JVM并不会在一次性把所有用到的类加载到内存中(即是不会一次性创建所有`Class`对象)，需要程序过程中用到了一个新的类，才会把这个类加载到内存(也就是创建它的`Class`对象)。这是JVM**动态加载**`class`的特性。
+JVM并不会在一次性把所有用到的类加载到内存中(即是不会一次性创建所有`Class`对象)，需要程序执行过程中用到了一个新的类，才会把这个类加载到内存(也就是创建它的`Class`对象)。这是JVM**动态加载**`class`的特性。
 
 因为动态加载特性，就可以用下面的函数来判断一个类是否存在，如果传入的类名在`classpath`中存在那么就会返回`true`，前面提到的Commons Logging判断Log4j是否存在就可以用这样的方法。
 ```java
@@ -1790,7 +1793,7 @@ static boolean isClassPresent(String name) {
 对任意的`Object`，有了它的`Class`对象，就可以获取这个它的一切信息。
 - `public Field getField(String name)` 根据字段名获取某个public的字段（包括父类和接口，找不到的话先按照声明顺序找接口，再找基类）
 - `public Field getDeclaredField(String name)` 根据字段名获取当前类的某个字段，包括所有访问权限的字段（不包括父类和接口）
-- `public Field[] getFields()` 获取所有public字段，包括所有基类和实现的接口，如果是内置类型或者数组，那么返回空数组
+- `public Field[] getFields()` 获取所有public字段，包括所有基类和实现的接口，如果是内置类型或者数组对应的`Class`实例，那么返回空数组
 - `public Field[] getDeclaredFields()` 获取当前类定义的所有访问权限的字段，不包括基类和接口
 
 `Field`类型：
@@ -1822,9 +1825,9 @@ static boolean isClassPresent(String name) {
 
 设置字段值：`public void set(Object obj, Object value)`
 
-静态实例的话`get/set`的`obj`参数会被忽略，自动为`null`，建议写为`null`，就像调用实例静态方法是用类名而不是用实例一样，只为让代码更清晰。
+静态实例的话`get/set`的`obj`参数会被忽略，自动为`null`，建议写为`null`，就像调用累的静态方法是用类名而不是用实例一样，只为让代码更清晰。
 
-值得注意的是，反射相关类型位于`java.lang.reflect`包内，与`java.lang`不是一个包，不会自动导入。
+值得注意的是，反射相关类型位于`java.lang.reflect`包内，与`java.lang`不是一个包，不会自动导入，需要`import`。
 
 ### 5.3 访问方法
 
@@ -1855,10 +1858,152 @@ static boolean isClassPresent(String name) {
 - 当然也遵守多态原则。
 
 
+### 5.4 调用构造方法
+
+我们通常用`new`操作符创建新的实例，有了反射也可以通过`Class`对象的方法来创建：
+```java
+Student s = new Student();
+Student s2 = Student.class.newInstance(); // 调用public无参构造
+```
+
+后者只能调用公有的无参构造，为了能够调用到所有构造，Java的反射API提供了`Constructor`对象，包含一个构造方法的所以信息，可以用来创建一个实例，和`Method`很类似，不同之处仅在于它是构造方法，并且总是返回实例。`Class`中用于获取`Constructor`的方法：
+```java
+public Constructor<T> getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException
+public Constructor<?>[] getConstructors() throws SecurityException
+public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException
+public Constructor<?>[] getDeclaredConstructors() throws SecurityException
+```
+同理前两者获取public的构造，后两者获取所有访问权限的构造，不同的普通方法和字段的是前两者不会获取到基类的构造，因为并不能调用基类的构造方法来构造子类的对象。如果是非静态的Inner class，那么第一个参数还需要额外传入内部类关联的对象，不展开详述。
+
+`Constructor`类型：
+- 定义：`public final class Constructor<T> extends Executable`
+- 方法：设置访问权限、获取定义的类、名称、修饰符、参数列表类型、异常类型、调用构造方法等。
+```java
+public void setAccessible(boolean flag)
+public Class<T> getDeclaringClass()
+public String getName()
+public int getModifiers()
+public TypeVariable<Constructor<T>>[] getTypeParameters()
+public Class<?>[] getExceptionTypes()
+public T newInstance(Object ... initargs) throws 
+            InstantiationException, IllegalAccessException, 
+            IllegalArgumentException, InvocationTargetException
+```
+
+
+### 5.5 获取继承关系
+
+获取一个`Class`对象的三种方法：
+- `className.class`
+- `classInstance.getClass()`
+- `Class.forName(classNameString)`
+
+对同一个类而言，这三种方法获取的都是同一个实例，JVM对每个类只会创建一个`Class`实例。
+
+获取父类的`Class`，前面已经有提到，就是`Class`的`getSuperClass`方法，获取接口则使用`getInterfaces`接口：
+```java
+public native Class<? super T> getSuperclass();
+public Class<?>[] getInterfaces()
+```
+
+判断继承关系：
+- 如果是一个实例，那么使用`instanceof`
+    ```java
+    Double n = Double.valueOf(10.0);
+    boolean isDouble = n instanceof Double;
+    ```
+- 如果是`Class`对象，那么使用`isAssignableFrom`，含义是`cls`表示的类的对象是否可以被赋给`this`表示的类的变量，即是传入的`Class`是否是当前`Class`的子类。
+    ```java
+    // declaration
+    public native boolean isAssignableFrom(Class<?> cls);
+    // calling
+    boolean isNumber = Number.class.isAssignableFrom(Integer.class); // true
+    ```
+- 判断一个对象是否是一个类或者其子类的对象：`isInstance`，等价于使用`instanceof`
+    ```java
+    // declaration
+    public native boolean isInstance(Object obj);
+    // calling
+    Integer n = Integer.valueOf(10);
+    boolean isNumber = Number.class.isInstance(n); // true
+    ```
+
+### 5.6 动态代理
+
+Java的`class`和`interface`的区别就是接口可以多继承，接口没有构造，接口不能有类成员，接口不能实例化。当然抽象类也不可以实例化，这样看感觉其实也就多继承和区别而已，因为需要用接口来多继承所以才不能有构造和实例字段。
+
+那么能不能不编写实现类，在运行时创建出一个`inteface`实例呢？Java标准库提供了动态代理(Dynamic Proxy)来实现这个事情。
+
+所谓的动态是和静态对应的，典型的静态创建即定义类来实现接口，然后实例化类对象并用接口来调用：
+```java
+interface Hello {
+	public void morning();
+}
+class HelloWorld implements Hello {
+	public void morning() {
+		System.out.println("hello, world");
+	}
+}
+public class Test {
+	public static void Main() {
+		Hello h = new HelloWorld();
+	    h.morning();
+	}
+}
+```
+
+那么动态创建怎么做呢？
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+interface Hello {
+	public void morning();
+}
+
+public class Main {
+	public static void main(String[] args) throws Exception {
+		InvocationHandler handler = new InvocationHandler() {
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				System.out.println(method);
+				if (method.getName().equals("morning"))
+				{
+					System.out.println("hello,world");
+				}
+				return null;
+			}
+		};
+		Hello h = (Hello)Proxy.newProxyInstance(
+				Hello.class.getClassLoader(),
+				new Class[] {Hello.class},
+				handler);
+		h.morning();
+	}
+}
+```
+
+方法如下：
+- 定义一个`InvocationHandler`实例，负责实现接口的方法调用，这里的语法是使用匿名类实现了`InvocationHandler`接口的`invoke`方法，并且在其中动态实现了`morning`方法。
+- 通过`Proxy.newProxyInstance()`创建`interface`实例，需要三个参数：
+    - 使用的`ClassLoader`，通常就是接口的`ClassLoader`，通过接口`Class`实例的`getClassLoader`方法获取。
+    - 需要实现的接口数组，至少传入一个接口。
+    - 处理调用方法的`InvocationHandler`实例。
+- 将返回的`Object`实例转换为接口。
+
+其实实现的方式就是JVM为我们自动编写了一个类（不需要源码直接生成字节码），并不存在可以直接实例化接口的黑魔法。
+
+
+动态代理是通过`Proxy`创建代理对象，然后将方法代理给`InvocationHandler`完成的。
+
+更多理解TODO。
+
+
+
 
 ## TODO
 - 模块详解
-- 反射
 - 注解
 - 泛型
 - 集合
