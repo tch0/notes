@@ -61,6 +61,11 @@
     - [5.4 调用构造方法](#54-%E8%B0%83%E7%94%A8%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95)
     - [5.5 获取继承关系](#55-%E8%8E%B7%E5%8F%96%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB)
     - [5.6 动态代理](#56-%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86)
+  - [6. 注解](#6-%E6%B3%A8%E8%A7%A3)
+    - [6.1 使用注解](#61-%E4%BD%BF%E7%94%A8%E6%B3%A8%E8%A7%A3)
+    - [6.2 定义注解](#62-%E5%AE%9A%E4%B9%89%E6%B3%A8%E8%A7%A3)
+    - [6.3 处理注解](#63-%E5%A4%84%E7%90%86%E6%B3%A8%E8%A7%A3)
+    - [6.4 TODO](#64-todo)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -1111,6 +1116,7 @@ private int lowestSetBitPlusTwo;
 private int firstNonzeroIntNumPlusTwo;
 ```
 
+尚未开始分析好吧，TODO。
 
 ## 4. 异常处理
 
@@ -1679,9 +1685,9 @@ public final class Class {
 在C++里面，如果我们要自己实现RTTI，其实也是这样来做的，具体做法大概是：
 - 当有新的类被添加到继承体系结构时，新的`Class`对象被创建，并被加到派生关系树的对应位置(叶子节点)，通过这个对象我们可以访问到他的所有直接与间接基类(向上遍历)。
 - 每个类中使用一个静态数据成员保存该类对应的`Class`对象(指针)，定义静态成员函数以获取到该指针。
-- 每个类中再定义非静态成员函数(`getClass()`)转调上面的静态成员函数，这个非静态成员函数需要是从根类继承来的**虚函数**，在每个类中重写已返回自己的`Class`对象，这是最关键的地方，通过该接口获取到对象真实类型的`Class`对象即可实现运行时类型识别。
+- 每个类中再定义非静态成员函数(`getClass()`)转调上面的静态成员函数，这个非静态成员函数需要是从根类继承来的**虚函数**，在每个类中重写以返回自己的`Class`对象，这是最关键的地方，通过该接口获取到对象真实类型的`Class`对象即可实现运行时类型识别。
 - 通常通过一个机制实现上面3个过程，一般来说就是写一个宏而已。典型的实现可以参考MFC(一个经典/过时的Windows界面库)。
-- 一般来说还会允许用户自己从指定的基类派生实现的类也有这个特性，那么还需要提供能够使类型动态加载和卸载的机制，也就是动态地从类型树上删除或者添加节点的机制，作为静态函数实现在类中，在模块加载和卸载时做即可。
+- 一般来说还会允许用户自己从指定的基类派生实现的类也有这个特性，那么就需要对外公开上一步说的那个机制让用户来用，还需要提供能够使类型动态加载和卸载的机制，也就是动态地从类型树上删除或者添加节点的机制，一般作为静态函数实现在类中，在模块加载和卸载时做即可。
 
 TODO：了解反射之后，可以尝试在C++上实现反射。
 
@@ -1699,13 +1705,13 @@ TODO：了解反射之后，可以尝试在C++上实现反射。
 这种通过该`Class`实例获取到类的信息的方法称为**反射(Reflection)**。
 
 那么要如何获取到一个类的`Class`对象呢：
-- 通过类的静态变量`calss`获取：`Class strClass = String.class`。
-- 通过实例的`getClass()`方法获取：
+- 通过类的静态变量`class`获取：`Class strClass = String.class`。因为`class`还是定义类的关键字，所以这里是Java编译器做了特殊处理，不是简单地在定义在`Object`类中的一个静态字段。在`Object`定义中也是找不到`class`字段的。
+- 通过实例的`getClass()`方法获取，这个方法是定义在万物的基类`Object`中的，因为内置类型不从`Object`派生，所以没有这个方法可以调用。
     ```java
     String s = "hello";
     Class strClass = s.getClass();
     ```
-- 如果知道一个`Class`实例的完整类名，可以通过静态方法`Class.fromName(String className) throws ClassNotFoundException`来获取：
+- 如果知道一个`Class`实例的完整类名，可以通过静态方法`Class.forName(String className) throws ClassNotFoundException`来获取：
     ```java
     try {
         Class strCls = Class.forName("java.lang.String");
@@ -1714,7 +1720,7 @@ TODO：了解反射之后，可以尝试在C++上实现反射。
     }
     ```
 
-注意获取类的`Class`实例比较与`isntanceOf`的区别，如果要求是同一个类型，后者可以是基类。
+注意获取类的`Class`实例判等与`isntanceOf`的区别，如果要求是同一个类型，后者可以是基类。
 
 `Class`定义：
 ```java
@@ -1818,20 +1824,20 @@ static boolean isClassPresent(String name) {
 
 获取字段的值：`public Object get(Object obj)`，参数为需要获取字段的对象，返回值被装箱到`Object`对象中，如果是内置类型，会自动包装为对应的包装类型。
 
-如果在没有访问该字段权限的地方用了`Field.get`那么可能会抛出`IllegalArgumentException`，如果非要访问，可以在前面加上`public void setAccessible(boolean flag)`调用传入`true`确保能够访问。
+如果在没有访问该字段权限的地方用了`Field.get`那么可能会抛出`IllegalAccessException`，如果非要访问，可以在前面加上`public void setAccessible(boolean flag)`调用传入`true`确保能够访问。`setAccessible`是在从基类`AccessibleObject`中继承而来的，`Field` `Method` `Constructor`都直接或间接从其派生。
 - 反射是一个非常规用法，使用反射，代码会很繁琐，使用反射会破坏对象的封装。
 - 反射更多提供给工具或底层框架来使用，目的是在不知道目标实例任何信息的情况下，获取特定字段的值。
 - `setAccessible(true)`可能会失败，如果JVM运行期存在`SecurityManager`，那么它会根据规则进行检查，有可能阻止`setAccessible(true)`。
 
 设置字段值：`public void set(Object obj, Object value)`
 
-静态实例的话`get/set`的`obj`参数会被忽略，自动为`null`，建议写为`null`，就像调用累的静态方法是用类名而不是用实例一样，只为让代码更清晰。
+静态实例的话`get/set`的`obj`参数会被忽略，自动为`null`，建议写为`null`，就像调用类的静态方法是最好用类名而不是用实例一样，只为让代码更清晰。
 
-值得注意的是，反射相关类型位于`java.lang.reflect`包内，与`java.lang`不是一个包，不会自动导入，需要`import`。
+值得注意的是，反射相关类型位于`java.lang.reflect`包内，与`java.lang`不是一个包，不会自动导入，需要手动`import`。
 
 ### 5.3 访问方法
 
-类似于访问字段，访问一个类的方法有如下方法：
+类似于访问字段，访问一个类的方法在`Class`类中有如下方法：
 - `public Method getMethod(String name, Class<?>... parameterTypes)` public，包括基类
 - `public Method getDeclaredMethod(String name, Class<?>... parameterTypes)` 所有权限，不包括基类和接口
 - `public Method[] getMethods()` public，包括基类
@@ -1873,7 +1879,7 @@ public Constructor<?>[] getConstructors() throws SecurityException
 public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException
 public Constructor<?>[] getDeclaredConstructors() throws SecurityException
 ```
-同理前两者获取public的构造，后两者获取所有访问权限的构造，不同的普通方法和字段的是前两者不会获取到基类的构造，因为并不能调用基类的构造方法来构造子类的对象。如果是非静态的Inner class，那么第一个参数还需要额外传入内部类关联的对象，不展开详述。
+同理前两者获取public的构造，后两者获取所有访问权限的构造，不同于方法和字段的是前两个方法不会获取到基类的构造，因为并不能调用基类的构造方法来构造子类的对象。如果是非静态的Inner class，那么第一个参数还需要额外传入内部类关联的实例，不展开详述。
 
 `Constructor`类型：
 - 定义：`public final class Constructor<T> extends Executable`
@@ -1992,8 +1998,7 @@ public class Main {
     - 处理调用方法的`InvocationHandler`实例。
 - 将返回的`Object`实例转换为接口。
 
-其实实现的方式就是JVM为我们自动编写了一个类（不需要源码直接生成字节码），并不存在可以直接实例化接口的黑魔法。
-
+其实实现的方式就是JVM为我们自动编写了一个类（不需要源码直接生成字节码），并不存在可以直接实例化接口的黑魔法。而且因为最终创建的对象是通过接口来用，也就没有办法添加和使用实例字段。暂不清楚使用场景。
 
 动态代理是通过`Proxy`创建代理对象，然后将方法代理给`InvocationHandler`完成的。
 
@@ -2007,7 +2012,7 @@ public class Main {
 
 注解的作用：
 
-从JVM的角度看，注解本身对代码逻辑没有任何影响，如何使用注解完全由工具决定。Java的注解可以分为三类：
+从JVM的角度看，注解本身对代码逻辑没有任何影响，如何使用注解完全由工具(比如一些库自己定义的注解)、你的代码(你自己定义的注解需要编写逻辑来使用它)决定。Java的注解可以分为三类：
 
 第一类是由编译器使用的注解，如：
 - `@Override`：让编译器检查方法是否正确实现了覆写。
@@ -2017,7 +2022,7 @@ public class Main {
 
 第二类是由工具处理的`.class`文件时使用的注解，比如某些工具加载class时候会对class做动态修改，实现一些特殊的功能。这类注解会被编译到`.class`文件中，但加载结束后不会存在于内存中。这类注解只会被一些底层库使用，一般我们不必处理。例如？
 
-第三类是程序运行期能够读取的注解，加载后一直存在JVM中，这也是**最常用**的注解。比如一个配置了`@PostConstruct`注解的方法会在调用构造方法后自动被调用，这是Java代码读取该注解实现的功能，JVM并不认识该注解。这里的Java代码是指的什么呢？
+第三类是程序运行期能够读取的注解，加载后一直存在JVM中，这也是**最常用**的注解。比如一个配置了`@PostConstruct`注解的方法会在调用构造方法后自动被调用，这是我们自己的Java代码读取该注解需要实现的功能，JVM并不认识该注解也不会帮你实现你脑子里的东西。
 
 定义一个注解时，还可以定义**配置参数**，配置参数可以包括：
 - 所有基本类型
@@ -2163,14 +2168,14 @@ public interface Annotation {
 }
 ```
 
-当然使用反射API读取注解：
+使用反射API读取注解：
 - 对于`Class` `Field` `Method` `Constructor`的话就是使用`AnnotatedElement.getAnnotation()`等相关接口了。`Class` `Field` `Method` `Constructor`都是有定义的。如果不存在对应的注解，会返回`null`。可以通过返回值是否为`null`来判断是否有传入的注解。
-- 而要获取到方法参数的注解就相对麻烦了，因为可能有多个参数，每个参数也可能有多个注解，所以结果使用一个二维数组来表示的。使用`public abstract Annotation[][] getParameterAnnotations();`方法，最顶层定义在`Executable`中(`Method`和`Constructor`的抽象基类)，在`Field`和`Constructor`做了实现。
+- 而要获取到方法参数的注解就相对麻烦了，因为可能有多个参数，每个参数也可能有多个注解，所以结果使用一个二维数组来表示。使用`public abstract Annotation[][] getParameterAnnotations();`方法，最顶层定义在`Executable`中(`Method`和`Constructor`的抽象基类)，在`Field`和`Constructor`中做了实现。
 
 
-使用注解：我们要在运行期来使用注解，那必然是使用`RetentionPolicy.RUNTIME`类型的注解，那注解要怎么用呢？这完全由程序自己决定，也就是说我们必须编写代码来使用注解，使用方法就是通过反射去读取。JVM并不会对我们的注解添加任何额外的逻辑，应该说通过反射的统一处理仅仅是将其作为了一个类动态加载进来然后将一个编译期就已经确定内容的实例附加到对应的类、方法、字段等上而已。
+使用注解：我们要在运行期来使用注解，那必然是使用`RetentionPolicy.RUNTIME`类型的注解，那注解要怎么用呢？这完全由程序自己决定，也就是说我们必须编写代码来使用注解，使用方法就是通过反射去读取。JVM并不会对我们的注解添加任何额外的逻辑，应该说通过反射的统一处理仅仅是将其作为了一个类动态加载进来然后将一个编译期就已经确定内容的注解实例关联到对应的类、方法、字段、参数等上而已。
 
-我的理解：不使用注解是完全OK的，但注解提供了一种方法让我们能够定义自己的关于类、构造、方法、实例等的“规则”，以提供给其他人使用。这个规则的解释完全由自己的程序进行解释。
+我的理解：不使用注解是完全OK的，但注解提供了一种方法让我们能够定义自己的关于类、构造、方法、实例等的“规则”，以提供给自己活着其他人使用。这个规则的解释完全由自己的程序进行实现。
 
 例子，定义一个`@Range`注解，希望用它来定义一个`String`字段的规则：字段长度必须满足`@Range`参数的定义：
 - 定义注解
@@ -2215,15 +2220,384 @@ void check(Person person) throws IllegalArgumentException, ReflectiveOperationEx
     }
 }
 ```
-这样配合`@Range`配合`check()`方法，就可以完成`Person`实例的检查。虽然就这个例子而言谁都能够想到替代的写法，但好像的确能够更方便一些的样子，比如说如果新增加了一个字段并且同样需要进行长度校验的话那么只需要在新字段上添加注解而不需要去修改`check`的逻辑。更多使用场景待挖掘，任何东西都需要结合使用场景才能够有深刻的理解。
+这样通过`@Range`配合`check()`方法，就可以完成`Person`实例的检查。虽然就这个例子而言谁都能够想到替代的写法，但好像的确能够更方便一些的样子，比如说如果新增加了一个字段并且同样需要进行长度校验的话那么只需要在新字段上添加注解而不需要去修改`check`的逻辑。更多使用场景待挖掘，任何东西都需要结合具体的使用场景才能够有深刻的理解。
 
 ### 6.4 TODO
 
 梳理反射和注解相关的类、接口、方法，了解实现，了解`java.lang.relfect`包。
 
+## 7. 泛型
+
+### 7.1 什么是泛型
+
+可以将类型作为参数，从而创建一种可以同时用于多种类型的通用的逻辑的方法。比如创建一种可以应用于所有类型的变长数组类型：`ArrayList<T>`，其中`T`是数据元素的类型。`T`需要编译期可知，当然一个类型不可能编译期不知道，这里的`T`是指的`int` `double` `Runnable`这种内置类型或已经在代码中定义的类型，而不是反射中和一个类型相关联的`Class`对象。
+
+向上转型，标准库的`ArrayList<T>`实现了`List<T>`接口，所以可以向上转型。但是需要注意这里的`T`是整个类型定义的一部分，`ArrayList<Integer>`不能转换为`ArrayList<Number>`或者`List<Number>`。`T`必须严格一致才能向上转换。类型参数`T`不一致的，比如`ArrayList<Integer>`和`List<Number>`是没有继承关系的两个类型。
+
+和C++模板差不太多，就是编写模板代码来适应任意类型，类型参数确定之后才成为一个类型，参数类型不同的模板类是不同的类型。
+
+那么C++的模板特化偏特化、模板递归、可变模板参数、模板元编程这种烧脑袋的东西有没有对应的呢？
+
+TODO：深入了解Java泛型的实现方式，和C++模板有何异同。
+
+### 7.2 使用泛型
+
+以`java.util.ArrayList`为例，如果不定义泛型类型，泛型类型实际上就是`Object`，相当于默认类型参数是`Object`，这个机制应该是语言层面实现的，因为java并没有默认参数或者默认类型参数这种东西。
+```java
+List list = new ArrayList();
+list.add("hello");
+System.out.println((String)list.get(0));
+```
+
+当定义泛型类型为`String`之后，`List<T>`泛型接口变为强类型`List<String>`。
+```java
+List list = new ArrayList<String>();
+list.add("hello");
+System.out.println(list.get(0));
+```
+
+编译器如果能自动推断出泛型类型，就可以省略后面的泛型类型。如用`ArrayList<T>`指定泛型类型为`String`后，接口`List<T>`就自动成为`List<String>`。
+
+除了类，接口也可以使用泛型，正如`List<T>`。一如：
+```java
+public interface Comparable<T> {
+    public int compareTo(T o);
+}
+```
+对于`Arrays.sort`接口对数组元素排序就会使用`Comparable.compareTo`来比较，元素类型需要实现`Comparable`接口后才能调用。如果未实现则会抛出`java.lang.ClassCastException`提示元素类型不能转化为`java.lang.Comparable`。但这样其实只能对元素按照一种类型来排序，如果需要更高的可定制性，可以使用`Arrays`的`public static <T> void sort(T[] a, Comparator<? super T> c)`接口传入一个`Comparator`已进行更加灵活的比较。当然也可以在重写`compareTo`比较多种比较方式，加上标记或者`boolean`实例成员来控制即可。
+
+### 7.3 编写泛型
+
+编写泛型类比普通类复杂，泛型类一般用于集合类中。
+
+比如编写一个类表示键值对：先用一个特定类型来实现。
+```java
+class kvPair {
+	private String key;
+	private String value;
+	public String getKey() {
+		return key;
+	}
+	public void setKey(String key) {
+		this.key = key;
+	}
+	public String getValue() {
+		return value;
+	}
+	public void setValue(String value) {
+		this.value = value;
+	}
+}
+```
+然后将`String`替换为`T`，并在类名后面加上类型参数`<T>`的声明。
+```java
+class kvPair<T> {
+	private T key;
+	private T value;
+	public T getKey() {
+		return key;
+	}
+	public void setKey(T key) {
+		this.key = key;
+	}
+	public T getValue() {
+		return value;
+	}
+	public void setValue(T value) {
+		this.value = value;
+	}
+}
+```
+那么如果我需要键和值可以是不同的类型呢，添加多个泛型类型参数即可。
+```java
+class kvPair<K, V> {
+	private K key;
+	private V value;
+	public K getKey() {
+		return key;
+	}
+	public void setKey(K key) {
+		this.key = key;
+	}
+	public V getValue() {
+		return value;
+	}
+	public void setValue(V value) {
+		this.value = value;
+	}
+}
+```
+
+实例方法是类的一部分，泛型参数类型对其是可见的。但是对于静态方法来说，类的泛型类型参数对其是不可见的，如果要定义静态泛型方法，需要为静态泛型方法专门指定静态类型参数。这里的静态方法的`K` `V`和`kvPair<K, V>`中的`K` `V`是没有任何关系的，完全可以替换为其他名称。如果不在`static`后指定静态类型参数的话会报错：不能对非静态类型`K`/`V`进行静态引用。
+```java
+class kvPair<K, V> {
+	private K key;
+	private V value;
+	public kvPair(K k, V v) {
+		key = k;
+		value = v;
+	}
+	public K getKey() {
+		return key;
+	}
+	public void setKey(K key) {
+		this.key = key;
+	}
+	public V getValue() {
+		return value;
+	}
+	public void setValue(V value) {
+		this.value = value;
+	}
+	
+	public static<K, V> kvPair<K, V> create(K key, V value) {
+		return new kvPair<K, V>(key, value);
+	}
+}
+```
+使用时：如果就是实例化这个类的对象，那么类型声明时需要写上类型参数，不然类型还是会默认为`Object`，而且貌似类型参数不能使用内置类型，因为默认是`Object`无法持有内置类型的缘故吗？那么就使用相应的包装类型吧，应该就是提供了来满足类似这种场景的。
+```java
+kvPair<String, Double> pair = new kvPair<String, Double>("xiaoming", 100.0);
+```
+
+
+### 7.4 泛型实现方法
+
+不同于C++的模板实现，Java中的泛型实现方法是**擦拭法**(**Type Erasure**)。
+
+所谓擦拭法是指：
+- JVM对泛型一无所知，所有工作都是编译器做的。编写了一个泛型类`kvPair<K, V>`，虚拟机执行的代码就是`kvPair<Object, Object>`。
+- 然后编译器根据使用的具体的泛型类型参数实现了安全的强制类型转换。因为泛型类型参数都是编译期确定的，不能转换就会报错停止编译。
+
+所以，Java的泛型是编译器在编译器实现的，编译器内部永远把所有类型`T`当做`Object`处理(即是说**擦拭**成了`Object`)，但是需要转换类型时，编译器会自动根据`T`的类型为我们安全的实行强制转换。
+
+所以必然就有局限：
+- `<T>`不能是基本类型，因为`Object`无法持有基本类型。
+- 无法取得类型参数的`class`，因为`class`是运行期的。编译期对编译器来说所有泛型类型参数都是`Object`。
+- 无法区分带泛型的类型，因为都是同一个`Class`对象。
+- 不能实例化类型参数`T`的变量，实例化`Object`明显不是我们想要的，所以java编译器阻止了在泛型类中对参数类型变量的实例化。
+
+所以`kvPair<Object, Object>`和`kvPair`和`kvPair<String, Double>`实际上是一个类型，他们的`Class`对象是同一个。那直观感受来看和C++的模板是有区别的，C++的模板会为每一种模板类型参数生成一个类或者函数的机器码，模板参数实际上最终的类的一部分，所以以上局限都是没有的。而Java中的泛型看来类型参数只是提供了用来告诉编译器需要如何做类型转换的手段，而并不是类型的一部分。
+
+**不恰当的覆写**：
+```java
+public class Pair<T> {
+    public boolean equals(T t) {
+        return this == t;
+    }
+}
+```
+像这样的代码其实会被擦拭成`equals(Object t)`，这个方法是继承自`Object`的，编译器会阻止一个实际上会变成覆写的方法定义。错误提示为：类型 `Pair<T>` 的方法 `equals(T)`与类型 `Object` 的 `equals(Object)`具有相同的擦除，但是未覆盖它。
+
+
+需要换个方法名，避免与`Object.equals(Object)`冲突。
+```java
+public class Pair<T> {
+    public boolean same(T t) {
+        return this == t;
+    }
+}
+```
+
+**泛型类的继承**：
+
+一个类可以继承自一个泛型类。比如
+```java
+class StringDoublePair extends kvPair<String, Double> {
+	public StringDoublePair() {
+		super("", 0.0);
+	}
+}
+```
+继承之后`StringDoublePair`的基类的类型参数是确定的，就是`<String, Double>`，但是我们无法通过`kvPair.class`对象获取到这个类型参数。但在继承了泛型类型的情况下，子类是可以获取到父类的泛型类型的。获取方式：
+```java
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+
+public class Main {
+	public static void main(String[] args){
+		Class<StringDoublePair> cls = StringDoublePair.class;
+		Type t = cls.getGenericSuperclass();
+		if (t instanceof ParameterizedType) {
+			ParameterizedType pt = (ParameterizedType)t;
+			Type[] types = pt.getActualTypeArguments();
+			for (Type typeArgs : types) {
+				Class<?> typeClass = (Class<?>)typeArgs;
+				if (typeClass != null) {
+					System.out.println(typeClass);
+				}
+			}
+		}
+	}
+}
+```
+这里获取到的是`Type`，因为java引入了泛型，所以单纯的`Class`用来标识类型就不够了，Java的类型系统结构如下：
+```
+Type
+|____Class
+|____ParameterizedType
+|____GenericArrayType
+|____WildcardType
+```
+
+### 7.5 extends通配符
+
+还是上面的`kvPair`，如果定义一个适用于`kvPair<Number, Number>`的方法：
+```java
+class PairHelper {
+	public static int add(kvPair<Number, Number> pair) {
+		return pair.getKey().intValue() + pair.getValue().intValue();
+	}
+}
+```
+那么下面的语句时能够编译通过的:
+```java
+int sum = PairHelper.add(new kvPair<Number, Number>(1, 1));
+```
+但是其实参数的类型是`(Integer, Integer)`，如果类型参数就是`Integer`呢：
+```java
+int sum = PairHelper.add(new kvPair<Number, Number>(1, 1));
+```
+编译错误：类型 `PairHelper` 中的方法`add(kvPair<Number,Number>)`对于参数`(kvPair<Integer,Integer>)`不适用。
+
+原因很简单：类型`kvPair<Integer,Integer>`不是`kvPair<Number,Number>`的子类。但是很明显`kvPair<Integer,Integer>`参数类型运用于`add`函数是完全满足内部代码的类型规范的，即基类或者接口来使用子类对象。
+
+那现在有没有方法能够使得方法`add`能够接受`kvPair<Type2, Type2>`其中`Type1` `Type2`是`Number`子类呢？办法当然是有的，就是定义`add`时使用`? extends Number`替代类型参数`Number`。
+```java
+class PairHelper {
+	public static int add(kvPair<? extends Number, ? extends Number> pair) {
+		return pair.getKey().intValue() + pair.getValue().intValue();
+	}
+}
+```
+
+这种使用`<? extends Number>`的泛型定义称为**上界通配符**(Upper Bounds Wildcards)。即把泛型类型参数`T`的上界限定为`Number`，就是只要是`Number`和其子类都可以。
+
+此时编译器能够确定`kvPair<? extends Number, ? extends Number>`的`getKey` `getValue`接口返回值一定`Number`或其子类，但无法确定具体类型。
+
+使用了通配符之后能不能用子类实例设置给基类成员呢？
+```java
+class PairHelper {
+	public static int add(kvPair<? extends Number, ? extends Number> pair) {
+		pair.setKey(Integer.valueOf(pair.getKey().intValue() + 100));
+		pair.setKey(Integer.valueOf(pair.getValue().intValue() + 100));
+		return pair.getKey().intValue() + pair.getValue().intValue();
+	}
+}
+```
+这时会编译错误提示：类型 `kvPair<capture#1-of ? extends Number,capture#2-of ? extends Number>` 中的方法 `setKey(capture#1-of ? extends Number)`对于参数`(Integer)`不适用
+
+编译错误的原因还是在于擦拭法，这就是`<? extends Number>`通配符的一个重要限制：
+- 方法参数签名`setKey(? extends Number)`无法传递任何`Number`或者子类型给`setKey(? extends Number)`，唯一的例外是可以传入`null`。
+- 对于方法类型参数`<? extends Number>`的泛型参数来说，方法内部不能调用它的传入`Number`引用的方法，总结来说**只读不能写**。为什么呢？这里我有一万个问号？后续再来理解，TODO。
+
+定义泛型类时也可以用`<T extends Number>`这样的方式使用通配符来限定`T`的类型。那么实例化时该类型参数就只能使用`Number`或者其子类。这里当然也可以是`interface`，只不过语法规定为使用`extends`。
+
+### 7.6 super通配符
+
+除了`extends`通配符外还有`super`通配符，对于类型参数中有`<? super Integer>`的实例来说。
+- 对应地，可以使用`Integer`和它的基类来进行匹配。
+- 使用该类型作为方法参数时，该参数**只能写不能读**，不能调用它的返回`<? super Integer>`类型的接口，但可以调用它的使用`<? super Integer>`参数的接口。就上面例子来说就是能调`setKey`不能调用`getKey`。
+
+**PECS原则**：一般使用`extends`和`super`是遵循**Producer Extends Consumer Super**。即生产者使用`extends`，而消费者使用`super`。
+
+除了`extends`和`super`通配符，`Java`的泛型还允许使用**无限定通配符**(Unbounded Wildcard Type)，即只定义一个`?`。
+
+特点：
+- 因为`<?>`通配符既没有`extends`也没有`super`：
+    - 不允许调用`set(T)`方法并传入引用（`null`除外）。
+    - 不允许调用`T get()`方法并获取`T`引用（只能获取`Object`引用）。
+    - 即既不能读也不能写，只能做一些`null`判断。
+- 大多数情况可以引入泛型参数`<T>`消除`<?>`的使用，就是说可以替换。
+- 无限定通配符`<?>`很少使用。
+
+`<?>`通配符有一个独特的特点，就是`pair<?>`是所有`pair<T>`的超类，可以安全地向上类型转换。
+
+到这里我只能说并没有搞懂为什么要有`extends`和`super`通配符这两个东西，也没有完全理解，TODO。
+
+### 7.7 泛型和反射
+
+java的部分反射API也是泛型，比如`Class`类就是泛型：
+```java
+public final class Class<T> implements java.io.Serializable,
+                              GenericDeclaration,
+                              Type,
+                              AnnotatedElement,
+                              TypeDescriptor.OfField<Class<?>>,
+                              Constable {
+    public static Class<?> forName(String className) {...}
+    public native boolean isAssignableFrom(Class<?> cls);
+    public TypeVariable<Class<T>>[] getTypeParameters() {...}
+    public native Class<? super T> getSuperclass();
+    public Class<?>[] getInterfaces() {...}
+    public Type[] getGenericInterfaces() {...}
+    public Class<?> getComponentType() {...} // 获取元素类型，仅对数组类型有效，否则返回null
+    public Class<?> getDeclaringClass() throws SecurityException {...}
+    public Constructor<?>[] getConstructors() throws SecurityException {...}
+    // other method about Constructor ...
+    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {...}
+    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {...}
+    // etc ...
+}
+```
+
+构造方法`Constructor<T>`也是泛型。
+
+泛型与数组：
+- 我们可以声明带泛型的数组，但不能直接`new`带泛型的数组，需要经过强制类型转换。
+```java
+Pair<String>[] ps = null; // ok
+Pair<String>[] ps = new Pair<String>[2]; // compile error!
+@SuppressWarnings("unchecked")
+Pair<String>[] ps = (Pair<String>[]) new Pair[2]; // ok
+```
+- 要安全使用泛型数组，不要将上述`new Pair[2]`的结果保存之后使用。因为`new Pair[2]`的结果不是泛型数组，编译器不会检查。
+- 带泛型的数组编译器也会做类型擦除：
+```java
+Pair<String>[] ps = (Pair<String>[]) new Pair[2];
+System.out.println(ps.getClass() == Pair[].class); // true
+```
+- 不能直接创建泛型数组`T[]`，因为擦拭后代码变`为Object[]`
+```java
+// compile error:
+public class Abc<T> {
+    T[] createArray() {
+        return new T[5];
+    }
+}
+```
+- 必须借助`java.lang.reflect.Array`来创建
+```java
+T[] createArray(Class<T> cls) {
+    return (T[]) Array.newInstance(cls, 5);
+}
+```
+- 还可以利用可变参数创建泛型数组：
+```java
+public class ArrayHelper {
+    @SafeVarargs
+    static <T> T[] asArray(T... objs) {
+        return objs;
+    }
+}
+```
+- 谨慎使用泛型可变参数，如果仔细观察，可以发现编译器对所有可变泛型参数都会发出警告，除非确认完全没有问题，才可以用`@SafeVarargs`消除警告。跟详细解释参考[*Effective Java*](https://www.oreilly.com/library/view/effective-java/9780134686097/)，看起来java的“上层建筑”确实有点太多太繁杂了。
+
+说实话泛型有点云里雾里的感觉，后续看书补充理解，TODO。
+
+## 8. 集合
+
+集合大部分时候应该会是使用最多的类型，因为任何东西都需要存储、管理，元素多了的时候就需要使用集合来存储。其中各式各样的数据结构服务于各种不同的使用场景：存储、查找、遍历、增删修改元素等操作的不同侧重。
+
+### 8.1 Java集合
+
+
+
+
+
+
 ## TODO
 - 模块详解
-- 泛型
 - 集合
 - IO
 - 日期与时间
