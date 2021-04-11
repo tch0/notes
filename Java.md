@@ -66,6 +66,27 @@
     - [6.2 定义注解](#62-%E5%AE%9A%E4%B9%89%E6%B3%A8%E8%A7%A3)
     - [6.3 处理注解](#63-%E5%A4%84%E7%90%86%E6%B3%A8%E8%A7%A3)
     - [6.4 TODO](#64-todo)
+  - [7. 泛型](#7-%E6%B3%9B%E5%9E%8B)
+    - [7.1 什么是泛型](#71-%E4%BB%80%E4%B9%88%E6%98%AF%E6%B3%9B%E5%9E%8B)
+    - [7.2 使用泛型](#72-%E4%BD%BF%E7%94%A8%E6%B3%9B%E5%9E%8B)
+    - [7.3 编写泛型](#73-%E7%BC%96%E5%86%99%E6%B3%9B%E5%9E%8B)
+    - [7.4 泛型实现方法](#74-%E6%B3%9B%E5%9E%8B%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95)
+    - [7.5 extends通配符](#75-extends%E9%80%9A%E9%85%8D%E7%AC%A6)
+    - [7.6 super通配符](#76-super%E9%80%9A%E9%85%8D%E7%AC%A6)
+    - [7.7 泛型和反射](#77-%E6%B3%9B%E5%9E%8B%E5%92%8C%E5%8F%8D%E5%B0%84)
+  - [8. 集合](#8-%E9%9B%86%E5%90%88)
+    - [8.1 Java集合](#81-java%E9%9B%86%E5%90%88)
+    - [8.2 List](#82-list)
+    - [8.3 Map & HashMap](#83-map--hashmap)
+    - [8.4 EnumMap](#84-enummap)
+    - [8.5 TreeMap](#85-treemap)
+    - [8.6 Properties](#86-properties)
+    - [8.7 Set](#87-set)
+    - [8.8 Queue](#88-queue)
+    - [8.9 PriorityQueue](#89-priorityqueue)
+    - [8.10 Deque](#810-deque)
+    - [8.11 Stack](#811-stack)
+    - [8.12 Iterator](#812-iterator)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -76,6 +97,8 @@
 Java教程：[廖雪峰Java教程](https://www.liaoxuefeng.com/wiki/1252599548343744)
 
 Eclipse教程：[Eclipse 教程](https://www.runoob.com/eclipse/eclipse-tutorial.html)
+
+JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit Version 15 API Specification](https://docs.oracle.com/en/java/javase/15/docs/api/index.html)
 
 写在前面：仅仅是关键性知识点的笔记，用来串联、查阅和回顾，并不系统也并不细节。
 
@@ -2591,13 +2614,864 @@ public class ArrayHelper {
 
 ### 8.1 Java集合
 
+数组的限制：
+- 数组初始化后大小不可变。
+- 数组只能按索引顺序存取，即随机存取。
+
+其他存储需求：
+- 可变大小
+- 保证无重复元素
+- 快速查找
+
+**java.util.Collection**：java标准库提供的集合类，定义在`java.util`包中，除`Map`所有其他集合类的根接口。`java.util`包主要提供了三种类型集合：
+- `List` 一种有序列表的集合。
+- `Set` 一种保证没有重复元素的集合。
+- `Map` 一种通过键值（key-value）查找的映射表集合。
+
+Java集合设计特点：
+- 接口和实现类分离，有序表接口`List`，实现`ArrayList` `LinkedList`。
+- 支持泛型。
+- 同一方式访问：迭代器(Iterator)。好处：无需知道集合内部元素的存储方式。
+
+Java集合历史久远，不应再使用的遗留类：
+- `Hashtable` 一种线程安全的`Map`实现
+- `Vector` 一种线程安全的`List`实现
+- `Stack` 基于`Vector`实现的LIFO的栈
+
+不应使用的遗留接口：
+- `Enumeration<E>`：已被`Iterator<E>`取代。
+
+`Collection`接口：
+```java
+public interface Collection<E> extends Iterable<E> {
+    int size();
+    boolean isEmpty();
+    boolean contains(Object o);
+    Iterator<E> iterator();
+    Object[] toArray();
+    <T> T[] toArray(T[] a);
+    default <T> T[] toArray(IntFunction<T[]> generator) {
+        return toArray(generator.apply(0));
+    }
+    boolean add(E e);
+    boolean remove(Object o);
+    boolean containsAll(Collection<?> c);
+    boolean addAll(Collection<? extends E> c);
+    boolean removeAll(Collection<?> c);
+    default boolean removeIf(Predicate<? super E> filter) { // 移除所有满足给定条件的元素
+        Objects.requireNonNull(filter);
+        boolean removed = false;
+        final Iterator<E> each = iterator();
+        while (each.hasNext()) {
+            if (filter.test(each.next())) {
+                each.remove();
+                removed = true;
+            }
+        }
+        return removed;
+    }
+    boolean retainAll(Collection<?> c);
+    void clear();
+    boolean equals(Object o);
+    int hashCode();
+    @Override
+    default Spliterator<E> spliterator() {
+        return Spliterators.spliterator(this, 0);
+    }
+    default Stream<E> stream() {
+        return StreamSupport.stream(spliterator(), false);
+    }
+    default Stream<E> parallelStream() {
+        return StreamSupport.stream(spliterator(), true);
+    }
+}
+```
+
+
+`Iterable`接口：
+```java
+public interface Iterable<T> {
+    Iterator<T> iterator(); // 迭代器
+    default void forEach(Consumer<? super T> action) { // 对所有元素执行传入的操作
+        Objects.requireNonNull(action);
+        for (T t : this) {
+            action.accept(t);
+        }
+    }
+    default Spliterator<T> spliterator() {
+        return Spliterators.spliteratorUnknownSize(iterator(), 0);
+    }
+}
+```
+
+### 8.2 List
+
+有序列表，可变数组实现`ArrayList`，和链表实现`LinkedList`，对比：
+
+||ArrayList|LinkedList|
+|:-:|:-:|:-:|
+|获取|快|从头查找，慢|
+|添加到末尾|快|快|
+|指定位置添加/删除|需要移动元素|不需要移动元素|
+|内存占用|小|较大|
+
+通常情况下，我们总是优先使用`ArrayList`。
+
+`List`接口：
+```java
+public interface List<E> extends Collection<E> {
+    // Query Operations
+    int size();
+    boolean isEmpty();
+    boolean contains(Object o);
+    Iterator<E> iterator(); // 迭代器
+    Object[] toArray(); // 返回列表元素构成的一个重新分配的数组
+    <T> T[] toArray(T[] a); // 返回特定类型，如果可以的话返回内置数组(如ArrayList)，否则新分配
+    // Modification Operations
+    boolean add(E e); // 添加元素到末尾
+    boolean remove(Object o); // 移除特定元素
+    // Bulk Modification Operations
+    boolean containsAll(Collection<?> c); // 包含集合中所有元素
+    boolean addAll(Collection<? extends E> c); // 添加集合所有元素到列表末尾，参数是自己的话未定义行为
+    boolean addAll(int index, Collection<? extends E> c); // 添加集合元素到index开始位置，从index开始所有元素向后移
+    boolean removeAll(Collection<?> c); // 移除当前列表中所有在集合中的元素
+    boolean retainAll(Collection<?> c); // 移除所有不在集合中的元素，保留集合中的元素
+    default void replaceAll(UnaryOperator<E> operator) {...} // 替换所有元素对给该元素应用传入的operator之后的结果
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    default void sort(Comparator<? super E> c) {...} // 使用传入的比较运算对数组元素进行s稳定排序(不会重排相等的元素)
+    void clear(); // 清空所有元素
+    // Comparison and hashing
+    boolean equals(Object o); // 和另一个List判等，同一位置元素相同、相同大小则等
+    int hashCode(); // 哈希值，根据列表所有元素哈希值求得
+    // Positional Access Operations
+    E get(int index); // 获取元素
+    E set(int index, E element); // 设置元素
+    void add(int index, E element); // 添加/插入元素到下标index处，index开始所有元素右移
+    E remove(int index); // 移除index处元素，后面元素左移
+    // Search Operations
+    int indexOf(Object o); // 第一个出现元素下标，没有则返回-1
+    int lastIndexOf(Object o); // 最后一个出现的该元素下标，没有则返回-1
+    // List Iterators
+    ListIterator<E> listIterator(); // 列表迭代器
+    ListIterator<E> listIterator(int index); // 从index开始的列表迭代器
+    // View
+    List<E> subList(int fromIndex, int toIndex); // 返回一个子列表，包括fromIndex，不包括toIndex，相等则返回空
+    @Override
+    default Spliterator<E> spliterator() {...}
+    @SuppressWarnings("unchecked")
+    static <E> List<E> of() {...} // 得到空列表
+    // other of method ... // 得到由传入的多个元素构成的列表，不接受null值
+    static <E> List<E> copyOf(Collection<? extends E> coll) {...} // 得到传入集合元素构成的不可修改的列表
+}
+```
+
+特点：
+- 允许添加重复元素。
+- 允许添加`null`元素。
+- 不支持`[]`取元素，仅有原生数组支持`[]`。不能运算符重载有点微妙。
+
+遍历：`String`列表为例
+- 经典`for`循环，对`ArrayList`来说是随机存取，但链表访问需要遍历，但要遍历修改还是得老老实实用。
+```java
+for (int i = 0; i < list.size(); i ++) {
+    String elem = list.get(i);
+    // ...
+}
+```
+- 范围`for`循环，通过迭代器实现，但不能修改元素
+```java
+for (String elem : list) {
+    // ...
+}
+```
+- 迭代器遍历，始终推荐使用迭代器
+```java
+Iterator<String> iter = list.iterator();
+while (iter.hasNext()) {
+    String elem = iter.next();
+    // ...
+}
+```
+
+常用方法解析：
+- `toArray()`只能返回`Object[]`少用。
+- `toArray(T[])`更为常用，填充传入的数组并返回，如果传入的数组元素不够，那么会重新分配并返回，如果超过了，剩余的会填`null`。一般都根据列表大小传：`Integer[] array = list.toArray(new Integer[list.size()]);`。
+- 所有会比较两个元素的操作都是调用`equals`方法判等。要正确使用查找相关的方法，就必须正确重写`equals`方法。
+
+
+如何正确覆写`equals`方法：
+- 自反性(Reflexive)：非`null`的`x`来说，`x.equals(x)`一定返回`true`
+- 对称性(Symmetric)：非`null`的`x`和`y`，`x.equals(y)`结果一定和`y.equals(x)`相同
+- 传递性(Transitive)：非`null`的`x`、`y`、`z`，如果`x.equals(y)==true`，`y.euqals(z) == true`，那么`y.equals(z)`一定为`true`
+- 一致性(Consistent)：非`null`的`x`和`y`，只要`x`和`y`状态不变，则`x.euqals(y)`总是一致地返回`true`或者`false`，就是它不能薛定谔，需要具有确定性。
+- 对`null`的比较：`x.equals(null)`一定返回`false`
+
+
+### 8.3 Map & HashMap
+
+`Map`即键值（key-value）映射表，高效通过`key`查找`value`。
+
+`Map`接口：
+```java
+public interface Map<K, V> {
+    // Query Operations
+    int size();
+    boolean isEmpty();
+    boolean containsKey(Object key);
+    boolean containsValue(Object value);
+    V get(Object key);
+
+    // Modification Operations
+    V put(K key, V value);
+    V remove(Object key);
+    // Bulk Operations
+    void putAll(Map<? extends K, ? extends V> m);
+    void clear();
+    // Views
+    Set<K> keySet();
+    Collection<V> values();
+    Set<Map.Entry<K, V>> entrySet();
+    interface Entry<K, V> {
+        K getKey();
+        V getValue();
+        V setValue(V value);
+        boolean equals(Object o);
+        int hashCode();
+        public static <K extends Comparable<? super K>, V> Comparator<Map.Entry<K, V>> comparingByKey() {
+            return (Comparator<Map.Entry<K, V>> & Serializable)
+                (c1, c2) -> c1.getKey().compareTo(c2.getKey());
+        }
+        public static <K, V extends Comparable<? super V>> Comparator<Map.Entry<K, V>> comparingByValue() {
+            return (Comparator<Map.Entry<K, V>> & Serializable)
+                (c1, c2) -> c1.getValue().compareTo(c2.getValue());
+        }
+        public static <K, V> Comparator<Map.Entry<K, V>> comparingByKey(Comparator<? super K> cmp) {
+            Objects.requireNonNull(cmp);
+            return (Comparator<Map.Entry<K, V>> & Serializable)
+                (c1, c2) -> cmp.compare(c1.getKey(), c2.getKey());
+        }
+        public static <K, V> Comparator<Map.Entry<K, V>> comparingByValue(Comparator<? super V> cmp) {
+            Objects.requireNonNull(cmp);
+            return (Comparator<Map.Entry<K, V>> & Serializable)
+                (c1, c2) -> cmp.compare(c1.getValue(), c2.getValue());
+        }
+    }
+
+    // Comparison and hashing
+    boolean equals(Object o);
+    int hashCode();
+
+    // Defaultable methods
+    default V getOrDefault(Object key, V defaultValue) {
+        V v;
+        return (((v = get(key)) != null) || containsKey(key))
+            ? v
+            : defaultValue;
+    }
+    default void forEach(BiConsumer<? super K, ? super V> action) {
+        Objects.requireNonNull(action);
+        for (Map.Entry<K, V> entry : entrySet()) {
+            K k;
+            V v;
+            try {
+                k = entry.getKey();
+                v = entry.getValue();
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+            action.accept(k, v);
+        }
+    }
+    default void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+        Objects.requireNonNull(function);
+        for (Map.Entry<K, V> entry : entrySet()) {
+            K k;
+            V v;
+            try {
+                k = entry.getKey();
+                v = entry.getValue();
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+
+            // ise thrown from function is not a cme.
+            v = function.apply(k, v);
+
+            try {
+                entry.setValue(v);
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+        }
+    }
+    default V putIfAbsent(K key, V value) {
+        V v = get(key);
+        if (v == null) {
+            v = put(key, value);
+        }
+
+        return v;
+    }
+    default boolean remove(Object key, Object value) {
+        Object curValue = get(key);
+        if (!Objects.equals(curValue, value) ||
+            (curValue == null && !containsKey(key))) {
+            return false;
+        }
+        remove(key);
+        return true;
+    }
+    default boolean replace(K key, V oldValue, V newValue) {
+        Object curValue = get(key);
+        if (!Objects.equals(curValue, oldValue) ||
+            (curValue == null && !containsKey(key))) {
+            return false;
+        }
+        put(key, newValue);
+        return true;
+    }
+    default V replace(K key, V value) {
+        V curValue;
+        if (((curValue = get(key)) != null) || containsKey(key)) {
+            curValue = put(key, value);
+        }
+        return curValue;
+    }
+    default V computeIfAbsent(K key,
+            Function<? super K, ? extends V> mappingFunction) {
+        Objects.requireNonNull(mappingFunction);
+        V v;
+        if ((v = get(key)) == null) {
+            V newValue;
+            if ((newValue = mappingFunction.apply(key)) != null) {
+                put(key, newValue);
+                return newValue;
+            }
+        }
+
+        return v;
+    }
+    default V computeIfPresent(K key,
+            BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        V oldValue;
+        if ((oldValue = get(key)) != null) {
+            V newValue = remappingFunction.apply(key, oldValue);
+            if (newValue != null) {
+                put(key, newValue);
+                return newValue;
+            } else {
+                remove(key);
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+    default V compute(K key,
+            BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        V oldValue = get(key);
+
+        V newValue = remappingFunction.apply(key, oldValue);
+        if (newValue == null) {
+            // delete mapping
+            if (oldValue != null || containsKey(key)) {
+                // something to remove
+                remove(key);
+                return null;
+            } else {
+                // nothing to do. Leave things as they were.
+                return null;
+            }
+        } else {
+            // add or replace old mapping
+            put(key, newValue);
+            return newValue;
+        }
+    }
+    default V merge(K key, V value,
+            BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        Objects.requireNonNull(remappingFunction);
+        Objects.requireNonNull(value);
+        V oldValue = get(key);
+        V newValue = (oldValue == null) ? value :
+                   remappingFunction.apply(oldValue, value);
+        if (newValue == null) {
+            remove(key);
+        } else {
+            put(key, newValue);
+        }
+        return newValue;
+    }
+    @SuppressWarnings("unchecked")
+    static <K, V> Map<K, V> of() {
+        return (Map<K,V>) ImmutableCollections.EMPTY_MAP;
+    }
+    static <K, V> Map<K, V> of(K k1, V v1) {
+        return new ImmutableCollections.Map1<>(k1, v1);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                               K k6, V v6) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5,
+                                               k6, v6);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                               K k6, V v6, K k7, V v7) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5,
+                                               k6, v6, k7, v7);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                               K k6, V v6, K k7, V v7, K k8, V v8) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5,
+                                               k6, v6, k7, v7, k8, v8);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                               K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5,
+                                               k6, v6, k7, v7, k8, v8, k9, v9);
+    }
+    static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5,
+                               K k6, V v6, K k7, V v7, K k8, V v8, K k9, V v9, K k10, V v10) {
+        return new ImmutableCollections.MapN<>(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5,
+                                               k6, v6, k7, v7, k8, v8, k9, v9, k10, v10);
+    }
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    static <K, V> Map<K, V> ofEntries(Entry<? extends K, ? extends V>... entries) {
+        if (entries.length == 0) { // implicit null check of entries array
+            @SuppressWarnings("unchecked")
+            var map = (Map<K,V>) ImmutableCollections.EMPTY_MAP;
+            return map;
+        } else if (entries.length == 1) {
+            // implicit null check of the array slot
+            return new ImmutableCollections.Map1<>(entries[0].getKey(),
+                    entries[0].getValue());
+        } else {
+            Object[] kva = new Object[entries.length << 1];
+            int a = 0;
+            for (Entry<? extends K, ? extends V> entry : entries) {
+                // implicit null checks of each array slot
+                kva[a++] = entry.getKey();
+                kva[a++] = entry.getValue();
+            }
+            return new ImmutableCollections.MapN<>(kva);
+        }
+    }
+    static <K, V> Entry<K, V> entry(K k, V v) {
+        // KeyValueHolder checks for nulls
+        return new KeyValueHolder<>(k, v);
+    }
+    @SuppressWarnings({"rawtypes","unchecked"})
+    static <K, V> Map<K, V> copyOf(Map<? extends K, ? extends V> map) {
+        if (map instanceof ImmutableCollections.AbstractImmutableMap) {
+            return (Map<K,V>)map;
+        } else {
+            return (Map<K,V>)Map.ofEntries(map.entrySet().toArray(new Entry[0]));
+        }
+    }
+}
+```
+
+最常用的实现类是`HashMap`，采用**数组+链表+红黑树**实现，也就是分离链表法(**拉链法**)实现的**哈希表**。简而言之就是用一个大数组存元素，每个不同元素都有一个特定的哈希值通过某种计算之后得到一个数组下标，然后这个元素就存在这个下标的位置，如果哈希冲突了(两个不同元素哈希值相同或者通过哈希值计算得到的下标相同)就用链表将下标相同的键值对链起来，如果链表长度超过8，则将链表转换为红黑树以提高查找效率。哈希表分配了数组之后数组大小是确定的，因为需要利用这个大小和哈希值来计算索引，在往哈希表中添加元素的过程中，必然会导致哈希冲突越来越频繁，当达到某一个阈值时基于效率考虑需要对哈希表进行扩容，重新分配更大的数组，并且根据哈希值重算所有元素的下标（再哈希，rehash）。扩容时机选择、哈希函数的编写、哈希冲突的解决方案都会影响哈希表的性能。
+
+常用方法：`get` `put` `remove` `containsKey` `keySet` `entrySet`
+
+遍历：
+- `for each`循环遍历`keySet`返回的集合
+- `for each`遍历`entrySet()`集合，同时遍历`key`和`value`
+
+特点：
+- 哈希表特性：不保证按插入顺序存储，也无法对元素排序，最佳`O(1)`的访问、插入、删除、按key查找时间复杂度。
+- 使用`key`的`hashCode()`作为哈希值，`key`的值作为发生哈希冲突时辅助判断的方法。
+
+正确使用`Map`必须保证：
+- 判断`key`相等依然是通过`equals`方法，所以要正确覆写`key`类型的`equals`方法。
+- 作为`key`还需要正确覆写`int hashCode()`方法以获取哈希值。要求：
+    - 如果对象相等(`equals()`返回`true`)，那么哈希值必须相等。必须满足以保证正确性。
+    - 两个对象不相等，尽量保证两个对象的`hashCode()`不相等。尽量保证以减少哈希冲突，提高查找效率。
+- 编写`equals(`)和`hashCode()`遵循的原则是: `equals()`用到的用于比较的每一个字段，都必须在`hashCode()`中用于计算，`equals()`中没有使用到的字段，绝不可放在`hashCode()`中计算。
+- `对于value`对象则没有任何要求。
+
+`equals`和`hashCode`编写实例：
+```java
+class Person {
+	private String name;
+	private int age;
+	
+	public Person(String name, int age) {
+		this.name = name;
+		this.age = age;
+	}
+	public boolean equals(Person other) {
+		return name.equals(other.name) && age == other.age;
+	}
+	public int hashCode() {
+		return name.hashCode() * 31 + age;
+	}
+}
+```
+`hashCode`需要用到每一个参与`equals`比较的字段，一种常见方法是：迭代逐次将每一轮的哈希值乘以一个素数并加上下一个字段的哈希值，直到所有字段都参与计算。
+
+上述`Person.hashCode`其实还有一点问题，如果`name`为`null`那么就直接`NullPointerException`了，所以经常借助`Objects.hash()`来计算哈希值。它的实现是差不多一样的逻辑：
+```java
+public final class Objects {
+    ublic static int hash(Object... values) {
+        return Arrays.hashCode(values);
+    }
+}
+
+public class Arrays {
+    public static int hashCode(Object a[]) {
+        if (a == null)
+            return 0;
+
+        int result = 1;
+
+        for (Object element : a)
+            result = 31 * result + (element == null ? 0 : element.hashCode());
+
+        return result;
+    }
+}
+```
+
+
+最一般的通过哈希值计算下标的方式就是直接取低位或者做取余操作。取低位操作计算量小，且实现时默认尺寸是16，每次扩容都是扩容为原先的2倍，`HashMap`就是采用取低位的方式。
+```java
+int index = key.hashCode() & 0xf; // 数组大小默认是16，直接取低4位
+int index = key.hashCode() % arraySize; // 计算量相对取低位来说就大了一点
+```
+``HashMap``内部其实使用提供的哈希值又做了一次计算然后才用来计算下标。在低16位加入了高16位的扰动(将高16位异或到了低16位)，因为直接取低位的方式会导致元素不多数组不大时高位用不到，加入高位扰动后可以进一步将低哈希冲突的概率。
+```java
+static final int hash(Object key) {
+    int h;
+    return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+}
+```
+
+TODO：详细分析`HashMap`实现。
+
+
+### 8.4 EnumMap
+
+如果`Map`的`key`是`enum`的话，还可以使用`java.util.EnumMap`，可以在内部以一个非常紧凑的数组存储`value`，并不需要计算`hashCode()`，不但效率最高，而且没有额外的空间浪费。当然其实如果是其他语言可能直接用`enum`转整数作为下标，`new`一个数组直接存其实就行了。
+
+定义：
+```java
+public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> implements java.io.Serializable, Cloneable
+```
+
+使用时直接使用`Map<K,V>`接口来使用即可。和使用`HashMap`没有任何区别。
+
+### 8.5 TreeMap
+
+`HashMap`以哈希表来实现就决定了它的元素是无序的，当我们需要`Map`的元素有序时可以使用`SortedMap`接口以及实现类`TreeMap`。
+
+对应于C++的容器来说`TreeMap`就对应于`std::map`，而`HashMap`则对应于`std::unordered_map`。
+
+派生关系：
+```
+Map
+|__HashMap
+|__SortedMap
+    |__TreeMap
+```
+
+`SortedMap`保证遍历时以`key`的顺序进行排序，具体的排序规则则由传入的`Comparable`接口决定。对于没有实现`Comparable`的接口的`key`，则需要在构造`TreeMap`时传入一个自定义的排序算法。相关方法：
+```java
+public class TreeMap<K,V>
+    extends AbstractMap<K,V>
+    implements NavigableMap<K,V>, Cloneable, java.io.Serializable
+{
+    private final Comparator<? super K> comparator;
+    public TreeMap() {
+        comparator = null;
+    }
+    public TreeMap(Comparator<? super K> comparator) {
+        this.comparator = comparator;
+    }
+    @SuppressWarnings("unchecked")
+    final int compare(Object k1, Object k2) {
+        return comparator==null ? ((Comparable<? super K>)k1).compareTo((K)k2)
+            : comparator.compare((K)k1, (K)k2);
+    }
+}
+```
+当调用`key`的比较方法`compare`时，首先使用构造时传入的`Comparator`对象，如果构造时没有传则为`null`，则使用`key`实现的`Comparable`接口的`compareTo`方法比较。
+
+如果使用`Comparator`对象的，需要针对这个类编写新的类实现`Comparator`接口，`Comparator`需要能够读取需要用于比较的`key`的成员，就必须实现相关的`getter`方法，直接在`key`中实现`Comparable`接口相对来说更为简单一些。如果多个`TreeMap`需要多种方式比较可以通过实现多个`Comparator`接口来做到。
+
+实现`Comparable.compareTo`或者`Comparator.compare`接口时，都是如果小于则返回负数，通常是`-1`，相等返回`0`，大于返回正数，通常是`1`。实现时应该按照规范，相等时必须返回`0`，不然查找时就查找不到了。注意使用`TreeMap`就不强制要求实现`equals`和`hashCode`方法了。
+
+`TreeMap`是按照升序排列的，也就是遍历得到的结果一定满足前者与后者比较结果为负。需要按照不同规则排序的话，可以实现不同的比较接口。
+
+看一下`SortedMap`接口提供了哪些特有的方法，并且其实在`SortedMap`和`TreeMap`之间还有一层`NavigableMap`。主要是子`Map`和各种查找操作。
+```java
+public interface SortedMap<K,V> extends Map<K,V> {
+    Comparator<? super K> comparator(); // 比较操作
+    SortedMap<K,V> subMap(K fromKey, K toKey); // from inclusive, to exclusive
+    SortedMap<K,V> headMap(K toKey);
+    SortedMap<K,V> tailMap(K fromKey);
+    K firstKey();
+    K lastKey();
+    Set<K> keySet(); // key升序集合
+    Collection<V> values(); // 值的集合
+    Set<Map.Entry<K, V>> entrySet(); // key升序排列的键值对集合
+}
+
+public interface NavigableMap<K,V> extends SortedMap<K,V> {
+    Map.Entry<K,V> lowerEntry(K key); // 得到最大的key小于给定的key的键值对，或者没有这样的key则返回null
+    K lowerKey(K key); // 同上一个不过返回的是key
+    Map.Entry<K,V> floorEntry(K key); // 得到最大的key小于或等于给定key的键值对，没有返回null
+    K floorKey(K key); // // 得到最大的小于或等于给定key的key
+    Map.Entry<K,V> ceilingEntry(K key); // 最小的大于等于给定key的键值对
+    K ceilingKey(K key); // 最小的大于等于给定key的key
+    Map.Entry<K,V> higherEntry(K key); // 最小的大于给定key的键值对
+    K higherKey(K key); // 最小的大于给定key的key
+    Map.Entry<K,V> firstEntry(); // 最小key，也就是第一个key，空Map则返回null
+    Map.Entry<K,V> lastEntry(); // 最大key，最后一个key，空Map返回null
+    Map.Entry<K,V> pollFirstEntry(); // 移除最小key对应元素，返回该键值对，空Map返回null
+    Map.Entry<K,V> pollLastEntry(); // 移除最大key对应元素
+    NavigableMap<K,V> descendingMap(); // 返回逆序Map，修改元素会反应到原始Map
+    NavigableSet<K> navigableKeySet(); // key的有序集合，升序排列
+    NavigableSet<K> descendingKeySet(); // key的降序集合，
+    NavigableMap<K,V> subMap(K fromKey, boolean fromInclusive,
+                             K toKey,   boolean toInclusive); // 子Map，见名知意
+    NavigableMap<K,V> headMap(K toKey, boolean inclusive); // 小于或等于给定key元素构成的Map
+    NavigableMap<K,V> tailMap(K fromKey, boolean inclusive); // 大于或等于给定key元素构成的Map
+    SortedMap<K,V> subMap(K fromKey, K toKey); // subMap(fromKey, true, toKey, false)
+    SortedMap<K,V> headMap(K toKey); // headMap(toKey, false)
+    SortedMap<K,V> tailMap(K fromKey); // tailMap(fromKey, true)
+}
+```
+
+### 8.6 Properties
+
+编写应用程序时，通常要读写配置文件，配置文件通常来说`Key-Value`是`String-String`类型的，因此可以用`Map<String, String>`来表示。如：
+```
+account=32767
+username=tikot
+```
+java集合库提供了一个`Properties`来表示一组配置，由于历史遗留原因，`Properties`是从`Hashtable`派生的，但只需要用到`Properties`本身的方法。
+
+Java默认配置文件以`.properties`为扩展名，以`#`为注释，如：
+```
+# account.properties
+account=32767
+username=tikot
+```
+
+**读写修改配置文件**：
+```java
+public class Main {
+	public static void main(String[] args) throws Exception {
+		String file = "account.properties";
+		Properties props = new Properties();
+		props.load(new java.io.FileInputStream(file));
+		System.out.println(props.getProperty("account"));
+		System.out.println(props.getProperty("username"));
+		props.setProperty("locatoin", "mars");
+		props.store(new FileOutputStream(file), "this is comment");
+	}
+}
+```
+
+相关方法：
+- `load`从流读取配置
+- `store`将配置写入流
+- `getProperty()` `setProperty()` 获取和修改配置
+
+
+总结：
+- Java集合库提供的`Properties`用于读写配置文件`.properties`。`.properties`文件可以使用`UTF-8`编码
+- 可以从文件系统、`classpath`或其他任何地方读取`.properties`文件。
+- 读写时调用`getProperty()`、`setProperty()`方法，不要使用从基类重写的方法`put` `set`。
+- `FileInputStream`表示字节流，使用表示字符流的`FileReader`重载版本指定字节编码可以更好的处理文件编码。
+
+### 8.7 Set
+
+如果只需要存储不重复的`key`，不需要存储`value`，则可以使用`Set`。定义：
+```java
+public interface Set<E> extends Collection<E> {
+    // Query Operations
+    int size();
+    boolean isEmpty();
+    boolean contains(Object o);
+    Iterator<E> iterator();
+    Object[] toArray(); // 转数组，元素按照迭代器顺序
+    <T> T[] toArray(T[] a);
+    // Modification Operations
+    boolean add(E e);
+    boolean remove(Object o);
+    // Bulk Operations
+    boolean containsAll(Collection<?> c);
+    boolean addAll(Collection<? extends E> c);
+    boolean retainAll(Collection<?> c);
+    boolean removeAll(Collection<?> c);
+    void clear();
+    // Comparison and hashing
+    boolean equals(Object o);
+    int hashCode();
+    @Override
+    default Spliterator<E> spliterator() {
+        return Spliterators.spliterator(this, Spliterator.DISTINCT);
+    }
+    @SuppressWarnings("unchecked")
+    static <E> Set<E> of() {
+        return (Set<E>) ImmutableCollections.EMPTY_SET;
+    }
+    // ... 多个参数和可变参数的of
+    // 由Collection创建Set
+    @SuppressWarnings("unchecked")
+    static <E> Set<E> copyOf(Collection<? extends E> coll) {
+        if (coll instanceof ImmutableCollections.AbstractImmutableSet) {
+            return (Set<E>)coll;
+        } else {
+            return (Set<E>)Set.of(new HashSet<>(coll).toArray());
+        }
+    }
+}
+```
+
+除了从`Collection`继承而来的方法外，主要操作为：
+- `add` `remove` 添加移除
+- `contains` `isEmpty`是否包含特定元素、判空
+
+`Set`就相当于只存储`key`，不存储`value`的`Map`，经常使用`Set`来**去重**。
+
+实现：
+- `HashSet`无序，类似于`HashMap`是哈希表实现，所以需要`key`正确实现`equals`和`hashCode`方法。
+- `TreeSet`有序，实现了`SortedSet`接口，同`TreeMap`红黑树实现，需要构造时传入`key`的`Comparator`或者`key`正确实现`Comparable`接口。
+
+### 8.8 Queue
+
+队列，即先进先出的有序表，定义：
+```java
+public interface Queue<E> extends Collection<E> {
+    boolean add(E e); // 入队
+    boolean offer(E e); // 入队
+    E remove(); // 出队
+    E poll(); // 出队
+    E element(); // 队首元素
+    E peek(); // 队首元素
+}
+```
+相同操作的不同方法的区别仅在于队满或队空时的行为是抛异常还是仅返回一个`null`或`false`，`add` `remove` `element`会抛异常，`offer`队满(达到了容量限制的大小)时返回`false`，`poll`和`peek`队空时返回`null`。
+
+注意应该避免把`null`添加到队列，不然`peek` `poll`返回`null`就无法判断是队空了还是返回了一个`null`元素。
+
+可以注意到`LinkedList`实现了`Queue`接口，并且中间还有一层`Deque`。
+
+### 8.9 PriorityQueue
+
+即优先队列，`PriorityQueue`实现了`Queue`接口，对`PriorityQueue`调用`remove`或者`poll`，出队时总是优先级最高的元素。
+
+我们需要提供比较接口：实现`Comparable`接口或者传入`Comparator`对象，以便能够通过比较确定优先级。
+
+`PriorityQueue`是实现类，使用时直接使用`new`，直接使用实现的`Queue`接口的方法即可。
+
+优先队列通常用堆实现，入队出队提供`O(logn)`的平均时间复杂度，`TreeMap`可以提供优先队列能够做到的所有操作，只是应该会占用更多空间，特定场景下还是可以使用`PriorityQueue`。
+
+
+### 8.10 Deque
+
+双端队列，也就是同时提供了堆和栈操作的队列，即同时提供队头队尾插入移除的操作。
+|操作\接口|`Queue`|`Deque`|
+|:-|:-:|:-:|
+|添加元素到队尾	|`add(E e)` / `offer(E e)`|`addLast(E e)` / `offerLast(E e)`|
+|取队首元素并删除|`E remove()` / `E poll()`|`E removeFirst()` / `E pollFirst()`|
+|取队首元素但不删除|`E element()` / `E peek()`|	`E getFirst()` / `E peekFirst()`|
+|添加元素到队首|无|	`addFirst(E e)` / `offerFirst(E e)`|
+|取队尾元素并删除|无|	`E removeLast()` / `E pollLast()`|
+|取队尾元素但不删除|无|	`E getLast()` / `E peekLast()`|
+
+定义：`public interface Deque<E> extends Queue<E>`
+
+`Deque`是从`Qeuee`派生的，所以其实也可以用`Queue`的`offer`/`poll`方法，其实就等同与`offerLast`/`pollFirst()`，但如果使用`Deque`接口，还是最好调用它自己的方法，这样更能明确表明自己在做什么事情。
+
+实现类：
+- `ArrayDeque`，数组实现。
+- `LinkedList`，链表。
+
+虽然像`LinkedList`这种实现了`List` `Queue` `Deque`等多个接口，但一般来说我们在使用时总是通过特定的接口来使用它，而不是直接持有一个`LinkedList`，因为持有接口说明代码的抽象层次更高，而接口本身定义的方法代表了特定的用途。
+
+**面向抽象编程**：尽量持有接口，而不是具体的实现类。
+
+### 8.11 Stack
+
+栈，即后进先出表，定义：
+```java
+public class Stack<E> extends Vector<E> {
+    public Stack() {
+    }
+    public E push(E item) { // 压栈
+        addElement(item);
+
+        return item;
+    }
+    public synchronized E pop() { // 出栈
+        E       obj;
+        int     len = size();
+
+        obj = peek();
+        removeElementAt(len - 1);
+
+        return obj;
+    }
+    public synchronized E peek() { // 取栈顶元素
+        int     len = size();
+
+        if (len == 0)
+            throw new EmptyStackException();
+        return elementAt(len - 1);
+    }
+    public boolean empty() { // 判空
+        return size() == 0;
+    }
+    public synchronized int search(Object o) { // 到栈顶距离，栈顶返回1
+        int i = lastIndexOf(o);
+
+        if (i >= 0) {
+            return size() - i;
+        }
+        return -1;
+    }
+    @java.io.Serial
+    private static final long serialVersionUID = 1224463164541339165L;
+}
+```
+
+可以看到`Stack`已经是实现类了，而不是接口，派生自`Vector`。
+
+`Vector`和`ArrayList`一样，都是`List`的动态数组实现，不同于`ArrayList`的是，它支持多线程的同步，同一时刻只能有一个线程能够写`Vector`，也就是`Vector`是线程安全的，但实现同步需要花费更多花费，所以性能不如`ArrayList`。
+
+为什么`Stack`是实现类，而不是接口呢？前面其实也说过，`Vector`和`Stack`都是**历史遗留**的不再推荐使用的类型。因为已经有了名为`Stack`的类，基于兼容性考虑，没有再定义接口。日常使用的话双端队列`Deque`拥有所有栈该有的功能。
+
+### 8.12 Iterator
+
 
 
 
 
 
 ## TODO
-- 模块详解
+- 包与模块详解
 - 集合
 - IO
 - 日期与时间
