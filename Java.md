@@ -2620,6 +2620,9 @@ public class ArrayHelper {
 
 集合大部分时候应该会是使用最多的类型，因为任何东西都需要存储、管理，元素多了的时候就需要使用集合来存储。其中各式各样的数据结构服务于各种不同的使用场景：存储、查找、遍历、增删修改元素等操作的不同侧重。
 
+先上Java集合类框架：
+![java集合类框架](Images/Java_collections.jpg)
+
 ### 8.1 Java集合
 
 数组的限制：
@@ -3675,15 +3678,83 @@ public static <T> Set<T> synchronizedSet(Set<T> s)
 `Collections`还有很多其他方法。
 
 
-## 9.0 IO
+## 9. IO
 
 输入输出：
 - 输入，即是从外部读入数据到内存。例如从磁盘、网络、用户输入等。读到内存之后无非就是用字节数组`byte[]`或者字符数组`char[]`表示。
 - 输出，将数据从内存输出到外部。例如输出到磁盘、网络、屏幕等。输出也就是将`byte[]`或者`char[]`写到文件或者其他位置。
+- `InputStream` / `OutputStream`是以字节为最小传输单位的输入输出流，也称字节流。
+- `Reader` / `Writer`是以字符`char`为最小传输单位的输入输出流，也成字符流。本质上`Reader`和`Writer`就是能够自动编码解码的字节流。`Reader`读取是将字节流解码转换为字符流，`Writer`将数据写入前会先将字符流编码为字节流。
+- 输入输出流是单向流动的。
 
+同步IO与异步IO：
+- 读写IO是代码必须等待数据返回后才继续执行后续代码，优点是代码简单，缺点是CPU效率低（因为CPU速度远高于IO速度）。
+- 异步IO是指，读写IO时仅发送请求，然后立刻执行后续代码，优点是CPU执行效率高，缺点是代码编写复杂。
 
+Java标准库提供了`java.io`同步IO以及`java.nio`异步IO。上述流相关的类都是同步IO的抽象类。这里只讨论同步IO。
 
+## 9.1 File
 
+Java用`java.io.File`来操作文件和目录，构建一个`File`对象需要传入路径。路径可以是绝对或者相对路径，或者绝对路径中使用`..`表示的相对路径。其中路径分隔符，windows中是`\\`，Linux中是`/`。
+
+三种路径：
+- `getPath` 传入路径
+- `getAbsolutePath` 绝对路径，传入相对路径中的`.`或者`..`不会被展开，而是直接拼接到当前目录上。
+- `getCanonicalPath` 规范路径，展开传入相对路径中的`.`或者`..`，得到文件的绝对路径。
+
+因为Windows和Linux路径分隔符不同，在`File`中用静态字段`File.separator`字符串表示。
+
+`File`既可以表示文件，也可以表示目录，构建`File`时，即使传入路径不存在，也不会出错，调用`File`对象某些方法时才会真正进行磁盘操作。
+
+`File`属性
+```java
+public boolean isFile()
+public boolean isDirectory()
+public boolean isAbsolute()
+public boolean isHidden()
+```
+
+文件读写权限和大小：
+```java
+public boolean canRead()
+public boolean canWrite()
+public boolean canExecute()
+public boolean exists()
+public long length() // 文件大小，如果是目录，返回值不确定
+```
+对目录而言，是否能够执行代表能够列出它包含的文件和子目录。
+
+创建删除文件：创建文件是先检查文件，如果不存在则创建一个空文件，检查和创建对文件系统来说是原子操作。
+```java
+public boolean createNewFile() throws IOException
+public boolean delete()
+```
+
+临时文件：使用`createTempFile`创建临时对象，如果调用了`deleteOnExit`则会在JVM退出时自动删除。
+```java
+public static File createTempFile(String prefix, String suffix) throws IOException
+public static File createTempFile(String prefix, String suffix, File directory)
+public void deleteOnExit()
+```
+
+遍历文件和目录：
+```java
+public String[] list()
+public String[] list(FilenameFilter filter)
+public File[] listFiles()
+public File[] listFiles(FilenameFilter filter)
+public File[] listFiles(FileFilter filter)
+public static File[] listRoots() // 列出文件系统所有根目录
+```
+
+目录操作：
+```java
+public boolean mkdir() // 只能创建最后一级目录
+public boolean mkdirs() // 如果中间目录不存在也会创建
+public boolean delete() // 目录为空才能成功
+```
+
+java标准库还提供了`Path`对象，位于`java.nio.file`包，和`File`对象类似，但操作更为简单。如果需要对目录进行复杂的拼接遍历等操作，使用`Path`对象更为方便。
 
 
 
