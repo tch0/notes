@@ -87,6 +87,8 @@
     - [8.10 Deque](#810-deque)
     - [8.11 Stack](#811-stack)
     - [8.12 Iterator](#812-iterator)
+    - [8.13 Collections](#813-collections)
+  - [9.0 IO](#90-io)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -479,7 +481,7 @@ class Person {
 - `default`方法：接口中也可以有实现了的方法，此时就需要加`default`关键字，当然没有字段可以给它访问。目的是实现没必要在所有子类中重写的接口，派生类中可以不进行重写。所以其实接口和类的区别就只有是否有字段和构造这一点是吗？
 - 接口中所有方法默认`public abstract`，不需要显示写出。
 - 接口可以继承另一个接口，同样使用`extends`。
-- 最后接口这个词，正常来说应该是表示纯虚类，上层的象出来的和实现类相对的没有数据的抽象类。但工作里面感觉好多人都用接口来表示函数，比如在这个类里面加一个接口这种说法。最后Java里面有人说函数吗？都是说方法吗？字段会说成成员吗？说实话从C++切换过来什么都还好还是有点不适应名词变了。
+- 最后接口这个词，正常来说应该是表示纯虚类，上层的抽象出来的和实现类相对的没有数据的抽象类。但工作里面感觉好多人都用接口来表示函数，比如在这个类里面加一个接口这种说法。最后Java里面有人说函数吗？都是说方法吗？字段会说成成员吗？说实话从C++切换过来什么都还好还是有点不适应名词变了。
 
 ### 2.7 静态字段与方法
 
@@ -3470,6 +3472,216 @@ public class Stack<E> extends Vector<E> {
 为什么`Stack`是实现类，而不是接口呢？前面其实也说过，`Vector`和`Stack`都是**历史遗留**的不再推荐使用的类型。因为已经有了名为`Stack`的类，基于兼容性考虑，没有再定义接口。日常使用的话双端队列`Deque`拥有所有栈该有的功能。
 
 ### 8.12 Iterator
+
+Java的集合类可以使用`for each`循环：
+```java
+List<String> list = new ArrayList("hello", "world");
+for (String s : list) {
+    System.out.println(s);
+}
+```
+但是实际上，java编译器并不知道如何遍历`List`，能够编译通过的原因是编译器把范围`for`循环改成了普通的`for`循环：
+```java
+for (Interator<String> it = list.iterator(); it.hasNext(); ) {
+    System.out.println(it.next());
+}
+```
+
+使用迭代器的好处在于，调用方总是可以通过统一的方式遍历所有集合，不必关心他们的内部存储结构。如果关心存储结构，那么遍历`ArrayList`就要使用下标，遍历链表就要使用表节点（因为使用下标会有效率问题）。但是使用迭代器可以将这两种方式统一起来，统一形式并且达到最好的效率，只是需要由实现类来实现迭代器的高效遍历访问。
+
+先看一下`Interator`的定义：
+```java
+public interface Iterator<E> {
+    boolean hasNext(); // 是否存在下一个元素
+    E next(); // 得到下一个元素，如果没有则抛出NoSuchElementException
+    // 移除上一个next返回的元素，每次next只能调用一次remove，不支持该操作抛 
+    // UnsupportedOperationException，调用前没有调用next抛IllegalStateException
+    default void remove() { 
+        throw new UnsupportedOperationException("remove");
+    }
+    // 对每一个指定元素执行给定操作，直到结尾，迭代过程中修改元素会导致未定义行为，除非实现类定义了对应的并发策略
+    default void forEachRemaining(Consumer<? super E> action) {
+        Objects.requireNonNull(action);
+        while (hasNext())
+            action.accept(next());
+    }
+}
+```
+非常简单，只需要实现`hasNext`和`next`方法，就可以支持遍历了，如果要支持删除元素，还要实现`remove`，最后的`forEachRemaining`是给`for each`循环来用的，如果不需要支持并发通常不需要再在实现类重写。
+
+实现一个简单的可变数组类作为例子：
+```java
+public class MyArray<T> implements Iterable<T>{
+	private Object[] arr = null;
+	private int size = 0;
+	public MyArray(int capacity) {
+		if (capacity > 0) {
+			arr = new Object[capacity];
+		}
+		else {
+			arr = new Object[8];
+		}
+		size = 0;
+	}
+	public MyArray() {
+		arr = new Object[8];
+		size = 0;
+	}
+	public boolean isEmpty() {
+		return size == 0;
+	}
+	public T get(int index) {
+		checkIndex(index);
+		return (T)arr[index];
+	}
+	public void set(int index, T obj) {
+		checkIndex(index);
+		arr[index] = obj;
+	}
+	public void add(T obj) {
+		if (size == arr.length) {
+			grow();
+		}
+		arr[size++] = obj;
+	}
+	public T removeAt(int index) {
+		checkIndex(index);
+		T elem = (T)arr[index];
+		for (int i = index+1; i < size; i ++) {
+			arr[i-1] = arr[i];
+		}
+		arr[size-1] = null;
+		size--;
+		return elem;
+	}
+	private void grow() {
+		int oldCapacity = arr.length;
+		Object[] newArr = new Object[oldCapacity*2];
+		for (int i = 0; i < arr.length; i ++) {
+			newArr[i] = arr[i];
+		}
+		arr = newArr;
+	}
+	private void checkIndex(int index) {
+		if (index < 0 || index >= size) {
+			throw new IllegalArgumentException("Illegal index: " + index);
+		}
+	}
+	// TODO : other method about equals, hashCode, subArray, searching, sorting, etc.
+	
+	@Override
+	public Iterator<T> iterator() {
+		return new MyArrayIterator();
+	}
+	
+	private class MyArrayIterator implements Iterator<T> {
+		private int index = 0;
+		private boolean bNext = false;
+		public MyArrayIterator() {
+		}
+		@Override
+		public boolean hasNext() {
+			return index < MyArray.this.size;
+		}
+		@Override
+		public T next() {
+			bNext = true;
+			return (T)MyArray.this.get(index++);
+		}
+		@Override
+		public void remove() {
+			if (bNext == false) {
+				throw new IllegalStateException("there is no last next() called.");
+			}
+			MyArray.this.removeAt(--index);
+			bNext = false;
+		}
+	}
+}
+```
+这只是最小功能简化，正常实现比如`ArrayList`要达到可用需要考虑比较多的东西。此时就可以用`for each`循环或者迭代器去迭代这个类了：
+```java
+MyArray<String> arr = new MyArray(10);
+arr.add("hello");
+arr.add("world");
+arr.add("nice");
+arr.removeAt(1);
+for (Iterator<String> it = arr.iterator(); it.hasNext();) {
+	System.out.println("elem: " + it.next());
+	it.remove();
+}
+```
+
+总结：
+- `Iterator`是一种抽象的数据访问模型，好处有：
+- 对任何集合都采用一种访问模型。
+- 调用者对集合内部结构一无所知。
+- 集合类返回的`Iterator`对象知道该如何迭代。
+
+
+### 8.13 Collections
+
+`Collections`是JDK提供的工具类，同样位于`java.util`包中，注意末尾有s，区别于`Collection`接口。它提供了一系列静态方法，能更方便地操作各种集合。
+
+创建空集合：
+```java
+public static final <T> List<T> emptyList()
+public static final <K,V> Map<K,V> emptyMap()
+public static final <T> Set<T> emptySet()
+```
+- 注意返回的空集合是不可变集合，无法向其中添加或者删除元素。
+- 也可以使用各个集合接口提供的`of(T...)`方法来创建空集合，比如`List.of()`和`Collections.emptyList()`就是等价的。
+
+创建单元素集合：
+```java
+public static <T> List<T> singletonList(T o)
+public static <K,V> Map<K,V> singletonMap(K key, V value)
+public static <T> Set<T> singleton(T o) // 单元素Set
+```
+单元素集合也是不可变集合，不可添加元素，空集合和单元素集合都是有`Collections`的静态嵌套类实现。
+
+排序：
+```java
+public static <T extends Comparable<? super T>> void sort(List<T> list)
+public static <T> void sort(List<T> list, Comparator<? super T> c)
+```
+排序会改变元素，所以参数需要是可变的`List`。
+
+洗牌：
+```java
+public static void shuffle(List<?> list)
+public static void shuffle(List<?> list, Random rnd)
+```
+传入有序的`List`，随机打乱`List`内部元素顺序。
+
+不可变集合：
+
+`Collections`提供了方法将可变集合封装为不可变集合。都是有内部的静态嵌套类实现，实际上是通过创建代理对象，拦截掉所有修改方法实现。
+```java
+public static <T> List<T> unmodifiableList(List<? extends T> list)
+public static <K,V> Map<K,V> unmodifiableMap(Map<? extends K, ? extends V> m)
+public static <T> Set<T> unmodifiableSet(Set<? extends T> s)
+```
+然而改变原始的可变集合是可以进行修改的，并且会影响到封装后的不可变集合。
+
+线程安全集合：
+```java
+public static <T> List<T> synchronizedList(List<T> list)
+public static <K,V> Map<K,V> synchronizedMap(Map<K,V> m)
+public static <T> Set<T> synchronizedSet(Set<T> s)
+```
+上述方法将线程不安全的集合变为线程安全的集合，Java5开始，引入了更高效的并发集合类，上述的同步方法已经没什么用了。
+
+`Collections`还有很多其他方法。
+
+
+## 9.0 IO
+
+输入输出：
+- 输入，即是从外部读入数据到内存。例如从磁盘、网络、用户输入等。读到内存之后无非就是用字节数组`byte[]`或者字符数组`char[]`表示。
+- 输出，将数据从内存输出到外部。例如输出到磁盘、网络、屏幕等。输出也就是将`byte[]`或者`char[]`写到文件或者其他位置。
+
+
 
 
 
