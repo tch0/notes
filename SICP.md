@@ -13,7 +13,7 @@
 
 # 学习SICP的笔记
 
-![SICP](Images/SICP_book_cover.jpg)
+![SICP](Images/SICP_book_Cover.jpg)
 
 写在前面：
 

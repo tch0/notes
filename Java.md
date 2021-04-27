@@ -43,7 +43,7 @@
     - [3.8 BigDecimal](#38-bigdecimal)
     - [3.9 常用工具类](#39-%E5%B8%B8%E7%94%A8%E5%B7%A5%E5%85%B7%E7%B1%BB)
     - [3.10 BigInteger实现分析](#310-biginteger%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90)
-  - [4. 异常处理](#4-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86)
+  - [4. 异常处理与日志](#4-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E4%B8%8E%E6%97%A5%E5%BF%97)
     - [4.1 Java异常](#41-java%E5%BC%82%E5%B8%B8)
     - [4.2 捕获异常](#42-%E6%8D%95%E8%8E%B7%E5%BC%82%E5%B8%B8)
     - [4.3 抛出异常](#43-%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8)
@@ -88,7 +88,16 @@
     - [8.11 Stack](#811-stack)
     - [8.12 Iterator](#812-iterator)
     - [8.13 Collections](#813-collections)
-  - [9.0 IO](#90-io)
+  - [9. IO](#9-io)
+    - [9.1 File](#91-file)
+    - [9.2 InputStream](#92-inputstream)
+    - [9.3 OutputStream](#93-outputstream)
+    - [9.4 Filter](#94-filter)
+    - [9.5 Zip](#95-zip)
+    - [9.6 读取classpath的资源](#96-%E8%AF%BB%E5%8F%96classpath%E7%9A%84%E8%B5%84%E6%BA%90)
+    - [9.7 序列化](#97-%E5%BA%8F%E5%88%97%E5%8C%96)
+    - [9.8 Reader](#98-reader)
+    - [9.9 Writer](#99-writer)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -390,7 +399,7 @@ class Person {
 }
 ```
 - java中没有类似C++中构造函数初始化列表这种东西。所以初始化就两个途径：给初始值、构造函数中赋值。
-- 调用其他构造：`this(args);`。
+- 调用其他构造：`this(args);`，必须放在当前构造的第一条语句。
 - 调用基类构造：`super(args);`
 - 除了构造函数之外，从各种意义上我们都需要有一个析构函数，因为不需要管理内存，好像析构存在的意义就没有那么大了。但用不用另说，必须有是确定的。java中扮演这个角色的就是`void finalize()`方法。
     - 但其实如果去看`Object.finalize`的注释的话，上面会说，这个方法从Java9就已经废弃了，原因是这个机制在本质上存在问题。如果在`finalizer`中出现错误，可能会导致资源泄漏、线程/进程挂起、死锁、造成性能问题。而且如果没有必要也无法取消，析构时机和顺序也无法保证。这我这直接好家伙！那你这保证了个啥？
@@ -407,7 +416,7 @@ class Person {
 - 可变参数: 
     - 定义: `void mthod(type ... args)`
     - 调用: `method(arg1, arg2, arg3)`
-    - 当然这要求所有参数同类型，和C中通过`va_list`加上一个参数个数来实现的方式有区别
+    - 当然这要求所有参数同类型，和C中通过`va_list`加上一个显式或隐式的参数个数来实现的方式有区别
     - 最终`args`被解释为一个数组，同类型可变参数完全可以使用数组来传递，但是需要调用时显式构造数组，并且可以传递`null`为参数，可变参数算是一个还不错的语法糖。
 - 方法重载(Overload):
     - 同C++一致的是，方法重载只与参数列表(类型和顺序)有关，和返回值，访问修饰符无关系。C++中函数重载之后其实就是成为了不同的函数，经过名称修饰之后符号是不同的。那么java有没有类似于名称修饰一类的东西呢？是如何保证调用时正确跳转到对应的函数入口地址的呢？这可能需要后续了解了字节码之后才能知道。
@@ -422,12 +431,12 @@ class Person {
         method(v1, default_v2);
     }
     ```
-    - 也是，不然和可变参数混在一起估计编译器估计就要凌乱了，也减少心智负担，挺好。以管窥豹，看得出来java所谓的啰嗦的确是有原因的，都是权衡了利弊之后的结果。
+    - 也是，不然和可变参数混在一起编译器估计就要凌乱了，也减少心智负担，挺好。
 
 
 
 ### 2.3 继承
-- 提前一句话总结所有内容: `class` `extends` `Object` `implements` `super` `protected` `sealed`  `permits` `final` `intanceOf` `@Override`
+- 提前总结所有关键字: `class` `extends` `Object` `implements` `super` `protected` `sealed`  `permits` `final` `intanceOf` `@Override`
 - 语法：`class Student extends Person`
 - 根类：`Object`，没有父类的类都会自动继承`Object`。  
 - 继承方式仅有一种，不像C++一样还有私有保护公有继承，虽然我从来未在工作中碰到过私有和保护继承就是了，无用的东西都可以剃掉，好耶！
@@ -1067,7 +1076,7 @@ System.out.println(r.nextLong());
 SecureRandom sr = new SecureRandom();
 System.out.println(sr.nextInt(100));
 ```
-- `SecureRandom`无法指定种子，使用RNG（random number generator）算法。JDK的`SecureRandom`实际上有多种不同的底层实现，有的使用安全随机种子加上伪随机数算法来产生安全的随机数，有的使用真正的随机数生成器。实际使用的时候，可以优先获取高强度的安全随机数生成器，如果没有提供，再使用普通等级的安全随机数生成器。
+- `SecureRandom`无法指定种子，使用RNG（random number generator）算法。JDK的`SecureRandom`实际上有多种不同的底层实现，有的使用安全随机种子加上伪随机数算法来产生安全的随机数，有的使用真正的随机数生成器。实际使用的时候，可以优先获取高强度的安全随机数生成器，如果没有提供，再使用普通等级的安全随机数生成���。
 ```java
 public class Main {
     public static void main(String[] args) {
@@ -1149,7 +1158,7 @@ private int firstNonzeroIntNumPlusTwo;
 
 尚未开始分析好吧，TODO。
 
-## 4. 异常处理
+## 4. 异常处理与日志
 
 ### 4.1 Java异常
 
@@ -1349,7 +1358,7 @@ java.lang.IllegalArgumentException
 ### 4.4 自定义异常
 
 Java标准库常用异常：
-```java
+```
 Exception
 │
 ├─ RuntimeException
@@ -2273,7 +2282,7 @@ TODO：深入了解Java泛型的实现方式，和C++模板有何异同。
 
 ### 7.2 使用泛型
 
-以`java.util.ArrayList`为例，如果不定义泛型类型，泛型类型实际上就是`Object`，相当于默认类型参数是`Object`，这个机制应该是语言层面实现的，因为java并没有默认参数或者默认类型参数这种东西。
+以`java.util.ArrayList`为例，如果不定义泛型类型，泛型类型��际上就是`Object`，相当于默认类型参数是`Object`，这个机制应该是语言层面实现的，因为java并没有默认参数或者默认类型参数这种东西。
 ```java
 List list = new ArrayList();
 list.add("hello");
@@ -3693,7 +3702,7 @@ public static <T> Set<T> synchronizedSet(Set<T> s)
 
 Java标准库提供了`java.io`同步IO以及`java.nio`异步IO。上述流相关的类都是同步IO的抽象类。这里只讨论同步IO。
 
-## 9.1 File
+### 9.1 File
 
 Java用`java.io.File`来操作文件和目录，构建一个`File`对象需要传入路径。路径可以是绝对或者相对路径，或者绝对路径中使用`..`表示的相对路径。其中路径分隔符，windows中是`\\`，Linux中是`/`。
 
@@ -3706,7 +3715,7 @@ Java用`java.io.File`来操作文件和目录，构建一个`File`对象需要�
 
 `File`既可以表示文件，也可以表示目录，构建`File`时，即使传入路径不存在，也不会出错，调用`File`对象某些方法时才会真正进行磁盘操作。
 
-`File`属性
+`File`属性：
 ```java
 public boolean isFile()
 public boolean isDirectory()
@@ -3756,12 +3765,538 @@ public boolean delete() // 目录为空才能成功
 
 java标准库还提供了`Path`对象，位于`java.nio.file`包，和`File`对象类似，但操作更为简单。如果需要对目录进行复杂的拼接遍历等操作，使用`Path`对象更为方便。
 
+有了`File`类就可以写一个简单的文件操作命令了，简单实现`ls` `mkdir` `touch` `tree` `rm` `cp` `mv`命令，不支持任何选项，只支持字面上的功能，列出当前目录所有文件、创建目录、创建新文件、树形结构列出所有文件、移除文件或目录、复制、移动文件。再来一个简单的命令循环就可以模拟一个简陋至极的`shell`了。
+```java
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Scanner;
+import java.util.StringJoiner;
+
+public class FileOp {
+	private File curDir = null;
+
+	public FileOp() {
+		curDir = new File(System.getProperty("user.dir"));
+	}
+
+	public FileOp(File inputFile) throws IOException {
+		if (inputFile == null || !inputFile.exists()) {
+			curDir = new File(System.getProperty("user.dir"));
+		} else if (inputFile.isDirectory()) {
+			curDir = new File(inputFile.getParent());
+		} else {
+			curDir = new File(inputFile.getCanonicalPath());
+		}
+	}
+
+	public void run() throws IOException {
+		if (curDir == null) {
+			return;
+		}
+
+		Scanner sc = new Scanner(System.in);
+		boolean bContinue = true;
+		do {
+			System.out.print(curDir.getCanonicalPath() + " > ");
+			String cmd = sc.nextLine();
+			cmd.trim();
+			if (cmd.isEmpty()) {
+				continue;
+			}
+			String[] args = cmd.split("[\\s]+"); // 正则表达式，匹配一个或多个空白符
+			for (int i = 0; i < args.length; i++) {
+				args[i].trim();
+			}
+			if (args.length == 0) {
+				continue;
+			}
+			switch (args[0]) {
+			case "ls":
+				if (args.length == 1) {
+					ls(curDir.getPath());
+				} else if (args.length == 2) {
+					ls(args[1]);
+				} else {
+					System.out.println("invalid args of ls : " + cmd);
+				}
+				break;
+			case "cd":
+				if (args.length == 2) {
+					cd(args[1]);
+				} else if (args.length >= 3) {
+					System.out.println("invalid args of cd : " + cmd);
+				}
+				break;
+			case "mkdir":
+				if (args.length == 2) {
+					mkdir(args[1]);
+				} else {
+					System.out.println("invalid args of mkdir : " + cmd);
+				}
+				break;
+			case "touch":
+				if (args.length == 2) {
+					touch(args[1]);
+				} else {
+					System.out.println("invalid args of touch : " + cmd);
+				}
+				break;
+			case "tree":
+				if (args.length == 1) {
+					tree(curDir.getCanonicalPath());
+				} else if (args.length == 2) {
+					tree(args[1]);
+				} else {
+					System.out.println("invalid args of tree : " + cmd);
+				}
+				break;
+			case "rm":
+				if (args.length == 2) {
+					rm(args[1]);
+				} else {
+					System.out.println("invalid args of rm : " + cmd);
+				}
+				break;
+			case "cp":
+				if (args.length == 3) {
+					cp(args[1], args[2]);
+				} else {
+					System.out.println("invalid args of cp : " + cmd);
+				}
+				break;
+			case "mv":
+				if (args.length == 3) {
+					mv(args[1], args[2]);
+				} else {
+					System.out.println("invalid args of mv : " + cmd);
+				}
+				break;
+			case "exit":
+				bContinue = false;
+				break;
+			default:
+				System.out.println("invalid args : " + cmd);
+				break;
+			}
+		} while (bContinue);
+		sc.close();
+	}
+
+	public void ls(String lsFile) {
+		lsFile = realToAbs(lsFile);
+		File f = new File(lsFile);
+		if (!f.exists()) {
+			System.out.println("non-exist file or directories : " + lsFile);
+		} else if (f.isFile()) {
+			System.out.println(f.getName());
+		} else {
+			File[] files = f.listFiles();
+			StringJoiner sj = new StringJoiner(" ");
+			for (int i = 0; i < files.length; i++) {
+				if (files[i].isFile()) {
+					sj.add(files[i].getName());
+				} else {
+					sj.add(files[i].getName() + "/");
+				}
+			}
+			if (files.length > 0) {
+				System.out.println(sj);
+			}
+		}
+	}
+
+	public void cd(String cdDir) {
+		cdDir = realToAbs(cdDir);
+		File f = new File(cdDir);
+		if (f.exists() && f.isDirectory()) {
+			curDir = f;
+		} else {
+			System.out.println("invalid directory path : " + cdDir);
+		}
+	}
+
+	public void mkdir(String mkDir) {
+		mkDir = realToAbs(mkDir);
+		File f = new File(mkDir);
+		if (f.isDirectory()) {
+			System.out.println("directory already exists : " + mkDir);
+		} else if (f.isFile()) {
+			System.out.println("a same name file already exists : " + mkDir);
+		} else if (!f.mkdir()) {
+			System.out.println("failed to mkdir : " + mkDir);
+		}
+	}
+
+	public void touch(String newFile) {
+		newFile = realToAbs(newFile);
+		File f = new File(newFile);
+		if (f.isDirectory()) {
+			System.out.println("a same neme directory already exists : " + newFile);
+		} else if (f.isFile()) {
+			System.out.println("file alredy exists : " + newFile);
+		} else {
+			try {
+				if (!f.createNewFile()) {
+					System.out.println("failed to create new file : " + newFile);
+				}
+			} catch (IOException e) {
+				System.out.println("failed to create new file : " + newFile);
+			}
+		}
+	}
+
+	public void tree(String inputFile) {
+		inputFile = realToAbs(inputFile);
+		File f = new File(inputFile);
+		if (!f.exists()) {
+			System.out.println("file or directory does not exist : " + inputFile);
+		} else if (f.isFile()) {
+			ls(inputFile);
+		} else if (f.isDirectory()) {
+			System.out.println(inputFile);
+			printFileOrDirWithTreeFormat(f, 0);
+		}
+	}
+
+	private void printFileOrDirWithTreeFormat(File f, int indent) {
+		for (int i = 0; i < indent; i++) {
+			System.out.print("    ");
+		}
+		if (f.isDirectory()) {
+			System.out.println(f.getName() + "/");
+			File[] files = f.listFiles();
+			for (File tmpFile : files) {
+				printFileOrDirWithTreeFormat(tmpFile, indent + 1);
+			}
+		} else if (f.isFile()) {
+			System.out.println(f.getName());
+		}
+	}
+
+	public void rm(String inputFile) {
+		inputFile = realToAbs(inputFile);
+		File f = new File(inputFile);
+		if (f.exists()) {
+			if (!f.delete()) {
+				System.out.println("fialed to delte file or directory : " + inputFile);
+			}
+		} else {
+			System.out.println("file or directory does not exist : " + inputFile);
+		}
+	}
+
+	public void cp(String fromFile, String toFile) {
+		File f = new File(realToAbs(fromFile));
+		File fto = new File(realToAbs(toFile));
+		if (fto.exists()) {
+			System.out.println("destination file or directory already exists : " + toFile);
+		} else if (f.exists()) {
+			try {
+				Files.copy(f.toPath(), fto.toPath());
+			} catch (IOException e) {
+				System.out.printf("fialed to copy %s to %s\n", fromFile, toFile);
+			}
+		} else {
+			System.out.println("source file does not exist : " + fromFile);
+		}
+	}
+
+	public void mv(String fromFile, String toFile) {
+		File f = new File(realToAbs(fromFile));
+		File fto = new File(realToAbs(toFile));
+		if (fto.exists()) {
+			System.out.println("destination file or directory already exists : " + toFile);
+		} else if (f.exists()) {
+			if (!f.renameTo(fto)) {
+				System.out.printf("failed to move %s to %s\n", fromFile, toFile);
+			}
+		} else {
+			System.out.println("source file does not exist : " + fromFile);
+		}
+	}
+
+	// common logic
+	private String realToAbs(String path) {
+		path.replace('/', File.separatorChar);
+		path.replace('\\', File.separatorChar);
+		Path p = Path.of(path);
+		if (!p.isAbsolute()) {
+			path = curDir.getPath() + File.separator + p;
+		}
+		return path;
+	}
+}
+```
+虽然极端简陋，但也具备了最基本的文件操作可用性了，类UNIX系统中每个命令都支持多个选项，功能丰富太多了。TODO：有空时阅读Linux系统的简单命令实现源码。
+
+### 9.2 InputStream
+
+输入流：
+```java
+public abstract class InputStream implements Closeable {
+    private static final int MAX_SKIP_BUFFER_SIZE = 2048;
+    private static final int DEFAULT_BUFFER_SIZE = 8192;
+    public InputStream() {}
+    public static InputStream nullInputStream() { ... } // 返回一个打开的不读取任何自己的匿名派生类对象
+    public abstract int read() throws IOException; // 从输入流中读取下一个字节，返回0~255，到达了流的末尾则返回-1
+    public int read(byte b[]) throws IOException {
+        return read(b, 0, b.length);
+    } // 读取固定长度字节到数组中，返回实际读取到的字节数，到达了流的末尾返回-1
+    public int read(byte b[], int off, int len) throws IOException {
+        Objects.checkFromIndexSize(off, len, b.length);
+        if (len == 0) {
+            return 0;
+        }
+
+        int c = read();
+        if (c == -1) {
+            return -1;
+        }
+        b[off] = (byte)c;
+
+        int i = 1;
+        try {
+            for (; i < len ; i++) {
+                c = read();
+                if (c == -1) {
+                    break;
+                }
+                b[off + i] = (byte)c;
+            }
+        } catch (IOException ee) {
+        }
+        return i;
+    } // 读取固定长度字节到数组，返回实际读取到的长度，鼓励在派生类中重写为更高效的实现
+    private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+    public byte[] readAllBytes() throws IOException {
+        return readNBytes(Integer.MAX_VALUE);
+    } // 读取输入流所有字节的方便实现，不鼓励用来读取量非常大的数据（会阻塞线程+大量内存占用）
+    public byte[] readNBytes(int len) throws IOException { ... } // 读取固定长度字节
+    public int readNBytes(byte[] b, int off, int len) throws IOException { } // 读取固定长度字节
+    public long skip(long n) throws IOException { ... } // 跳过n个字节，返回实际跳过的字节数
+    public void skipNBytes(long n) throws IOException { ... } // 跳过n字节，不够n字节抛异常
+    public int available() throws IOException {
+        return 0;
+    } // 子类应该重写，返回可用的字节数，返回估计流中还剩余的字节数，可能并不准确，不要用返回结果去分配内存来存储所有数据
+    public void close() throws IOException {} // 关闭流释放资源，子类应该重写
+    public synchronized void mark(int readlimit) {} // 标记一个位置，reset时将流重新定位到这个位置
+    public synchronized void reset() throws IOException {
+        throw new IOException("mark/reset not supported");
+    }
+    public boolean markSupported() {
+        return false;
+    }
+    public long transferTo(OutputStream out) throws IOException { ... } // 输入流数据转移到输出流
+}
+```
+
+`InputStream`是一个抽象类，最重要的就是`read`相关的读取方法，读取完之后需要`close`(来自`Closeable extends AutoCloseable`)，
+
+计算机中，文件、网络端口等资源由操作系统管理，应用程序运行中，可能会出现IO错误，比如文件没有读写权限，不存在等情况，底层错误由虚拟机封装为`IOException`抛出，所以所有IO操作都必须正确处理`IOException`。并且需要关闭流以释放系统资源。
+
+用`try-finally`保证无论是否发生IO错误流都能够关闭是一种常见写法：
+```java
+InputStream is = null;
+try {
+	is = new FileInputStream("readme.txt");
+	while (true) {
+		int n = is.read();
+		if (n != -1) {
+			System.out.println(n);
+		}
+		else {
+			break;
+		}
+	}
+} finally {
+	if (is != null) {
+		is.close();
+	}
+}
+```
+
+这样会有一点繁琐，更好的写法是使用Java7引入的`try(resource)`语法，只需要写`try`让编译器自动为我们关闭资源。
+```java
+try (InputStream is = new FileInputStream("readme.txt")) {
+	while (true) {
+		int n = is.read();
+		if (n != -1) {
+			System.out.println(n);
+		}
+		else {
+			break;
+		}
+	}
+} // 编译器自动在此处添加finally并调用close
+```
+
+实际上编译器只看`try(resource = ...)`中的对象是否实现了`java.lang.AutoCloseable`，如果实现了就自动加上`finally`并`close`。
+
+
+**缓冲**：读取流时一次读一个字节并不高效，一次性读取多个字节到缓冲区往往比一次一个字节高效很多，`InputStream`提供了多个`read`和相关接口来读取多个字节到字节数组。
+
+**阻塞**：同步IO在读取是会阻塞，也就是说`read`语句会读取到数据之后才返回执行下一条语句，读取IO的操作相比普通的计算操作速度会慢很多。
+
+**实现**：`InputStream`是一个抽象类，具体的实现在实现类中，`FileInputStream`获取文件输入流就是一个典型。此外`ByteArrayInputStream`可以在内存中模拟一个输入流，实际上就是把数组变成流，实际应用不多，可以用在测试时构造一个输入流。
+
+```java
+byte[] b = new byte[] {1, 100, 101};
+try (InputStream is = new ByteArrayInputStream(b)) {
+	while (true) {
+		int n = is.read();
+		if (n != -1) {
+			System.out.println(n);
+		}
+		else {
+			break;
+		}
+	}
+}
+```
+
+### 9.3 OutputStream
+
+类似于`InputStream`，输出流也是抽象类，最基本方法是`write`。
+```java
+public abstract class OutputStream implements Closeable, Flushable {
+    public OutputStream() {}
+    public static OutputStream nullOutputStream() { ... } // 得到一个丢弃所有字节的打开的输出流
+    public abstract void write(int b) throws IOException; // 写一个字节到输出流，只写低8字节，高24字节忽略
+    public void write(byte b[]) throws IOException { // 写多个字节
+        write(b, 0, b.length);
+    }
+    public void write(byte b[], int off, int len) throws IOException {
+        Objects.checkFromIndexSize(off, len, b.length);
+        // len == 0 condition implicitly handled by loop bounds
+        for (int i = 0 ; i < len ; i++) {
+            write(b[off + i]);
+        }
+    }
+    public void flush() throws IOException {
+    } // 如果实现类中缓冲了已写的字节，那么这个接口的调用会将缓冲的字节实际交给操作系统去写
+    public void close() throws IOException {
+    }
+}
+```
+
+和`InputStream`一样，需要关闭和处理IO错误，`write`时同样会阻塞。
+```java
+try (OutputStream os = new FileOutputStream("readme.txt")) {
+	os.write("how are you!".getBytes("utf-8"));
+}
+```
+
+其实`InputStream`和`OutputStream`都有缓冲区，只是`InputStream`的缓冲区不会被感知到，打开输入流时，操作系统会一次性读取若干字节到缓冲区，`read`读完之后会再次读取并填满缓冲区。而`OutputStream`的缓冲区会被感知到，因为缓冲区不满时操作系统并不会真正去执行IO操作，所以提供了`flush`给我们去手动刷新缓冲区，当然缓冲区满了或者关闭输出流时都会自动调用`flush`。如果是文件输出流可能影响不大，但如果是网络输出流那可能就需要视场景调用`flush`了。
+
+实现类：
+- `FileOutputStream`文件输出流。
+- `ByteArrayOutputStream`字节数组输出流可以在内存中模拟一个`OutputStream`。
+
+复制文件：
+```java
+public static void copyFile(String src, String dest) throws FileNotFoundException,IOException {
+	try(InputStream is = new FileInputStream(src); OutputStream os = new FileOutputStream(dest)) {
+		is.transferTo(os);
+	}
+}
+```
+将流内容读取为字符串：
+```java
+public static String readAsString(InputStream is) throws IOException {
+	StringBuilder sb = new StringBuilder();
+	int n = 0;
+	while ((n = is.read()) != -1) {
+		sb.append((char)n);
+	}
+	return sb.toString();
+}
+```
+
+### 9.4 Filter
+
+某些时候可能需要给输入输出流添加其他的功能，可以选择从`InputStream`或者`OutputStrem`派生一个类来实现，比如添加缓冲、加密解密、计算签名功能。但如果需要同时支持其中的多项功能呢？那又需要再实现派生类，因为不允许多继承那不知道要实现多少类了。为了解决依赖继承会导致子类数量爆炸的问题，JDK将`InputStream`分为两类。
+- 一类是直接提供数据的流：`FileInputStream` `ByteArrayInputStream` `ServletInputStream` etc
+- 一类是提供额外附加功能的流：`BufferedInputStream` `DigestInputStream` `CipherInputStream` etc
+
+当我们希望给一个流提供其他功能，比如提供缓冲来提高读取效率，这时候就用`BufferedInputStream`来包装这个类。
+```java
+InputStream file = new FileInputStream("test.gz");
+InputStream buffered = new BufferedInputStream(file);
+```
+
+可以多次包装，无论包装多少次，得到的流都是`InputStream`，直接用`InputStream`来引用它就可以正常读取。
+
+```
+InputStream 
+|__FileInputStream
+|__ByteArrayInputStream
+|__ServletInputStream
+|__FilterInputStream    // 包装类基类，只做包装，不干任何其他事情
+    |__BufferedInputStream
+    |__DataInputStream
+    |__CheckedInputStream 
+```
+输出流类似。这种通过一个基础组件再叠加各种附加功能组件的模式称之为**装饰器模式**(Decorator)。让我们可以通过少量类来实现各种功能的组合。
+
+叠加多个`FilterInputStream`时，只需要持有最外层的`InputStream`，最外层的`InputStream`关闭时，内层的`InputStream`的`close`方法也会被调用。其实就是在`FilterInputStream`中保存了传入的`InputStream`，然后进行转调。
+
+实现一个自己的`FilterInputStream`以统计读取的总字节数：
+```java
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class CountInputStream extends FilterInputStream {
+	private int count = 0;
+	protected CountInputStream(InputStream in) {
+		super(in);
+	}
+	@Override
+	public int read() throws IOException {
+		int n = in.read();
+		if (n != -1)
+			count ++;
+		return n;
+	}
+	@Override
+	public int read(byte b[], int off, int len) throws IOException {
+		int n = in.read(b, off, len);
+		if (n != -1) {
+			count += n;
+		}
+		return n;
+	}
+	public int getReadCount() {
+		return count;
+	}
+}
+```
+
+使用：
+```java
+try (InputStream is = new FileInputStream("readme.txt"); CountInputStream cis = new CountInputStream(is)) {
+	System.out.println(readAsString(cis));
+	System.out.println(cis.getReadCount());
+}
+```
+
+### 9.5 Zip
+
+### 9.6 读取classpath的资源
+
+### 9.7 序列化
+
+### 9.8 Reader
+
+### 9.9 Writer
+
 
 
 
 ## TODO
 - 包与模块详解
-- 集合
 - IO
 - 日期与时间
 - 单元测试
