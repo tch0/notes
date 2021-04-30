@@ -1078,3 +1078,4 @@ exit /B 0
 TODO:
 - 注册表。
 - 组策略。
+- PowerShell。
