@@ -6,6 +6,8 @@
 - [MathFunc.md](MathFunc.md)：`<math.h>`常用数学函数分析与实现。
 - [Nginx.md](Nginx.md)：Nginx Web服务器了解与配置入门。
 - [Java.md](Java.md)：Java入门。
+- [BatchScript.md](BatchScript.md)：Windows批处理脚本了解。
+- [SICP.md][SICP.md]：SICP学习笔记，TODO。
 
 ## 关于这个仓库
 
