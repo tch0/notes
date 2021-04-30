@@ -575,7 +575,7 @@ start /NODE 1 /AFFINITY 0xc application2.exe
 |`.JS/.JSE`|JavaScript脚本文件/加密的JavaScript脚本文件|
 |`.WSF/.WSH` |Windows脚本文件(Windows Script)。
 |`.MSC`|微软管理控制台MMC(Microsoft Management Console)用来添加/删除的嵌入式管理单元文件。典型如`gpedit.msc` `services.msc`。|
-|`.PY/.PYW`|python脚本文件，.py/.pyw的差别是运行程序分别为python.exe/pythonw.exe，可能是安装python是由安装程序添加，Windows系统本身应该不会.py作为可执行文件。|
+|`.PY/.PYW`|python脚本文件，.py/.pyw的差别是运行程序分别为python.exe/pythonw.exe，可能是安装python是由安装程序添加，Windows系统本身应该不会将.py作为可执行文件。|
 
 ### set
 
@@ -727,7 +727,7 @@ find "test" < test.txt
 
 ```bat
 find "hello" hello.txt & echo execute find
-find "hello" hello.txt || echo success
+find "hello" hello.txt && echo success
 find "hello" hello.txt || echo failed
 ```
 
@@ -875,7 +875,7 @@ Win10更新一次，UI就会变一次，当前20H2版本的环境变量设置方
 - `XCOPY      `    复制文件和目录树。
 - `WMIC       `    在交互式命令 shell 中显示 WMI 信息。
 
-大部分目录文件磁盘操作、也有一些系统设置进程之类的操作，这些操作应该都能找到相关的UI操作赌赢，用到时去查就行，没必要折磨自己。知道常用的就行，某些磁盘操作命令可能是危险的，请注意数据安全，确保知道自己在做什么。
+大部分目录文件磁盘操作、也有一些系统设置进程之类的操作，这些操作应该都能找到相关的UI操作，用到时去查就行，没必要折磨自己。知道常用的就行，某些磁盘操作命令可能是危险的，请注意数据安全，确保知道自己在做什么。
 
 批处理也大多用在需要批量处理文件目录操作的场景中，具体怎么写还得通过实践总结。
 
