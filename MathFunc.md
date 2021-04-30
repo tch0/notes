@@ -19,7 +19,7 @@ _CRTIMP double __cdecl atan2 (double, double); // 反正切
 _CRTIMP double __cdecl exp (double); // e为底指数
 _CRTIMP double __cdecl log (double); // e为底对数
 _CRTIMP double __cdecl log10 (double); // 10为底对数
-_CRTIMP	double __cdecl pow (double, double); // 实数的实数次方
+_CRTIMP double __cdecl pow (double, double); // 实数的实数次方
 _CRTIMP double __cdecl sqrt (double); // 开方
 _CRTIMP double __cdecl ceil (double); // 向负无穷方向取整
 _CRTIMP double __cdecl floor (double); // 向正无穷方向取整

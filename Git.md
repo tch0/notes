@@ -199,37 +199,37 @@ Git的版本管理操作：
 - `--stat`仅显示简要的增改行数统计
 - 另外`--pretty`提供了不同的参数:`oneline`,`short`,`full`,`fuller`可以显示不同风格的记参数还可以是`format`用于自己定制要显示的记录格式，这样的输出方便后期编程提取（哇，细节太多。常用格式占位和说明：
     ```
-    %H	提交对象（commit）的完整哈希字串
-    %h	提交对象的简短哈希字串
-    %T	树对象（tree）的完整哈希字串
-    %t	树对象的简短哈希字串
-    %P	父对象（parent）的完整哈希字串
-    %p	父对象的简短哈希字串
-    %an	作者（author）的名字
-    %ae	作者的电子邮件地址
-    %ad	作者修订日期（可以用 -date= 选项定制格式）
-    %ar	作者修订日期，按多久以前的方式显示
-    %cn	提交者(committer)的名字
-    %ce	提交者的电子邮件地址
-    %cd	提交日期
-    %cr	提交日期，按多久以前的方式显示
-    %s	提交说明
+    %H  提交对象（commit）的完整哈希字串
+    %h  提交对象的简短哈希字串
+    %T  树对象（tree）的完整哈希字串
+    %t  树对象的简短哈希字串
+    %P  父对象（parent）的完整哈希字串
+    %p  父对象的简短哈希字串
+    %an 作者（author）的名字
+    %ae 作者的电子邮件地址
+    %ad 作者修订日期（可以用 -date= 选项定制格式）
+    %ar 作者修订日期，按多久以前的方式显示
+    %cn 提交者(committer)的名字
+    %ce 提交者的电子邮件地址
+    %cd 提交日期
+    %cr 提交日期，按多久以前的方式显示
+    %s  提交说明
     ```
     用法：`git log --pretty=format:"%h - %an , %ar : %s"`。还要细心注意作者和提交者的区不得不说细节真的到位，也是真的多。
 - `--graph`选项：可以显示ASCII图形表示的分支合并历史。
 
 常用选项和含义：
 ```
-选项	        说明
+选项            说明
 -p              按补丁格式显示每个更新之间的差异。
 --word-diff     按 word diff 格式显示差异。
---stat	        显示每次更新的文件修改统计信息。
+--stat          显示每次更新的文件修改统计信息。
 --shortstat     只显示 --stat 中最后的行数修改添加移除统计。
 --name-only     仅在提交信息后显示已修改的文件清单。
---name-status	显示新增、修改、删除的文件清单。
---abbrev-commit	仅显示 SHA-1 的前几个字符，而非所有的 40 个字符。
---relative-date	使用较短的相对时间显示（比如，“2 weeks ago”）。
---graph	        显示 ASCII 图形表示的分支合并历史。
+--name-status   显示新增、修改、删除的文件清单。
+--abbrev-commit 仅显示 SHA-1 的前几个字符，而非所有的 40 个字符。
+--relative-date 使用较短的相对时间显示（比如，“2 weeks ago”）。
+--graph         显示 ASCII 图形表示的分支合并历史。
 --pretty        使用其他格式显示历史提交信息。可用的选项包括 oneline，short，full，fuller 和 format（后跟指定格式）。
 --oneline       --pretty=oneline --abbrev-commit 的简化用法。
 ```

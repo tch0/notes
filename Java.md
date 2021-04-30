@@ -332,9 +332,9 @@ else {
 并且还可以直接返回一个值：
 ```java
 double d = switch(i) {
-		case 1 -> 1.0;
-		default -> 100;
-		};
+        case 1 -> 1.0;
+        default -> 100;
+        };
 ```
 如果有多种情况，中间还有语句执行，还可以用`{}`包起来，执行多个语句后用`yield`返回，就像定义一个函数那样。
 
@@ -670,8 +670,8 @@ java -cp ./hello.jar abc.xyz.hello
 - 创建模块：与创建Java项目一致，在`src/`目录一级下创建`module-info.java`文件，即是**模块描述文件**。文件内容类似与下面这样：使用`module`和`requires`说明模块和依赖。
 ```java
 module hello.world {
-	requires java.base; // 可不写，任何模块都会自动引入java.base
-	requires java.xml;
+    requires java.base; // 可不写，任何模块都会自动引入java.base
+    requires java.xml;
 }
 ```
 - `module-info.java`经过编译后会在`bin`下生成`module-info.class`。
@@ -762,13 +762,13 @@ public StringJoiner merge(StringJoiner other) // 合并
 - 为`int`定义包装类：类似于这样包装一层之后就可以将其当做对象来用。
 ```java
 class Integer {
-	private final int value;
-	public Integer(int value) {
-		this.value = value;
-	}
-	public int intValue() {
-		return value;
-	}
+    private final int value;
+    public Integer(int value) {
+        this.value = value;
+    }
+    public int intValue() {
+        return value;
+    }
 }
 ```
 - java核心库`java.lang`为每种基本类型都定义了包装类型，分别为 `Boolean` `Byte` `Short` `Integer`  `Long` `Float` `Double` `Character`
@@ -812,12 +812,12 @@ public void setXyz(Type value)
 使用`java.beans`提供的`Introspector`可以枚举出一个`JavaBean`的所有属性。
 ```java
 public static void main(String[] args) throws IntrospectionException {
-	BeanInfo info = Introspector.getBeanInfo(Person.class);
-	for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-		System.out.println(pd.getName());
-		System.out.println("\t" + pd.getReadMethod());
-		System.out.println("\t" + pd.getWriteMethod());
-	}
+    BeanInfo info = Introspector.getBeanInfo(Person.class);
+    for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+        System.out.println(pd.getName());
+        System.out.println("\t" + pd.getReadMethod());
+        System.out.println("\t" + pd.getWriteMethod());
+    }
 }
 ```
 因为可能抛异常所以最后声明中必须加上`throws`语句，不然会报错，异常暂时没有了解，后续详解。其中的`class`字段是继承自`Object`而来。得到的结果中对于`class`字段有一个只读属性：`public final native java.lang.Class java.lang.Object.getClass()`。
@@ -1302,11 +1302,11 @@ try {
 - 可以通过基类的`Throwable.printStackTrace()`方法来打印出该异常传播的调用栈。从最底层抛出的那一层直到调用的最顶层。对于调试错误很有帮助，给出了源代码行号，可以直接定位。
 ```java
 java.io.UnsupportedEncodingException: unknown
-	at java.base/java.lang.StringCoding.encode(StringCoding.java:440)
-	at java.base/java.lang.String.getBytes(String.java:960)
-	at Main.Main.stringToEncode(Main.java:41)
-	at Main.Main.test(Main.java:22)
-	at Main.Main.main(Main.java:13)
+    at java.base/java.lang.StringCoding.encode(StringCoding.java:440)
+    at java.base/java.lang.String.getBytes(String.java:960)
+    at Main.Main.stringToEncode(Main.java:41)
+    at Main.Main.test(Main.java:22)
+    at Main.Main.main(Main.java:13)
 ```
 - 如果在某一层捕获了异常，但重新`new`了一个新的异常像上抛出，那么这个新的异常打印调用堆栈时就会丢失原始异常的信息。为了能够追踪原始的异常栈，可以把捕获到的异常作为参数，构造新的异常。
 - 作为参数传入的用来构造异常的原始异常会被保存在`Throwable.cause`字段中，通过`Throwable.getCause()`方法获取到。
@@ -1545,11 +1545,11 @@ void info(Object message, Throwable t)
 第二个重载可以传入异常，用在`catch`语句中很方便，结果除了输出`message`之外，还会调用异常的`printStackTrace`输出异常栈。
 ```java
 public static void main(String[] args) {
-	try {
-		throw new RuntimeException();
-	} catch (Exception e) {
-		log.error("exception occureed", e);
-	}
+    try {
+        throw new RuntimeException();
+    } catch (Exception e) {
+        log.error("exception occureed", e);
+    }
 }
 ```
 
@@ -1587,39 +1587,39 @@ log.info("User signed in.");
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-	<Properties>
-		<!-- 定义日志格式 -->
-		<Property name="log.pattern">%d{MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}%n%msg%n%n</Property>
-		<!-- 定义文件名变量 -->
-		<Property name="file.err.filename">log/err.log</Property>
-		<Property name="file.err.pattern">log/err.%i.log.gz</Property>
-	</Properties>
-	<!-- 定义Appender，即目的地 -->
-	<Appenders>
-		<!-- 定义输出到屏幕 -->
-		<Console name="console" target="SYSTEM_OUT">
-			<!-- 日志格式引用上面定义的log.pattern -->
-			<PatternLayout pattern="${log.pattern}" />
-		</Console>
-		<!-- 定义输出到文件,文件名引用上面定义的file.err.filename -->
-		<RollingFile name="err" bufferedIO="true" fileName="${file.err.filename}" filePattern="${file.err.pattern}">
-			<PatternLayout pattern="${log.pattern}" />
-			<Policies>
-				<!-- 根据文件大小自动切割日志 -->
-				<SizeBasedTriggeringPolicy size="1 MB" />
-			</Policies>
-			<!-- 保留最近10份 -->
-			<DefaultRolloverStrategy max="10" />
-		</RollingFile>
-	</Appenders>
-	<Loggers>
-		<Root level="info">
-			<!-- 对info级别的日志，输出到console -->
-			<AppenderRef ref="console" level="info" />
-			<!-- 对error级别的日志，输出到err，即上面定义的RollingFile -->
-			<AppenderRef ref="err" level="error" />
-		</Root>
-	</Loggers>
+    <Properties>
+        <!-- 定义日志格式 -->
+        <Property name="log.pattern">%d{MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}%n%msg%n%n</Property>
+        <!-- 定义文件名变量 -->
+        <Property name="file.err.filename">log/err.log</Property>
+        <Property name="file.err.pattern">log/err.%i.log.gz</Property>
+    </Properties>
+    <!-- 定义Appender，即目的地 -->
+    <Appenders>
+        <!-- 定义输出到屏幕 -->
+        <Console name="console" target="SYSTEM_OUT">
+            <!-- 日志格式引用上面定义的log.pattern -->
+            <PatternLayout pattern="${log.pattern}" />
+        </Console>
+        <!-- 定义输出到文件,文件名引用上面定义的file.err.filename -->
+        <RollingFile name="err" bufferedIO="true" fileName="${file.err.filename}" filePattern="${file.err.pattern}">
+            <PatternLayout pattern="${log.pattern}" />
+            <Policies>
+                <!-- 根据文件大小自动切割日志 -->
+                <SizeBasedTriggeringPolicy size="1 MB" />
+            </Policies>
+            <!-- 保留最近10份 -->
+            <DefaultRolloverStrategy max="10" />
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <!-- 对info级别的日志，输出到console -->
+            <AppenderRef ref="console" level="info" />
+            <!-- 对error级别的日志，输出到err，即上面定义的RollingFile -->
+            <AppenderRef ref="err" level="error" />
+        </Root>
+    </Loggers>
 </Configuration>
 ```
 虽然配置Log4j比较繁琐，但一旦配置完成，使用起来就非常方便。对上面的配置文件，凡是INFO级别的日志，会自动输出到屏幕，而ERROR级别的日志，不但会输出到屏幕，还会同时输出到文件。并且，一旦日志文件达到指定大小（1MB），Log4j就会自动切割新的日志文件，并最多保留10份。更多配置参见[官方文档](https://logging.apache.org/log4j/2.x/manual/configuration.html)。
@@ -1664,28 +1664,28 @@ log.info("User signed in.");
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-		</encoder>
-	</appender>
-	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-			<charset>utf-8</charset>
-		</encoder>
-		<file>log/output.log</file>
-		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-			<fileNamePattern>log/output.log.%i</fileNamePattern>
-		</rollingPolicy>
-		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-			<MaxFileSize>1MB</MaxFileSize>
-		</triggeringPolicy>
-	</appender>
-	<root level="INFO">
-		<appender-ref ref="CONSOLE" />
-		<appender-ref ref="FILE" />
-	</root>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <file>log/output.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>log/output.log.%i</fileNamePattern>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>1MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
 </configuration>
 ```
 
@@ -1809,11 +1809,11 @@ JVM为每一种基本类型进行了特殊处理创建了`Class`对象，可以�
 获取到一个类型的`Class`对象之后，就可以用其来创建该类型对象：但是因为没有参数，所有只能调用无参构造函数。
 ```java
 try {
-	Class cls = Student.class;
-	Student s  = (Student)cls.newInstance();
-	System.out.println(s);
+    Class cls = Student.class;
+    Student s  = (Student)cls.newInstance();
+    System.out.println(s);
 } catch (Exception e) {
-	System.out.println(e);
+    System.out.println(e);
 }
 ```
 如果传入的这个`Class`对象对应的类没有无参构造，那么会抛出`java.lang.InstantiationException`，如果无参构造无法访问或者使用的是`Class`类对应的`Class`对象，那么会抛出`java.lang.IllegalAccessException`。其中做了特殊处理，况且`Class`的无参构造是`private`的。`Class`对象只能由JVM在加载了新的类时来创建。
@@ -1823,12 +1823,12 @@ JVM并不会在一次性把所有用到的类加载到内存中(即是不会一�
 因为动态加载特性，就可以用下面的函数来判断一个类是否存在，如果传入的类名在`classpath`中存在那么就会返回`true`，前面提到的Commons Logging判断Log4j是否存在就可以用这样的方法。
 ```java
 static boolean isClassPresent(String name) {
-	try {
-		Class.forName(name);
-		return true;
-	} catch (Exception e) {
-		return false;
-	}
+    try {
+        Class.forName(name);
+        return true;
+    } catch (Exception e) {
+        return false;
+    }
 }
 ```
 
@@ -1983,18 +1983,18 @@ Java的`class`和`interface`的区别就是接口可以多继承，接口没有�
 所谓的动态是和静态对应的，典型的静态创建即定义类来实现接口，然后实例化类对象并用接口来调用：
 ```java
 interface Hello {
-	public void morning();
+    public void morning();
 }
 class HelloWorld implements Hello {
-	public void morning() {
-		System.out.println("hello, world");
-	}
+    public void morning() {
+        System.out.println("hello, world");
+    }
 }
 public class Test {
-	public static void Main() {
-		Hello h = new HelloWorld();
-	    h.morning();
-	}
+    public static void Main() {
+        Hello h = new HelloWorld();
+        h.morning();
+    }
 }
 ```
 
@@ -2005,28 +2005,28 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 interface Hello {
-	public void morning();
+    public void morning();
 }
 
 public class Main {
-	public static void main(String[] args) throws Exception {
-		InvocationHandler handler = new InvocationHandler() {
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				System.out.println(method);
-				if (method.getName().equals("morning"))
-				{
-					System.out.println("hello,world");
-				}
-				return null;
-			}
-		};
-		Hello h = (Hello)Proxy.newProxyInstance(
-				Hello.class.getClassLoader(),
-				new Class[] {Hello.class},
-				handler);
-		h.morning();
-	}
+    public static void main(String[] args) throws Exception {
+        InvocationHandler handler = new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                System.out.println(method);
+                if (method.getName().equals("morning"))
+                {
+                    System.out.println("hello,world");
+                }
+                return null;
+            }
+        };
+        Hello h = (Hello)Proxy.newProxyInstance(
+                Hello.class.getClassLoader(),
+                new Class[] {Hello.class},
+                handler);
+        h.morning();
+    }
 }
 ```
 
@@ -2313,86 +2313,86 @@ public interface Comparable<T> {
 比如编写一个类表示键值对：先用一个特定类型来实现。
 ```java
 class kvPair {
-	private String key;
-	private String value;
-	public String getKey() {
-		return key;
-	}
-	public void setKey(String key) {
-		this.key = key;
-	}
-	public String getValue() {
-		return value;
-	}
-	public void setValue(String value) {
-		this.value = value;
-	}
+    private String key;
+    private String value;
+    public String getKey() {
+        return key;
+    }
+    public void setKey(String key) {
+        this.key = key;
+    }
+    public String getValue() {
+        return value;
+    }
+    public void setValue(String value) {
+        this.value = value;
+    }
 }
 ```
 然后将`String`替换为`T`，并在类名后面加上类型参数`<T>`的声明。
 ```java
 class kvPair<T> {
-	private T key;
-	private T value;
-	public T getKey() {
-		return key;
-	}
-	public void setKey(T key) {
-		this.key = key;
-	}
-	public T getValue() {
-		return value;
-	}
-	public void setValue(T value) {
-		this.value = value;
-	}
+    private T key;
+    private T value;
+    public T getKey() {
+        return key;
+    }
+    public void setKey(T key) {
+        this.key = key;
+    }
+    public T getValue() {
+        return value;
+    }
+    public void setValue(T value) {
+        this.value = value;
+    }
 }
 ```
 那么如果我需要键和值可以是不同的类型呢，添加多个泛型类型参数即可。
 ```java
 class kvPair<K, V> {
-	private K key;
-	private V value;
-	public K getKey() {
-		return key;
-	}
-	public void setKey(K key) {
-		this.key = key;
-	}
-	public V getValue() {
-		return value;
-	}
-	public void setValue(V value) {
-		this.value = value;
-	}
+    private K key;
+    private V value;
+    public K getKey() {
+        return key;
+    }
+    public void setKey(K key) {
+        this.key = key;
+    }
+    public V getValue() {
+        return value;
+    }
+    public void setValue(V value) {
+        this.value = value;
+    }
 }
 ```
 
 实例方法是类的一部分，泛型参数类型对其是可见的。但是对于静态方法来说，类的泛型类型参数对其是不可见的，如果要定义静态泛型方法，需要为静态泛型方法专门指定静态类型参数。这里的静态方法的`K` `V`和`kvPair<K, V>`中的`K` `V`是没有任何关系的，完全可以替换为其他名称。如果不在`static`后指定静态类型参数的话会报错：不能对非静态类型`K`/`V`进行静态引用。
 ```java
 class kvPair<K, V> {
-	private K key;
-	private V value;
-	public kvPair(K k, V v) {
-		key = k;
-		value = v;
-	}
-	public K getKey() {
-		return key;
-	}
-	public void setKey(K key) {
-		this.key = key;
-	}
-	public V getValue() {
-		return value;
-	}
-	public void setValue(V value) {
-		this.value = value;
-	}
-	
-	public static<K, V> kvPair<K, V> create(K key, V value) {
-		return new kvPair<K, V>(key, value);
-	}
+    private K key;
+    private V value;
+    public kvPair(K k, V v) {
+        key = k;
+        value = v;
+    }
+    public K getKey() {
+        return key;
+    }
+    public void setKey(K key) {
+        this.key = key;
+    }
+    public V getValue() {
+        return value;
+    }
+    public void setValue(V value) {
+        this.value = value;
+    }
+    
+    public static<K, V> kvPair<K, V> create(K key, V value) {
+        return new kvPair<K, V>(key, value);
+    }
 }
 ```
 使用时：如果就是实例化这个类的对象，那么类型声明时需要写上类型参数，不然类型还是会默认为`Object`，而且貌似类型参数不能使用内置类型，因为默认是`Object`无法持有内置类型的缘故吗？那么就使用相应的包装类型吧，应该就是提供了来满足类似这种场景的。
@@ -2444,9 +2444,9 @@ public class Pair<T> {
 一个类可以继承自一个泛型类。比如
 ```java
 class StringDoublePair extends kvPair<String, Double> {
-	public StringDoublePair() {
-		super("", 0.0);
-	}
+    public StringDoublePair() {
+        super("", 0.0);
+    }
 }
 ```
 继承之后`StringDoublePair`的基类的类型参数是确定的，就是`<String, Double>`，但是我们无法通过`kvPair.class`对象获取到这个类型参数。但在继承了泛型类型的情况下，子类是可以获取到父类的泛型类型的。获取方式：
@@ -2455,20 +2455,20 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 public class Main {
-	public static void main(String[] args){
-		Class<StringDoublePair> cls = StringDoublePair.class;
-		Type t = cls.getGenericSuperclass();
-		if (t instanceof ParameterizedType) {
-			ParameterizedType pt = (ParameterizedType)t;
-			Type[] types = pt.getActualTypeArguments();
-			for (Type typeArgs : types) {
-				Class<?> typeClass = (Class<?>)typeArgs;
-				if (typeClass != null) {
-					System.out.println(typeClass);
-				}
-			}
-		}
-	}
+    public static void main(String[] args){
+        Class<StringDoublePair> cls = StringDoublePair.class;
+        Type t = cls.getGenericSuperclass();
+        if (t instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType)t;
+            Type[] types = pt.getActualTypeArguments();
+            for (Type typeArgs : types) {
+                Class<?> typeClass = (Class<?>)typeArgs;
+                if (typeClass != null) {
+                    System.out.println(typeClass);
+                }
+            }
+        }
+    }
 }
 ```
 这里获取到的是`Type`，因为java引入了泛型，所以单纯的`Class`用来标识类型就不够了，Java的类型系统结构如下：
@@ -2485,9 +2485,9 @@ Type
 还是上面的`kvPair`，如果定义一个适用于`kvPair<Number, Number>`的方法：
 ```java
 class PairHelper {
-	public static int add(kvPair<Number, Number> pair) {
-		return pair.getKey().intValue() + pair.getValue().intValue();
-	}
+    public static int add(kvPair<Number, Number> pair) {
+        return pair.getKey().intValue() + pair.getValue().intValue();
+    }
 }
 ```
 那么下面的语句时能够编译通过的:
@@ -2505,9 +2505,9 @@ int sum = PairHelper.add(new kvPair<Number, Number>(1, 1));
 那现在有没有方法能够使得方法`add`能够接受`kvPair<Type2, Type2>`其中`Type1` `Type2`是`Number`子类呢？办法当然是有的，就是定义`add`时使用`? extends Number`替代类型参数`Number`。
 ```java
 class PairHelper {
-	public static int add(kvPair<? extends Number, ? extends Number> pair) {
-		return pair.getKey().intValue() + pair.getValue().intValue();
-	}
+    public static int add(kvPair<? extends Number, ? extends Number> pair) {
+        return pair.getKey().intValue() + pair.getValue().intValue();
+    }
 }
 ```
 
@@ -2518,11 +2518,11 @@ class PairHelper {
 使用了通配符之后能不能用子类实例设置给基类成员呢？
 ```java
 class PairHelper {
-	public static int add(kvPair<? extends Number, ? extends Number> pair) {
-		pair.setKey(Integer.valueOf(pair.getKey().intValue() + 100));
-		pair.setKey(Integer.valueOf(pair.getValue().intValue() + 100));
-		return pair.getKey().intValue() + pair.getValue().intValue();
-	}
+    public static int add(kvPair<? extends Number, ? extends Number> pair) {
+        pair.setKey(Integer.valueOf(pair.getKey().intValue() + 100));
+        pair.setKey(Integer.valueOf(pair.getValue().intValue() + 100));
+        return pair.getKey().intValue() + pair.getValue().intValue();
+    }
 }
 ```
 这时会编译错误提示：类型 `kvPair<capture#1-of ? extends Number,capture#2-of ? extends Number>` 中的方法 `setKey(capture#1-of ? extends Number)`对于参数`(Integer)`不适用
@@ -3131,19 +3131,19 @@ public interface Map<K, V> {
 `equals`和`hashCode`编写实例：
 ```java
 class Person {
-	private String name;
-	private int age;
-	
-	public Person(String name, int age) {
-		this.name = name;
-		this.age = age;
-	}
-	public boolean equals(Person other) {
-		return name.equals(other.name) && age == other.age;
-	}
-	public int hashCode() {
-		return name.hashCode() * 31 + age;
-	}
+    private String name;
+    private int age;
+    
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+    public boolean equals(Person other) {
+        return name.equals(other.name) && age == other.age;
+    }
+    public int hashCode() {
+        return name.hashCode() * 31 + age;
+    }
 }
 ```
 `hashCode`需要用到每一个参与`equals`比较的字段，一种常见方法是：迭代逐次将每一轮的哈希值乘以一个素数并加上下一个字段的哈希值，直到所有字段都参与计算。
@@ -3300,15 +3300,15 @@ username=tikot
 **读写修改配置文件**：
 ```java
 public class Main {
-	public static void main(String[] args) throws Exception {
-		String file = "account.properties";
-		Properties props = new Properties();
-		props.load(new java.io.FileInputStream(file));
-		System.out.println(props.getProperty("account"));
-		System.out.println(props.getProperty("username"));
-		props.setProperty("locatoin", "mars");
-		props.store(new FileOutputStream(file), "this is comment");
-	}
+    public static void main(String[] args) throws Exception {
+        String file = "account.properties";
+        Properties props = new Properties();
+        props.load(new java.io.FileInputStream(file));
+        System.out.println(props.getProperty("account"));
+        System.out.println(props.getProperty("username"));
+        props.setProperty("locatoin", "mars");
+        props.store(new FileOutputStream(file), "this is comment");
+    }
 }
 ```
 
@@ -3414,12 +3414,12 @@ public interface Queue<E> extends Collection<E> {
 双端队列，也就是同时提供了堆和栈操作的队列，即同时提供队头队尾插入移除的操作。
 |操作\接口|`Queue`|`Deque`|
 |:-|:-:|:-:|
-|添加元素到队尾	|`add(E e)` / `offer(E e)`|`addLast(E e)` / `offerLast(E e)`|
+|添加元素到队尾|`add(E e)` / `offer(E e)`|`addLast(E e)` / `offerLast(E e)`|
 |取队首元素并删除|`E remove()` / `E poll()`|`E removeFirst()` / `E pollFirst()`|
-|取队首元素但不删除|`E element()` / `E peek()`|	`E getFirst()` / `E peekFirst()`|
-|添加元素到队首|无|	`addFirst(E e)` / `offerFirst(E e)`|
-|取队尾元素并删除|无|	`E removeLast()` / `E pollLast()`|
-|取队尾元素但不删除|无|	`E getLast()` / `E peekLast()`|
+|取队首元素但不删除|`E element()` / `E peek()`|`E getFirst()` / `E peekFirst()`|
+|添加元素到队首|无|`addFirst(E e)` / `offerFirst(E e)`|
+|取队尾元素并删除|无|`E removeLast()` / `E pollLast()`|
+|取队尾元素但不删除|无|`E getLast()` / `E peekLast()`|
 
 定义：`public interface Deque<E> extends Queue<E>`
 
@@ -3524,91 +3524,91 @@ public interface Iterator<E> {
 实现一个简单的可变数组类作为例子：
 ```java
 public class MyArray<T> implements Iterable<T>{
-	private Object[] arr = null;
-	private int size = 0;
-	public MyArray(int capacity) {
-		if (capacity > 0) {
-			arr = new Object[capacity];
-		}
-		else {
-			arr = new Object[8];
-		}
-		size = 0;
-	}
-	public MyArray() {
-		arr = new Object[8];
-		size = 0;
-	}
-	public boolean isEmpty() {
-		return size == 0;
-	}
-	public T get(int index) {
-		checkIndex(index);
-		return (T)arr[index];
-	}
-	public void set(int index, T obj) {
-		checkIndex(index);
-		arr[index] = obj;
-	}
-	public void add(T obj) {
-		if (size == arr.length) {
-			grow();
-		}
-		arr[size++] = obj;
-	}
-	public T removeAt(int index) {
-		checkIndex(index);
-		T elem = (T)arr[index];
-		for (int i = index+1; i < size; i ++) {
-			arr[i-1] = arr[i];
-		}
-		arr[size-1] = null;
-		size--;
-		return elem;
-	}
-	private void grow() {
-		int oldCapacity = arr.length;
-		Object[] newArr = new Object[oldCapacity*2];
-		for (int i = 0; i < arr.length; i ++) {
-			newArr[i] = arr[i];
-		}
-		arr = newArr;
-	}
-	private void checkIndex(int index) {
-		if (index < 0 || index >= size) {
-			throw new IllegalArgumentException("Illegal index: " + index);
-		}
-	}
-	// TODO : other method about equals, hashCode, subArray, searching, sorting, etc.
-	
-	@Override
-	public Iterator<T> iterator() {
-		return new MyArrayIterator();
-	}
-	
-	private class MyArrayIterator implements Iterator<T> {
-		private int index = 0;
-		private boolean bNext = false;
-		public MyArrayIterator() {
-		}
-		@Override
-		public boolean hasNext() {
-			return index < MyArray.this.size;
-		}
-		@Override
-		public T next() {
-			bNext = true;
-			return (T)MyArray.this.get(index++);
-		}
-		@Override
-		public void remove() {
-			if (bNext == false) {
-				throw new IllegalStateException("there is no last next() called.");
-			}
-			MyArray.this.removeAt(--index);
-			bNext = false;
-		}
-	}
+    private Object[] arr = null;
+    private int size = 0;
+    public MyArray(int capacity) {
+        if (capacity > 0) {
+            arr = new Object[capacity];
+        }
+        else {
+            arr = new Object[8];
+        }
+        size = 0;
+    }
+    public MyArray() {
+        arr = new Object[8];
+        size = 0;
+    }
+    public boolean isEmpty() {
+        return size == 0;
+    }
+    public T get(int index) {
+        checkIndex(index);
+        return (T)arr[index];
+    }
+    public void set(int index, T obj) {
+        checkIndex(index);
+        arr[index] = obj;
+    }
+    public void add(T obj) {
+        if (size == arr.length) {
+            grow();
+        }
+        arr[size++] = obj;
+    }
+    public T removeAt(int index) {
+        checkIndex(index);
+        T elem = (T)arr[index];
+        for (int i = index+1; i < size; i ++) {
+            arr[i-1] = arr[i];
+        }
+        arr[size-1] = null;
+        size--;
+        return elem;
+    }
+    private void grow() {
+        int oldCapacity = arr.length;
+        Object[] newArr = new Object[oldCapacity*2];
+        for (int i = 0; i < arr.length; i ++) {
+            newArr[i] = arr[i];
+        }
+        arr = newArr;
+    }
+    private void checkIndex(int index) {
+        if (index < 0 || index >= size) {
+            throw new IllegalArgumentException("Illegal index: " + index);
+        }
+    }
+    // TODO : other method about equals, hashCode, subArray, searching, sorting, etc.
+    
+    @Override
+    public Iterator<T> iterator() {
+        return new MyArrayIterator();
+    }
+    
+    private class MyArrayIterator implements Iterator<T> {
+        private int index = 0;
+        private boolean bNext = false;
+        public MyArrayIterator() {
+        }
+        @Override
+        public boolean hasNext() {
+            return index < MyArray.this.size;
+        }
+        @Override
+        public T next() {
+            bNext = true;
+            return (T)MyArray.this.get(index++);
+        }
+        @Override
+        public void remove() {
+            if (bNext == false) {
+                throw new IllegalStateException("there is no last next() called.");
+            }
+            MyArray.this.removeAt(--index);
+            bNext = false;
+        }
+    }
 }
 ```
 这只是最小功能简化，正常实现比如`ArrayList`要达到可用需要考虑比较多的东西。此时就可以用`for each`循环或者迭代器去迭代这个类了：
@@ -3619,8 +3619,8 @@ arr.add("world");
 arr.add("nice");
 arr.removeAt(1);
 for (Iterator<String> it = arr.iterator(); it.hasNext();) {
-	System.out.println("elem: " + it.next());
-	it.remove();
+    System.out.println("elem: " + it.next());
+    it.remove();
 }
 ```
 
@@ -3775,258 +3775,258 @@ import java.util.Scanner;
 import java.util.StringJoiner;
 
 public class FileOp {
-	private File curDir = null;
+    private File curDir = null;
 
-	public FileOp() {
-		curDir = new File(System.getProperty("user.dir"));
-	}
+    public FileOp() {
+        curDir = new File(System.getProperty("user.dir"));
+    }
 
-	public FileOp(File inputFile) throws IOException {
-		if (inputFile == null || !inputFile.exists()) {
-			curDir = new File(System.getProperty("user.dir"));
-		} else if (inputFile.isDirectory()) {
-			curDir = new File(inputFile.getParent());
-		} else {
-			curDir = new File(inputFile.getCanonicalPath());
-		}
-	}
+    public FileOp(File inputFile) throws IOException {
+        if (inputFile == null || !inputFile.exists()) {
+            curDir = new File(System.getProperty("user.dir"));
+        } else if (inputFile.isDirectory()) {
+            curDir = new File(inputFile.getParent());
+        } else {
+            curDir = new File(inputFile.getCanonicalPath());
+        }
+    }
 
-	public void run() throws IOException {
-		if (curDir == null) {
-			return;
-		}
+    public void run() throws IOException {
+        if (curDir == null) {
+            return;
+        }
 
-		Scanner sc = new Scanner(System.in);
-		boolean bContinue = true;
-		do {
-			System.out.print(curDir.getCanonicalPath() + " > ");
-			String cmd = sc.nextLine();
-			cmd.trim();
-			if (cmd.isEmpty()) {
-				continue;
-			}
-			String[] args = cmd.split("[\\s]+"); // 正则表达式，匹配一个或多个空白符
-			for (int i = 0; i < args.length; i++) {
-				args[i].trim();
-			}
-			if (args.length == 0) {
-				continue;
-			}
-			switch (args[0]) {
-			case "ls":
-				if (args.length == 1) {
-					ls(curDir.getPath());
-				} else if (args.length == 2) {
-					ls(args[1]);
-				} else {
-					System.out.println("invalid args of ls : " + cmd);
-				}
-				break;
-			case "cd":
-				if (args.length == 2) {
-					cd(args[1]);
-				} else if (args.length >= 3) {
-					System.out.println("invalid args of cd : " + cmd);
-				}
-				break;
-			case "mkdir":
-				if (args.length == 2) {
-					mkdir(args[1]);
-				} else {
-					System.out.println("invalid args of mkdir : " + cmd);
-				}
-				break;
-			case "touch":
-				if (args.length == 2) {
-					touch(args[1]);
-				} else {
-					System.out.println("invalid args of touch : " + cmd);
-				}
-				break;
-			case "tree":
-				if (args.length == 1) {
-					tree(curDir.getCanonicalPath());
-				} else if (args.length == 2) {
-					tree(args[1]);
-				} else {
-					System.out.println("invalid args of tree : " + cmd);
-				}
-				break;
-			case "rm":
-				if (args.length == 2) {
-					rm(args[1]);
-				} else {
-					System.out.println("invalid args of rm : " + cmd);
-				}
-				break;
-			case "cp":
-				if (args.length == 3) {
-					cp(args[1], args[2]);
-				} else {
-					System.out.println("invalid args of cp : " + cmd);
-				}
-				break;
-			case "mv":
-				if (args.length == 3) {
-					mv(args[1], args[2]);
-				} else {
-					System.out.println("invalid args of mv : " + cmd);
-				}
-				break;
-			case "exit":
-				bContinue = false;
-				break;
-			default:
-				System.out.println("invalid args : " + cmd);
-				break;
-			}
-		} while (bContinue);
-		sc.close();
-	}
+        Scanner sc = new Scanner(System.in);
+        boolean bContinue = true;
+        do {
+            System.out.print(curDir.getCanonicalPath() + " > ");
+            String cmd = sc.nextLine();
+            cmd.trim();
+            if (cmd.isEmpty()) {
+                continue;
+            }
+            String[] args = cmd.split("[\\s]+"); // 正则表达式，匹配一个或多个空白符
+            for (int i = 0; i < args.length; i++) {
+                args[i].trim();
+            }
+            if (args.length == 0) {
+                continue;
+            }
+            switch (args[0]) {
+            case "ls":
+                if (args.length == 1) {
+                    ls(curDir.getPath());
+                } else if (args.length == 2) {
+                    ls(args[1]);
+                } else {
+                    System.out.println("invalid args of ls : " + cmd);
+                }
+                break;
+            case "cd":
+                if (args.length == 2) {
+                    cd(args[1]);
+                } else if (args.length >= 3) {
+                    System.out.println("invalid args of cd : " + cmd);
+                }
+                break;
+            case "mkdir":
+                if (args.length == 2) {
+                    mkdir(args[1]);
+                } else {
+                    System.out.println("invalid args of mkdir : " + cmd);
+                }
+                break;
+            case "touch":
+                if (args.length == 2) {
+                    touch(args[1]);
+                } else {
+                    System.out.println("invalid args of touch : " + cmd);
+                }
+                break;
+            case "tree":
+                if (args.length == 1) {
+                    tree(curDir.getCanonicalPath());
+                } else if (args.length == 2) {
+                    tree(args[1]);
+                } else {
+                    System.out.println("invalid args of tree : " + cmd);
+                }
+                break;
+            case "rm":
+                if (args.length == 2) {
+                    rm(args[1]);
+                } else {
+                    System.out.println("invalid args of rm : " + cmd);
+                }
+                break;
+            case "cp":
+                if (args.length == 3) {
+                    cp(args[1], args[2]);
+                } else {
+                    System.out.println("invalid args of cp : " + cmd);
+                }
+                break;
+            case "mv":
+                if (args.length == 3) {
+                    mv(args[1], args[2]);
+                } else {
+                    System.out.println("invalid args of mv : " + cmd);
+                }
+                break;
+            case "exit":
+                bContinue = false;
+                break;
+            default:
+                System.out.println("invalid args : " + cmd);
+                break;
+            }
+        } while (bContinue);
+        sc.close();
+    }
 
-	public void ls(String lsFile) {
-		lsFile = realToAbs(lsFile);
-		File f = new File(lsFile);
-		if (!f.exists()) {
-			System.out.println("non-exist file or directories : " + lsFile);
-		} else if (f.isFile()) {
-			System.out.println(f.getName());
-		} else {
-			File[] files = f.listFiles();
-			StringJoiner sj = new StringJoiner(" ");
-			for (int i = 0; i < files.length; i++) {
-				if (files[i].isFile()) {
-					sj.add(files[i].getName());
-				} else {
-					sj.add(files[i].getName() + "/");
-				}
-			}
-			if (files.length > 0) {
-				System.out.println(sj);
-			}
-		}
-	}
+    public void ls(String lsFile) {
+        lsFile = realToAbs(lsFile);
+        File f = new File(lsFile);
+        if (!f.exists()) {
+            System.out.println("non-exist file or directories : " + lsFile);
+        } else if (f.isFile()) {
+            System.out.println(f.getName());
+        } else {
+            File[] files = f.listFiles();
+            StringJoiner sj = new StringJoiner(" ");
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isFile()) {
+                    sj.add(files[i].getName());
+                } else {
+                    sj.add(files[i].getName() + "/");
+                }
+            }
+            if (files.length > 0) {
+                System.out.println(sj);
+            }
+        }
+    }
 
-	public void cd(String cdDir) {
-		cdDir = realToAbs(cdDir);
-		File f = new File(cdDir);
-		if (f.exists() && f.isDirectory()) {
-			curDir = f;
-		} else {
-			System.out.println("invalid directory path : " + cdDir);
-		}
-	}
+    public void cd(String cdDir) {
+        cdDir = realToAbs(cdDir);
+        File f = new File(cdDir);
+        if (f.exists() && f.isDirectory()) {
+            curDir = f;
+        } else {
+            System.out.println("invalid directory path : " + cdDir);
+        }
+    }
 
-	public void mkdir(String mkDir) {
-		mkDir = realToAbs(mkDir);
-		File f = new File(mkDir);
-		if (f.isDirectory()) {
-			System.out.println("directory already exists : " + mkDir);
-		} else if (f.isFile()) {
-			System.out.println("a same name file already exists : " + mkDir);
-		} else if (!f.mkdir()) {
-			System.out.println("failed to mkdir : " + mkDir);
-		}
-	}
+    public void mkdir(String mkDir) {
+        mkDir = realToAbs(mkDir);
+        File f = new File(mkDir);
+        if (f.isDirectory()) {
+            System.out.println("directory already exists : " + mkDir);
+        } else if (f.isFile()) {
+            System.out.println("a same name file already exists : " + mkDir);
+        } else if (!f.mkdir()) {
+            System.out.println("failed to mkdir : " + mkDir);
+        }
+    }
 
-	public void touch(String newFile) {
-		newFile = realToAbs(newFile);
-		File f = new File(newFile);
-		if (f.isDirectory()) {
-			System.out.println("a same neme directory already exists : " + newFile);
-		} else if (f.isFile()) {
-			System.out.println("file alredy exists : " + newFile);
-		} else {
-			try {
-				if (!f.createNewFile()) {
-					System.out.println("failed to create new file : " + newFile);
-				}
-			} catch (IOException e) {
-				System.out.println("failed to create new file : " + newFile);
-			}
-		}
-	}
+    public void touch(String newFile) {
+        newFile = realToAbs(newFile);
+        File f = new File(newFile);
+        if (f.isDirectory()) {
+            System.out.println("a same neme directory already exists : " + newFile);
+        } else if (f.isFile()) {
+            System.out.println("file alredy exists : " + newFile);
+        } else {
+            try {
+                if (!f.createNewFile()) {
+                    System.out.println("failed to create new file : " + newFile);
+                }
+            } catch (IOException e) {
+                System.out.println("failed to create new file : " + newFile);
+            }
+        }
+    }
 
-	public void tree(String inputFile) {
-		inputFile = realToAbs(inputFile);
-		File f = new File(inputFile);
-		if (!f.exists()) {
-			System.out.println("file or directory does not exist : " + inputFile);
-		} else if (f.isFile()) {
-			ls(inputFile);
-		} else if (f.isDirectory()) {
-			System.out.println(inputFile);
-			printFileOrDirWithTreeFormat(f, 0);
-		}
-	}
+    public void tree(String inputFile) {
+        inputFile = realToAbs(inputFile);
+        File f = new File(inputFile);
+        if (!f.exists()) {
+            System.out.println("file or directory does not exist : " + inputFile);
+        } else if (f.isFile()) {
+            ls(inputFile);
+        } else if (f.isDirectory()) {
+            System.out.println(inputFile);
+            printFileOrDirWithTreeFormat(f, 0);
+        }
+    }
 
-	private void printFileOrDirWithTreeFormat(File f, int indent) {
-		for (int i = 0; i < indent; i++) {
-			System.out.print("    ");
-		}
-		if (f.isDirectory()) {
-			System.out.println(f.getName() + "/");
-			File[] files = f.listFiles();
-			for (File tmpFile : files) {
-				printFileOrDirWithTreeFormat(tmpFile, indent + 1);
-			}
-		} else if (f.isFile()) {
-			System.out.println(f.getName());
-		}
-	}
+    private void printFileOrDirWithTreeFormat(File f, int indent) {
+        for (int i = 0; i < indent; i++) {
+            System.out.print("    ");
+        }
+        if (f.isDirectory()) {
+            System.out.println(f.getName() + "/");
+            File[] files = f.listFiles();
+            for (File tmpFile : files) {
+                printFileOrDirWithTreeFormat(tmpFile, indent + 1);
+            }
+        } else if (f.isFile()) {
+            System.out.println(f.getName());
+        }
+    }
 
-	public void rm(String inputFile) {
-		inputFile = realToAbs(inputFile);
-		File f = new File(inputFile);
-		if (f.exists()) {
-			if (!f.delete()) {
-				System.out.println("fialed to delte file or directory : " + inputFile);
-			}
-		} else {
-			System.out.println("file or directory does not exist : " + inputFile);
-		}
-	}
+    public void rm(String inputFile) {
+        inputFile = realToAbs(inputFile);
+        File f = new File(inputFile);
+        if (f.exists()) {
+            if (!f.delete()) {
+                System.out.println("fialed to delte file or directory : " + inputFile);
+            }
+        } else {
+            System.out.println("file or directory does not exist : " + inputFile);
+        }
+    }
 
-	public void cp(String fromFile, String toFile) {
-		File f = new File(realToAbs(fromFile));
-		File fto = new File(realToAbs(toFile));
-		if (fto.exists()) {
-			System.out.println("destination file or directory already exists : " + toFile);
-		} else if (f.exists()) {
-			try {
-				Files.copy(f.toPath(), fto.toPath());
-			} catch (IOException e) {
-				System.out.printf("fialed to copy %s to %s\n", fromFile, toFile);
-			}
-		} else {
-			System.out.println("source file does not exist : " + fromFile);
-		}
-	}
+    public void cp(String fromFile, String toFile) {
+        File f = new File(realToAbs(fromFile));
+        File fto = new File(realToAbs(toFile));
+        if (fto.exists()) {
+            System.out.println("destination file or directory already exists : " + toFile);
+        } else if (f.exists()) {
+            try {
+                Files.copy(f.toPath(), fto.toPath());
+            } catch (IOException e) {
+                System.out.printf("fialed to copy %s to %s\n", fromFile, toFile);
+            }
+        } else {
+            System.out.println("source file does not exist : " + fromFile);
+        }
+    }
 
-	public void mv(String fromFile, String toFile) {
-		File f = new File(realToAbs(fromFile));
-		File fto = new File(realToAbs(toFile));
-		if (fto.exists()) {
-			System.out.println("destination file or directory already exists : " + toFile);
-		} else if (f.exists()) {
-			if (!f.renameTo(fto)) {
-				System.out.printf("failed to move %s to %s\n", fromFile, toFile);
-			}
-		} else {
-			System.out.println("source file does not exist : " + fromFile);
-		}
-	}
+    public void mv(String fromFile, String toFile) {
+        File f = new File(realToAbs(fromFile));
+        File fto = new File(realToAbs(toFile));
+        if (fto.exists()) {
+            System.out.println("destination file or directory already exists : " + toFile);
+        } else if (f.exists()) {
+            if (!f.renameTo(fto)) {
+                System.out.printf("failed to move %s to %s\n", fromFile, toFile);
+            }
+        } else {
+            System.out.println("source file does not exist : " + fromFile);
+        }
+    }
 
-	// common logic
-	private String realToAbs(String path) {
-		path.replace('/', File.separatorChar);
-		path.replace('\\', File.separatorChar);
-		Path p = Path.of(path);
-		if (!p.isAbsolute()) {
-			path = curDir.getPath() + File.separator + p;
-		}
-		return path;
-	}
+    // common logic
+    private String realToAbs(String path) {
+        path.replace('/', File.separatorChar);
+        path.replace('\\', File.separatorChar);
+        Path p = Path.of(path);
+        if (!p.isAbsolute()) {
+            path = curDir.getPath() + File.separator + p;
+        }
+        return path;
+    }
 }
 ```
 虽然极端简陋，但也具备了最基本的文件操作可用性了，类UNIX系统中每个命令都支持多个选项，功能丰富太多了。TODO：有空时阅读Linux系统的简单命令实现源码。
@@ -4100,35 +4100,35 @@ public abstract class InputStream implements Closeable {
 ```java
 InputStream is = null;
 try {
-	is = new FileInputStream("readme.txt");
-	while (true) {
-		int n = is.read();
-		if (n != -1) {
-			System.out.println(n);
-		}
-		else {
-			break;
-		}
-	}
+    is = new FileInputStream("readme.txt");
+    while (true) {
+        int n = is.read();
+        if (n != -1) {
+            System.out.println(n);
+        }
+        else {
+            break;
+        }
+    }
 } finally {
-	if (is != null) {
-		is.close();
-	}
+    if (is != null) {
+        is.close();
+    }
 }
 ```
 
 这样会有一点繁琐，更好的写法是使用Java7引入的`try(resource)`语法，只需要写`try`让编译器自动为我们关闭资源。
 ```java
 try (InputStream is = new FileInputStream("readme.txt")) {
-	while (true) {
-		int n = is.read();
-		if (n != -1) {
-			System.out.println(n);
-		}
-		else {
-			break;
-		}
-	}
+    while (true) {
+        int n = is.read();
+        if (n != -1) {
+            System.out.println(n);
+        }
+        else {
+            break;
+        }
+    }
 } // 编译器自动在此处添加finally并调用close
 ```
 
@@ -4144,15 +4144,15 @@ try (InputStream is = new FileInputStream("readme.txt")) {
 ```java
 byte[] b = new byte[] {1, 100, 101};
 try (InputStream is = new ByteArrayInputStream(b)) {
-	while (true) {
-		int n = is.read();
-		if (n != -1) {
-			System.out.println(n);
-		}
-		else {
-			break;
-		}
-	}
+    while (true) {
+        int n = is.read();
+        if (n != -1) {
+            System.out.println(n);
+        }
+        else {
+            break;
+        }
+    }
 }
 ```
 
@@ -4184,7 +4184,7 @@ public abstract class OutputStream implements Closeable, Flushable {
 和`InputStream`一样，需要关闭和处理IO错误，`write`时同样会阻塞。
 ```java
 try (OutputStream os = new FileOutputStream("readme.txt")) {
-	os.write("how are you!".getBytes("utf-8"));
+    os.write("how are you!".getBytes("utf-8"));
 }
 ```
 
@@ -4197,20 +4197,20 @@ try (OutputStream os = new FileOutputStream("readme.txt")) {
 复制文件：
 ```java
 public static void copyFile(String src, String dest) throws FileNotFoundException,IOException {
-	try(InputStream is = new FileInputStream(src); OutputStream os = new FileOutputStream(dest)) {
-		is.transferTo(os);
-	}
+    try(InputStream is = new FileInputStream(src); OutputStream os = new FileOutputStream(dest)) {
+        is.transferTo(os);
+    }
 }
 ```
 将流内容读取为字符串：
 ```java
 public static String readAsString(InputStream is) throws IOException {
-	StringBuilder sb = new StringBuilder();
-	int n = 0;
-	while ((n = is.read()) != -1) {
-		sb.append((char)n);
-	}
-	return sb.toString();
+    StringBuilder sb = new StringBuilder();
+    int n = 0;
+    while ((n = is.read()) != -1) {
+        sb.append((char)n);
+    }
+    return sb.toString();
 }
 ```
 
@@ -4249,36 +4249,36 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CountInputStream extends FilterInputStream {
-	private int count = 0;
-	protected CountInputStream(InputStream in) {
-		super(in);
-	}
-	@Override
-	public int read() throws IOException {
-		int n = in.read();
-		if (n != -1)
-			count ++;
-		return n;
-	}
-	@Override
-	public int read(byte b[], int off, int len) throws IOException {
-		int n = in.read(b, off, len);
-		if (n != -1) {
-			count += n;
-		}
-		return n;
-	}
-	public int getReadCount() {
-		return count;
-	}
+    private int count = 0;
+    protected CountInputStream(InputStream in) {
+        super(in);
+    }
+    @Override
+    public int read() throws IOException {
+        int n = in.read();
+        if (n != -1)
+            count ++;
+        return n;
+    }
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+        int n = in.read(b, off, len);
+        if (n != -1) {
+            count += n;
+        }
+        return n;
+    }
+    public int getReadCount() {
+        return count;
+    }
 }
 ```
 
 使用：
 ```java
 try (InputStream is = new FileInputStream("readme.txt"); CountInputStream cis = new CountInputStream(is)) {
-	System.out.println(readAsString(cis));
-	System.out.println(cis.getReadCount());
+    System.out.println(readAsString(cis));
+    System.out.println(cis.getReadCount());
 }
 ```
 
