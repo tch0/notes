@@ -30,6 +30,8 @@
     - [7.3 区分命令行执行和双击执行](#73-%E5%8C%BA%E5%88%86%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%89%A7%E8%A1%8C%E5%92%8C%E5%8F%8C%E5%87%BB%E6%89%A7%E8%A1%8C)
   - [8. 我的评价](#8-%E6%88%91%E7%9A%84%E8%AF%84%E4%BB%B7)
   - [9. Windows管理深入](#9-windows%E7%AE%A1%E7%90%86%E6%B7%B1%E5%85%A5)
+    - [9.1 注册表](#91-%E6%B3%A8%E5%86%8C%E8%A1%A8)
+    - [9.2 组策略](#92-%E7%BB%84%E7%AD%96%E7%95%A5)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1088,7 +1090,7 @@ exit /B 0
 Windows API中提供了[增删改查注册表项的接口](https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry)，可以将注册表项导出为`.reg`文件，或者将要添加的注册表项写在`.reg`文件中，双击直接导入。
 
 
-## 9.2 组策略
+### 9.2 组策略
 
 Windows操作系统的组策略是配置计算机中某一些用户组策略的程序，是系统管理员操作控制计算机程序、访问网络资源、操作行为、各种软件设置的最主要工具。
 
