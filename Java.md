@@ -4137,7 +4137,7 @@ try (InputStream is = new FileInputStream("readme.txt")) {
 
 **缓冲**：读取流时一次读一个字节并不高效，一次性读取多个字节到缓冲区往往比一次一个字节高效很多，`InputStream`提供了多个`read`和相关接口来读取多个字节到字节数组。
 
-**阻塞**：同步IO在读取是会阻塞，也就是说`read`语句会读取到数据之后才返回执行下一条语句，读取IO的操作相比普通的计算操作速度会慢很多。
+**阻塞**：同步IO在读取时会阻塞，也就是说`read`语句会读取到数据之后才返回执行下一条语句，读取IO的操作相比普通的计算操作速度会慢很多。
 
 **实现**：`InputStream`是一个抽象类，具体的实现在实现类中，`FileInputStream`获取文件输入流就是一个典型。此外`ByteArrayInputStream`可以在内存中模拟一个输入流，实际上就是把数组变成流，实际应用不多，可以用在测试时构造一个输入流。
 
@@ -4284,20 +4284,362 @@ try (InputStream is = new FileInputStream("readme.txt"); CountInputStream cis = 
 
 ### 9.5 Zip
 
+`ZipInputStream`是一种`FilterInputStream`，提供了直接读取zip包的功能。层次结构：
+```
+InputStream
+|__FilterInputStream 
+    |__InflaterInputStream
+        |__ZipInputStream
+            |__JarInputStream
+```
+
+`jar`包本身就是zip压缩文件，`JarInputStream`相对`ZipInputStream`增加的功能主要是用来读取jar中的`MANIFEST.MF`。其中`InflaterInputStream`和`ZipInputStream`定义在`java.util.zip`包，`JarInputStream`定义在`java.util.jar`包。
+
+`java.util.zip`包中定义了zip/gzip相关的压缩文件条目、输入输出流、校验和等相关类。
+
+示例，当然有了读取到了数据再利用文件输出流就可以实现解压缩了：
+```java
+public static void readZip(String zipfile) throws FileNotFoundException, IOException {
+    try (ZipInputStream zip = new ZipInputStream(new FileInputStream(zipfile))) {
+        ZipEntry entry = null;
+        while ((entry = zip.getNextEntry()) != null) {
+            System.out.println(entry.getName());
+            if (!entry.isDirectory()) {
+                StringBuilder sb = new StringBuilder();
+                int n;
+                while ((n = zip.read()) != -1) {
+                    sb.append((char)n);
+                }
+                System.out.println(sb.toString());
+            }
+        }
+    }
+}
+```
+
+`ZipInputStream`通常用循环`getNextEntry`来遍历压缩包内所有文件，其中`ZipEntry`用来表示其中的一个压缩条目，用`isDirectory`判断是目录还是文件，判断依据是`getName`获取到的名称是否是以`/`结尾的。除了这两个常用方法，还有获取校验和，创建读取修改时间等相关方法。
+```java
+public boolean isDirectory() {
+    return name.endsWith("/");
+}
+```
+
+写入Zip包则需要调用`ZipOutputStream`，派生关系类似于`ZipInputStreram`，通常是包装一个`FileOutputStream`，没写入一个文件，先调用`putNextEntry()`，然后用`write`写入`byte[]`数据，写入完毕后调用`closeEntry`结束文件打包。
+
+添加压缩文件，需要注意`ZipEntry`的名称：
+```java
+public static void createZip(String zipfile, File[] inputFiles) throws FileNotFoundException, IOException {
+    try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipfile))) {
+        for (File file : inputFiles) {
+            if (file != null && file.exists()) {
+                writeFileToZip(zip, file, "");
+            }
+        }
+    }
+}
+
+public static void writeFileToZip(ZipOutputStream zip, File file, String prefix) throws IOException {
+    if (file.exists()) {
+        if (file.isDirectory()) {
+            String entryName = prefix + file.getName() + "/";
+            zip.putNextEntry(new ZipEntry(entryName));
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File tmpFile : files) {
+                    writeFileToZip(zip, tmpFile, entryName);
+                }
+            }
+        }
+        else {
+            zip.putNextEntry(new ZipEntry(prefix + file.getName()));
+            try (InputStream is = new FileInputStream(file)) {
+                zip.write(is.readAllBytes());
+            }
+        }
+    }
+}
+```
+
+利用ZIP流和文件流，实现压缩和解压缩ZIP文件就是这么简单。
+
+TODO：了解zip以及常见的压缩算法.
+
 ### 9.6 读取classpath的资源
+
+如果我们读取一个配置文件、资源文件，需要指定它的路径，如果文件不在项目里面，那么需要根据当前路径指定相对路径或者直接用绝对路径。如果这个文件在`classpath`里面，最终随着`jar`文件一起打包，那么读取时就只需要指定它在`classpath`中的路径即可。
+
+在`classpath`中的资源文件，路径总是以`/`开头，获取到当前`Class`对象，然后调用`getResourceAsStream`就可以直接从`classpath`读取任意资源。
+
+在Eclipse中，最终资源应该放在`bin`目录下，`/hello.txt`资源代表的就是`bin/hello.txt`资源，最终打包后就是`jar`包根目录中的`hello.txt`。TODO：理清楚Eclipse工程、classpath等配置的详细含义。
+
+例：
+```java
+public static void readClassPathResFile(String path) throws IOException {
+    try (InputStream is = ResourceHelper.class.getResourceAsStream(path)) {
+        if (is != null) {
+            System.out.println(readStreamAsString(is));
+        }
+    }
+}
+public static String readStreamAsString(InputStream is) throws IOException {
+    int n;
+    StringBuilder sb = new StringBuilder();
+    while ((n = is.read()) != -1) {
+        sb.append((char)n);
+    }
+    return sb.toString();
+}
+```
+调用：
+```java
+ResourceHelper.readClassPathResFile("/hello.txt");
+```
+
+如果没有该资源，`getResourceAsStream`返回的`InputStream`是空的，需要检查。
 
 ### 9.7 序列化
 
+序列化(serialization, serialize)就是把Java对象变成二进制内容的过程，本质上就是一个`byte[]`。有序列化就有反序列化(deserialization, deserialize)，也就是把二进制内容`byte[]`变回Java对象。
+
+为什么要序列化：序列化后方便存储到磁盘、通过网络传输，通过反序列化再还原回一个Java对象。
+
+一个对象要能序列化，必须要实现一个特殊的接口：`java.io.Serializable`接口。这个接口没有任何方法，只起到一个标记的作用，这样的接口被称为“标记接口”。
+
+要把一个对象序列化为`byte[]`，需要使用`ObjectOutputStream`，负责将一个Java对象写入字节流。这个接口既可以写入内置类型`int` `double`等，可以以utf-8编码写入String，也可以写入实现了`Serializable`接口的对象。
+
+同理反序列化则使用`ObejctInputStream`从`byte[]`读取一个`Java`对象。调用`readObject`读取到一个`Obejct`之后做强制类型转换为特定类型。
+
+相关重要方法：
+```java
+public class ObjectOutputStream
+    extends OutputStream implements ObjectOutput, ObjectStreamConstants
+{
+    public final void writeObject(Object obj) throws IOException {}
+    public void writeBoolean(boolean val) throws IOException {}
+    public void writeByte(int val) throws IOException {}
+    public void writeShort(int val)  throws IOException {}
+    public void writeChar(int val)  throws IOException {}
+    public void writeInt(int val)  throws IOException {}
+    public void writeLong(long val)  throws IOException {}
+    public void writeFloat(float val) throws IOException {}
+    public void writeDouble(double val) throws IOException {}
+    public void writeBytes(String str) throws IOException {}
+    public void writeChars(String str) throws IOException {}
+    public void writeUTF(String str) throws IOException {}
+}
+
+public class ObjectInputStream
+    extends InputStream implements ObjectInput, ObjectStreamConstants
+{
+    public final Object readObject() {}
+    public byte readByte() throws IOException  {}
+    public int readUnsignedByte()  throws IOException {}
+    public char readChar()  throws IOException {}
+    public short readShort()  throws IOException {}
+    public int readUnsignedShort() throws IOException {}
+    public int readInt()  throws IOException {}
+    public long readLong()  throws IOException {}
+    public float readFloat() throws IOException {}
+    public double readDouble() throws IOException {}
+    @Deprecated
+    public String readLine() throws IOException {}
+    public String readUTF() throws IOException {}
+}
+```
+
+`readObejct`反序列化是可能抛出异常有:
+- `ClassNotFoundException` 未找到对应类。
+- `InvalidClassException` 类型不匹配。`extends ObjectStreamException extends IOException`
+
+对于`InvalidClassException`常见情况是类的定义可能发生了细微改变，比如一个字段类型由`int`改为`long`导致不兼容。为了避免这种不兼容，Java的序列化允许对象定义一个特殊的`serialVersionUID`静态字段。用于标识类的序列化版本，通常可由IDE自动生成。如果修改了实例字段，则需要修改这个ID。这样就可以自动阻止不匹配的class版本。
+
+在Eclipse中，实现了`Serializable`接口后，鼠标放在类名上面，就可以看到生成序列化ID的选项，一种是添加自动生成的使用类名、接口名、成员方法即属性来生成的一个64位的哈希字段，一种是缺省的比如`1L`。
+```java
+private static final long serialVersionUID = -5351371831194389028L;
+```
+
+反序列化并不会调用构造函数，而是直接用数据填充这个对象的字段，正式因为这一点，Java的反序列化机制可以不经过构造方法就可以直接创建对象，所以可能存在安全隐患。
+
+所以Java本身提供的基于对象的序列化和反序列化即存在安全性问题，又存在兼容性问题。更好的序列化方法是通过Json这样的通用数据结构来实现。如果需要与其他语言交换数据，也必须用通用的序列化方法比如Json。
+
 ### 9.8 Reader
+
+`Reader`是`java.io`的另一个输入流接口，代表字符输入流。读取单位是`char`，和`InputStream`接口的方法可以说一模一样，只是基本数据类型由`byte`换成了`char`。
+```java
+public int read() throws IOException
+public int read(char cbuf[]) throws IOException
+```
+上面两个接口前者返回`0~65535`，或者到达流末尾返回`-1`，后者返回读取字符数。
+
+示例：
+```java
+try (Reader reader = new FileReader("hello.txt", StandardCharsets.UTF_8)) {
+    int n;
+    StringBuilder sb = new StringBuilder();
+    while ((n = reader.read()) != -1) {
+        sb.append((char)n);
+    }
+    System.out.println(sb);
+}
+```
+此时`hello.txt`中的中文就可以被识别了。纯文本文件的读取是与编码相关的，`FileReader`构造时最好指定编码，如果不指定会使用默认编码。
+
+和`InputStream`一样，`Reader`也是资源，也需要关闭，所以最好使用`try (resource)`。
+
+`java.io`也提供了同`ByteArrayInputStream`类似的`CharArrayReader`，使用一个`char[]`在内存中模拟一个`Reader`:
+```java
+Reader rd = new CharArrayReader("hello".toCharArray());
+```
+
+`StringReader`可以直接把`String`作为数据源，和`CharArrayReader`几乎一模一样。
+```java
+Reader rd = new StringReader("hello");
+```
+
+实际上，处理特殊的`CharArrayReader`和`StringReader`，普通的`Reader`都是基于`InputStream`构造的。因为`Reader`也需要读取字节，然后再解码成字符流。比如`FileReader`：
+```java
+public class FileReader extends InputStreamReader {
+    public FileReader(String fileName) throws FileNotFoundException {
+        super(new FileInputStream(fileName));
+    }
+    public FileReader(File file) throws FileNotFoundException {
+        super(new FileInputStream(file));
+    }
+    public FileReader(FileDescriptor fd) {
+        super(new FileInputStream(fd));
+    }
+    public FileReader(String fileName, Charset charset) throws IOException {
+        super(new FileInputStream(fileName), charset);
+    }
+}
+```
+可以看到`FileReader`基本没有做任何事情，解码和读取都是在基类做的。
+
+作为`Reader`和`InputStream`之间的桥梁的就是`InputStreamReader`类，`InputStreamReader`接受一个`InputStream`和一个编码，负责解码工作：
+```java
+public class InputStreamReader extends Reader {
+    // constructors
+    private final StreamDecoder sd;
+    public String getEncoding() {
+        return sd.getEncoding();
+    }
+    public int read() throws IOException {
+        return sd.read();
+    }
+    public int read(char cbuf[], int offset, int length) throws IOException {
+        return sd.read(cbuf, offset, length);
+    }
+    public boolean ready() throws IOException {
+        return sd.ready();
+    }
+    public void close() throws IOException {
+        sd.close();
+    }
+}
+```
+具体的解码工作由底层的一个`StreamDecoder`完成，不用太关注细节。使用时只需要传入`InputStream`和编码即可。
+
+下面的写法逻辑上是等价的：
+```java
+Reader reader1 = new InputStreamReader(new FileInputStream("hello.txt"), "GBK");
+Reader reader2 = new FileReader("hello.txt", Charset.forName("GBK"));
+```
+注意标准字符集`StandardCharsets`中是没有`GBK`编码的常量的，所以需要使用字符串表示或者使用`Charset.forName`来创建。
 
 ### 9.9 Writer
 
+`Writer`同理就是`OutputStream`加上一个解码的功能。主要方法：
+```java
+public void write(int c) throws IOException
+public void write(char cbuf[]) throws IOException
+public void write(String str) throws IOException
+```
 
+主要派生类：
+- `FileWriter`
+- `CharArrayWriter`
+- `StringWriter`
 
+同理`OutputStream`和`Writer`之间的桥梁是`OutputStreamWriter`负责输出到流并进行字符串编码。使用方法同`Reader`：
+```java
+try (Writer wt = new FileWriter("hello.txt", Charset.forName("GBK"))) {
+    wt.write("你好呀");
+}
+```
+
+TODO：分析了解底层`StreamDecoder`和`StreamEncoder`字符串编解码的实现。
+
+### 9.10 PrintStream & PrintWriter
+
+PrintStream是一种`FilterStream`，在`OutputStream`的基础上提供了各种写入数据的方法：
+```java
+public void print(char c) {
+    write(String.valueOf(c));
+}
+public void print(int i) {
+    write(String.valueOf(i));
+}
+public void print(long l) {
+    write(String.valueOf(l));
+}
+public void print(float f) {
+    write(String.valueOf(f));
+}
+public void print(double d) {
+    write(String.valueOf(d));
+}
+public void print(char s[]) {
+    write(s);
+}
+public void print(String s) {
+    write(String.valueOf(s));
+}
+public void print(Object obj) {
+    write(String.valueOf(obj)); // (obj == null) ? "null" : obj.toString();
+}
+public void println() {
+    newLine();
+}
+// other println ...
+public PrintStream printf(String format, Object ... args) {
+    return format(format, args);
+}
+```
+`PrintStream`与`OutputStream`相比提供了一组`print/println`方法用来打印各种数据类型，而且不会抛出`IOException`，编写代码时，不必处理异常。
+
+我们常用的`System.out`就是`PrintStream`类型。`PrintStream`是一种`FilterOutputStream`，所以最终输出的是`byte`数据。
+
+`PrintWriter`则是扩展了`Writer`接口，包装一个`Writer`并提供类似的`print/println/printf`等打印函数，最终输出`char`数据。
+
+另外`Reader`和`Writer`也是可以由`FilterReader`和`FilterWriter`来装饰的，不赘述。
+
+`System`类提供标准输入输出、获取外部环境变量等能力：
+```java
+public final class System {
+    public static final InputStream in = null;
+    public static final PrintStream out = null;
+    public static final PrintStream err = null;
+    private static volatile SecurityManager security;   // read by VM
+    private static volatile Console cons;
+}
+```
+其中：
+- `in` 标准输入
+- `out` 标准输出
+- `err` 标准错误输出
+
+类似于C语言中的`stdin` `stdout` `stderr`，非常好理解。
+
+### 9.11 工具
+
+使用`java.nio.file.Files`和`java.nio.file.Paths`这两个工具类，可以方便的处理文件操作和路径操作。
+
+`Files`提供了诸如删除、拷贝、移动、判断是否存在、读取文件数据等操作。读取数据的话如果文件过大，建议还是使用文件流进行操作。
+
+`Paths`提供的方法不多，主要的路径操作在`Path`类本身。
 
 ## TODO
 - 包与模块详解
-- IO
 - 日期与时间
 - 单元测试
 - 正则
@@ -4315,7 +4657,7 @@ try (InputStream is = new FileInputStream("readme.txt"); CountInputStream cis = 
 
 
 
+## 最新学习实践要求
 
-
-
+针对每一个知识点，都用上知识点想一个应用写出来，至少60%时间应该花在这上面。以这些代码为基础就可以形成简单的CodeBase了。组织形式：每一个章节形成一个新的包。
 
