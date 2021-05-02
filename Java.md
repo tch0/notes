@@ -3,7 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [入门一下Java](#%E5%85%A5%E9%97%A8%E4%B8%80%E4%B8%8Bjava)
-  - [0. 简介](#0-%E7%AE%80%E4%BB%8B)
+  - [0. 准备](#0-%E5%87%86%E5%A4%87)
     - [0.1 关于Java](#01-%E5%85%B3%E4%BA%8Ejava)
     - [0.2 开发环境](#02-%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
     - [0.3 基本Eclipse使用](#03-%E5%9F%BA%E6%9C%ACeclipse%E4%BD%BF%E7%94%A8)
@@ -98,6 +98,8 @@
     - [9.7 序列化](#97-%E5%BA%8F%E5%88%97%E5%8C%96)
     - [9.8 Reader](#98-reader)
     - [9.9 Writer](#99-writer)
+    - [9.10 PrintStream & PrintWriter](#910-printstream--printwriter)
+    - [9.11 工具](#911-%E5%B7%A5%E5%85%B7)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -113,7 +115,7 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 
 写在前面：仅仅是关键性知识点的笔记，用来串联、查阅和回顾，并不系统也并不细节。
 
-## 0. 简介
+## 0. 准备
 
 ### 0.1 关于Java
 - 1995年发布1.0版本，Java之父[James Gosling](https://en.wikipedia.org/wiki/James_Gosling)，SUN公司财产，2009年被Orcale收购。
@@ -152,11 +154,11 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 - 使用Eclipse：
     - 安装：下载[Eclipse IDE for Java Developers](https://www.eclipse.org/downloads/packages/)，无需安装，解压即可使用。
     - 汉化：下载中文汉化包，[地址](https://www.eclipse.org/babel/downloads.php)，找到IDE对应版本汉化包，找到简体中文的包全部下载下来共20个左右，批量解压提取到当前位置，复制得到的两个文件夹`features/`和`plugins/`到安装目录。
-    - 具体配置等略过不谈，网上一大把。
+    - 具体配置等略过不谈，网上一大把。无非就是编码、补全、文字样式、注释和代码风格等。
 
 ### 0.3 基本Eclipse使用
 
-Eclipse基本调试操作：
+**Eclipse基本调试操作：**
 - `Ctrl+Shift+B` 添加移除断点
 - `Ctrl+F11` 开始运行
 - `F11` 开始调试
@@ -173,7 +175,7 @@ Eclipse基本调试操作：
 - 首选项，调试，单步执行过滤，过滤不需要关注的类。
 - 配合调用堆栈(位于调试窗口)、本地变量监视、条件断点、表达式求值，常用的调试操作也就这些了。
 
-其他提高效率的快捷键：
+**其他提高效率的快捷键：**
 - `Ctrl+O` 右键快速大纲，用于搜索当前文件中的字段或者方法以快速跳转
 - `Ctrl+F3` 显示当前符号的快速大纲
 - `Ctrl+T` 右键快速类型层次结构，显示派生层次结构
@@ -188,12 +190,31 @@ Eclipse基本调试操作：
 
 说实话有些快捷键实在是有点太啰嗦，一点都起不到快捷的作用，说的就是`Alt+Sift+Q`加上一个键的那一堆，也懒得自己改，不要增加太多心智负担，记住常用的就好。如`Ctrl+O`, `F3`, `Ctrl+T`，加上常用的查找和调试快捷键就行。快捷键的使用必须要能够方便到在两秒钟内定位到想要的某个类、方法、文件、某个符号的所有引用、某个类的派生结构层次才算是舒服。
 
-Eclipse导入第三方库：
+**Eclipse导入第三方库：**
 - 右键项目，属性，Java构建路径，库，类路径(就是`classpath`)，添加外部JAR，选择JAR添加之后即可导入到该项目中。然后在包资源管理器中`src`、JRE系统同级的引用的库中就有这个库了。并且这个库的路径是绝对路径。
 - 也可以在项目中新建文件夹，然后将`jar`文件复制到这个目录中，右键选中该jar，构建路径，添加到构建路径后同样会被加入到引用的库中，此时`jar`被加入到了项目中，如果删除文件夹会移除依赖，库的路径是以相对路径保存的。或者类路径右边选择"添加JAR"就是添加项目内的`Jar`路径。
 
-启用预览特性：
+**启用预览特性：**
 - 右键项目，属性，Java编译器，取消JDK一致性，并勾选`Enable preview features for Java 15`。并且可以设置警告等级。
+
+**Eclipse多个包或者多个入口管理：**
+- 多个包同时存在都有入口时，在某个包含合法入口`main`的文件`Ctrl+F11`运行即执行当前入口。如果当前文件没有入口，那么执行上一个配置。
+- 在学习或者测试时可以个每个要测试的类写一个`public static main`，然后在当前文件执行测试。
+- 运行配置会自动创建，也可以项目右键，运行方式，运行 配置，Java应用程序，新建配置进行新建。
+- 上一个对话框中`Show Command Line`即可看到当前配置执行时的命令行。例：
+    ```shell
+    C:\eclipse\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_15.0.1.v20201027-0507\jre\bin\javaw.exe
+    -Dfile.encoding=UTF-8
+    -classpath "C:\Users\CapT\Desktop\LearnJava\JavaStarted\bin"
+    -XX:+ShowCodeDetailsInExceptionMessages dateAndTime.Main
+    ```
+- 要更改命令行的公共参数可以在窗口，首选项，Java，已安装的JRE找到对应JRE，编辑修改默认VM参数。
+- 可以写多个入口的确很舒服，甚至可以互相调用。
+
+**使用自己安装的JDK而不是Eclipse自带的：**
+- 同样在窗口，首选项，Java，已安装的JRE，添加，标准VM，找到安装的JDK目录，添加自己安装的JRE环境而不是用Eclipse默认的。设置为默认后创建新项目时选择使用默认JRE作为编译环境即可。
+- 修改已有项目的JRE环境：右键项目，属性，Java构建路径，库，模块路径找到JRE，编辑，修改为工作空间缺省JRE即可跟随首选项里面的默认JRE变化。
+- Eclipse自带了JRE，最终执行结果都是一样的，一般来说也不需要改。
 
 ## 1. Java语言基础
 
@@ -4655,9 +4676,4 @@ public final class System {
 - Spring
 - Spring Boot
 
-
-
-## 最新学习实践要求
-
-针对每一个知识点，都用上知识点想一个应用写出来，至少60%时间应该花在这上面。以这些代码为基础就可以形成简单的CodeBase了。组织形式：每一个章节形成一个新的包。
 
