@@ -100,6 +100,15 @@
     - [9.9 Writer](#99-writer)
     - [9.10 PrintStream & PrintWriter](#910-printstream--printwriter)
     - [9.11 工具](#911-%E5%B7%A5%E5%85%B7)
+  - [10. 日期和时间](#10-%E6%97%A5%E6%9C%9F%E5%92%8C%E6%97%B6%E9%97%B4)
+    - [10.1 基本概念](#101-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5)
+    - [10.2 时间戳](#102-%E6%97%B6%E9%97%B4%E6%88%B3)
+    - [10.3 Date & Calendar](#103-date--calendar)
+    - [10.4 LocalDateTime](#104-localdatetime)
+    - [10.5 ZonedDateTime](#105-zoneddatetime)
+    - [10.6 DateTimeFormatter](#106-datetimeformatter)
+    - [10.7 Instant](#107-instant)
+    - [10.8 最佳实践](#108-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5)
   - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -1097,7 +1106,7 @@ System.out.println(r.nextLong());
 SecureRandom sr = new SecureRandom();
 System.out.println(sr.nextInt(100));
 ```
-- `SecureRandom`无法指定种子，使用RNG（random number generator）算法。JDK的`SecureRandom`实际上有多种不同的底层实现，有的使用安全随机种子加上伪随机数算法来产生安全的随机数，有的使用真正的随机数生成器。实际使用的时候，可以优先获取高强度的安全随机数生成器，如果没有提供，再使用普通等级的安全随机数生成���。
+- `SecureRandom`无法指定种子，使用RNG（random number generator）算法。JDK的`SecureRandom`实际上有多种不同的底层实现，有的使用安全随机种子加上伪随机数算法来产生安全的随机数，有的使用真正的随机数生成器。实际使用的时候，可以优先获取高强度的安全随机数生成器，如果没有提供，再使用普通等级的安全随机数生成。
 ```java
 public class Main {
     public static void main(String[] args) {
@@ -4481,7 +4490,12 @@ private static final long serialVersionUID = -5351371831194389028L;
 
 反序列化并不会调用构造函数，而是直接用数据填充这个对象的字段，正式因为这一点，Java的反序列化机制可以不经过构造方法就可以直接创建对象，所以可能存在安全隐患。
 
-所以Java本身提供的基于对象的序列化和反序列化即存在安全性问题，又存在兼容性问题。更好的序列化方法是通过Json这样的通用数据结构来实现。如果需要与其他语言交换数据，也必须用通用的序列化方法比如Json。
+另外静态字段不会序列化，使用`transient`修饰的实例字段不会参与序列化，一般用于那种可以通过已有字段重新计算得到的字段或者业务需要不应该做序列化的字段，标准库里面经常可以看到。
+```java
+private transient long fastTime;
+```
+
+所以Java本身提供的基于对象的序列化和反序列化既存在安全性问题，又存在兼容性问题。更好的序列化方法是通过Json这样的通用数据结构来实现。如果需要与其他语言交换数据，也必须用通用的序列化方法比如Json。
 
 ### 9.8 Reader
 
@@ -4659,7 +4673,296 @@ public final class System {
 
 `Paths`提供的方法不多，主要的路径操作在`Path`类本身。
 
+## 10. 日期和时间
+
+### 10.1 基本概念
+
+日期：
+- `2021-5-2`
+- `2012-12-21`
+
+时间：
+- `20:30:28`
+- `2021-5-2 21:26:48`
+
+时间可以带日期可以不带日期，只有带日期才能准确地表示一个**时刻**。
+
+**时区与本地时间**
+
+世界上的不同时区，同一时刻，时间表示是不同的。中国国内都用北京时间，也就是东八区时间。
+
+光靠时间和日期无法唯一确定一个时刻，还需要一个时区。世界上有24个时区，相邻时区时间相差1个小时。以伦敦格林尼治本初子午线为0时区的中心，往东从东1区到东12区，往西西1区到西12区，东西12时区合并做一个时区，所以共24时区，东西12时区的中心就是国际日变更线。时区是1个时区15度，但是时区并不严格按照经度划分，在海洋上基本上是按照经度划分，在陆地上按照国界线或者其他界线进行了划分，比如中国在都是统一用北京的东八区时间，全部划分到了东八区。
+
+地球是自西往东转的，东边比西边更早看到太阳。同一时刻，西区比东区时间要早(也就是时间更小，更慢)，比如北京东八区例如正午12点时英国伦敦0时区慢8小时就应该是凌晨4点，美国纽约西5区比伦敦再慢5小时，就应该是日期早一天的23点(简捷算法:12-(8-(-5)) = -1, 即前一天的23:00)。
+
+如果穿越了国际日界线，从东12区往西12区的话(横跨太平洋中国到美国的方向)，东区快就应该将时间倒退一天，从西12区到东12区(横跨太平洋美国到中国的方向)，西区慢就应该将时间前进一天。
+
+表示本地时间就需要加上时区，时区有几种表示方式。
+- 一种是`GMT`或者`UTC`加上时区偏移，例如`GMT+08:00`/`UTC+08:00`表示北京东八区，美国纽约西五区就是`GMT-05:00`/`UTC-05:00`。
+
+其中GMT是格林尼治标准时间(Greenwich Mean Time)，GMT时间定义一天就是24小时，一小时60分钟，一分钟60秒，所以一天就是86400秒。但是地球并不是自始至终保持恒定不变的速度自转，而是在缓慢减速的，这样定义会导致一秒钟变得越来越长，所以格林尼治时间不再作为标准时间。而是使用UTC(Coodinated Universal Time, 协调世界时间)，UTC使用原子时，一秒定义为，铯-133原子基态的两个超精细能级间在零磁场下辐射跃迁9,192,631,770周所持续的时间。【仿佛回到了大学上半导体物理的时光，时间一去不复返，非常惭愧的是大学学的物理也全都还给老师了】所以使用UTC的一秒就被固定了，就会导致每一年用秒来计算的时间会越来越长，就需要在某些年份进行闰秒(负闰秒，最后一分钟为59秒，正闰秒则是最后一分钟为61秒)，规定当时间时和原子时相差超过正负0.9秒时就需要进行闰秒。目前，全球已经进行了27次闰秒，均为正闰秒，最近一次是北京时间2017年1月1日7时59分59秒，时钟显示为07:59:60。
+
+用GMT和UTC来表示时区时可以认为是等价的，UTC每过几年会闰秒，开发程序时可以忽略，计算机的时钟联网时会自动与时间服务器同步。不过貌似有闰秒后电子设备不工作的传闻，不知真假，就是没有考虑到这种情况的原因。
+
+- 另一中时区是使用洲/城市来表示，例如`Asia/Shanghai`，表示上海所在时区，需要注意城市名称不是任意的，而是由国际标准组织规定的城市。
+
+**夏令时**
+
+夏令时(Daylight Saving Time, DST)的意思是在天亮早的夏季将时间调快一小时，本意是使人早睡早起，减少照明，节约用电。大概的操作夏季开始时讲时间调快一小时，夏季结束时调慢一小时，不同地区夏令时开始和结束时间节点还不一样。
+
+比如前面提到的例子，东八区的12点，如果在今天(5月2日)夏令时期间，由于伦敦和纽约都实行夏令时，伦敦就是凌晨5点，纽约就是夜晚0点。
+
+全世界不同地区可能实行起止时间不同的夏令时，这使得计算就变得繁琐且非常容易出错。理解还是很好理解的，但你如果要我去算那还是饶了我吧。记住一点：**计算夏令时应该使用标准库提供的类，而不是自己计算。**
+
+**本地化**
+
+在计算机中，通常使用`Locale`表示一个国家或地区的日期、时间、数字、货币等格式。`Locale`由`语言_国家`的字母缩写构成。例如`zh_CN`表示中国，`en_US`表示美国，语言用小写，国家用大写。对于日期不同地区表示可能不同，如：
+- `zh_CN: 2020-05-02`
+- `en_US: 05/02/2020`
+
+计算机用`Locale`在日期、时间、货币和字符串之间进行转换。
+
+### 10.2 时间戳
+
+我们知道不同的时区表示同一个时刻时间表示也不同，但同一个时刻只需要一个整数就可以精确表示，我们称之为**Epoch Time**，定义为1970年1月1日零点(格林尼治时间/GMT+00:00)到现在所经历的秒数。
+
+根据这个整数给定时区就可以算出当前时区当前时刻的时间表示。Epoch Time也成为了时间戳(Time Stamp)，不同编程语言中会有不同的存储方式：
+- 以秒为单位的整数，缺点是只能精确到秒。
+- 以毫秒为单位的整数，最后三位表示毫秒。
+- 秒为单位的浮点数，小数点后表示零点几秒。
+
+他们之间的转换很简单，Java中，时间戳通常是用64位整数long表示的毫秒数。使用`System.currentTimeMillis()`获取：
+```java
+long t = System.currentTimeMillis();
+```
+
+有了这个时刻之后我们自己都可以来算现在的时间了，只要用上小学学到的闰年和大小月，考虑已经进行了的闰秒(时间戳没有累加闰秒，所以不需要考虑)，转到东八区，就可以得到一个当前机器的毫秒级精确的北京时间。
+```java
+public class BeiJingTime {
+    private int year;
+    private int month;
+    private int day;
+    private int hour;
+    private int min;
+    private int sec;
+    private int milliSec;
+    
+    public BeiJingTime(int y, int m, int d, int h, int mi, int s, int ms) {
+        year = y;
+        month = m;
+        day = d;
+        hour = h;
+        min = mi;
+        sec = s;
+        milliSec = ms;
+    }
+    
+    @Override
+    public String toString() {
+        return year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec + "." + milliSec + " UTC+08:00";
+    }
+
+    public static BeiJingTime of(long timeMillis) {
+        long t = timeMillis;
+        long milliSec = t % 1000;
+        t = t / 1000; // do not need to accumulate leap seconds
+        long day = t / 86400;
+        long reminder = t % 86400;
+        long hour = reminder / 3600 + 8; // to UTC+08:00
+        long min = (reminder % 3600) / 60;
+        long sec = reminder % 60;
+
+        int from = 1970;
+        int count = 0;
+        while (day > 0) {
+            int curYearDay = 365;
+            if (isLeapYear(from + count)) {
+                curYearDay = 366;
+            }
+            if (day - curYearDay < 0) {
+                break;
+            }
+            day -= curYearDay;
+            count++;
+        }
+        int curYear = from + count;
+        int curMonth = 1;
+        while (day > 0) {
+            int curMonthDay = getMonthDay(curYear, curMonth);
+            if (day - curMonthDay < 0) {
+                break;
+            }
+            day -= curMonthDay;
+            curMonth++;
+        }
+        day += 1;
+        return new BeiJingTime(curYear, curMonth, (int)day, (int)hour, (int)min, (int)sec, (int)milliSec);
+    }
+
+    public static Boolean isLeapYear(int year) {
+        return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    }
+
+    public static int getMonthDay(int year, int month) {
+        if (month <= 0 || month > 12) {
+            throw new IllegalArgumentException("Unexpected month: " + month);
+        }
+        int curMonthDay = 30;
+        switch (month) {
+        case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+            curMonthDay = 31;
+            break;
+        case 2:
+            curMonthDay = 28;
+            if (isLeapYear(year)) {
+                curMonthDay = 29;
+            }
+            break;
+        }
+        return curMonthDay;
+    }
+    
+    public static void main(String[] args) throws InterruptedException {
+        while (true) {
+            Thread.sleep(200);
+            System.out.println(BeiJingTime.of(System.currentTimeMillis()));
+        }
+    }
+}
+```
+`Thread.sleep(200)`就是当前线程睡眠200毫秒，多线程相关内容后续详解。
+
+这里算的就是UTC时间，UTC的话应该要考虑闰秒，但是Epoch Time是不计算闰秒的，所以我们可以直接忽略闰秒的存在，得到的就是当前机器时间戳算出来的标准时间。通过比较和我本地电脑的时间是完全一致的，但不同设备本身保存的这个时间戳由于同步关系可能会有几秒的差距，比如我的手机比电脑就慢2秒左右。但同一个设备不同软件、不同编程语言只要取同一个时间戳计算无误的话那时间肯定应该是完全一致的。
+
+按照平年365天来算，不考虑几年才进行一次的闰秒，一年就是365*86400=31536000秒。一般来说这个系统时间戳使用整数来表示，如果是用32位整数表示的话比如Unix时间戳，因为整数带符号，最大能表示2147483648，也就是68年左右，也就是2038年之后这个时间戳就会溢出变为负数。有人预测2038年之后诸如Linux、IOS等的类Unix系统就会发生时间倒退、不能启动等现象，但现在毕竟还没有到。以后应该会解决这个问题，在现在64位设备已经全面普及的当下，将这个时间戳从底层改为`int64_t`之类的64位整数就可以继续用到天荒地老了。Java本身采用64位long表示，无需担心。
+
+考虑夏令时的各个其他国家地区的时间也很简单，只是比较繁琐没有太大的编写意义，用标准库就好。
+
+### 10.3 Date & Calendar
+
+现在看一下Java标准库中的标准API。Java提供了两套API：
+- 旧的一套在`java.util`包中，包括`Date` `Calendar` `TimeZone`。历史遗留原因，旧的API存在很多问题。
+- 新的一套是Java8引入的`java.time`包中，`LocalDateTime` `ZoneDateTime` `ZoneId`等。
+
+新的代码当然应该使用新的API，但遇到历史遗留项目中用的旧的API的话也可以在新旧对象之间做转换。
+
+`java.util.Date`是用于表示时间和日期的类，注意与`java.sql.Date`区分，后者用在数据库中。
+
+`Date`中保存了`long`类型的毫米时间戳，时间表示都是通过其计算而来。
+
+```java
+public class Date
+    implements java.io.Serializable, Cloneable, Comparable<Date>
+{
+    private transient long fastTime;
+    public Date(long date) {}
+    // other constructors...
+    public static long parse(String s) {} // 从字符串解析时间
+    public int getYear() {}
+    public void setYear(int year) {}
+    // month, day, hour, etc...
+    public long getTime() {} // 获取到时间戳
+    public void setTime(long time) {} // 设置时间戳
+    public boolean before(Date when) {} // 测试当前日期是否早于指定日期
+    public boolean after(Date when) {} // 测试当前日期是否晚于指定日期
+    public String toString() {} // dow mon dd hh:mm:ss zzz yyyy格式
+    public String toLocaleString() {}
+    public String toGMTString() {}
+    public int getTimezoneOffset() {}
+    public static Date from(Instant instant) {}
+    public Instant toInstant() {}
+}
+```
+测试：
+```java
+Date date = new Date();
+System.out.println(date); // Mon May 03 16:14:39 CST 2021
+System.out.println(date.toLocaleString()); // 2021年5月3日 下午4:14:39
+System.out.println(date.toGMTString()); // 3 May 2021 08:14:39 GMT
+System.out.println(Date.parse(date.toGMTString())); // 1620029679000 没有毫秒因为GMTString中没有毫秒的信息
+System.out.println(date.getTime()); // 时间戳 1620029679673
+System.out.println(date.getYear()+1900); // 需要加上1900才是真实年份
+System.out.println(date.getMonth()+1); // 结果是0~11需要+1
+System.out.println(date.getDate()); // 1~31
+System.out.println(date.getDay()); // 1 for Monday
+System.out.println(date.toInstant()); // 2021-05-03T08:20:22.197Z
+```
+其中`getYear`的结果需要+1900，`getMonth`结果需要+1，相关set方法同理。
+
+想要针对用户的偏好精确地控制日期和时间的格式，可以使用`SimpleDateFormat`类，用预定义的字符串表示格式化。
+- yyyy：年
+- MM：月
+- dd: 日
+- HH: 小时
+- mm: 分钟
+- ss: 秒
+
+```java
+SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+System.out.println(sdf.format(date));
+```
+
+上面`Date`从字符串解析时间只能针对特定的格式，比如`toString`或者`toGMTString`的结果，而针对本地化格式化的时间则不能解析。但`SimpleDateFormat`就可以解析自己定义格式的时间。
+```java
+public Date parse(String text, ParsePosition pos)
+```
+
+`SimpleDateFormat`预定义了很多格式，一般来说字母越长，输出越长，与`M`表示月份为例：
+- `M` 5
+- `MM` 05
+- `MMM` 5月
+- `MMMM` 五月
+
+|Letter|Date or Time Component|Presentation|Examples|
+|:-|:-|:-|:-|
+|G|Era designator|Text|AD|
+|y|Year|Year|1996; 96|
+|Y|Week year|Year|2009; 09|
+|M|Month in year (context sensitive)|Month|July; Jul; 07|
+|L|Month in year (standalone form)|Month|July; Jul; 07|
+|w|Week in year|Number|27|
+|W|Week in month|Number|2|
+|D|Day in year|Number|189|
+|d|Day in month|Number|10|
+|F|Day of week in month|Number|2|
+|E|Day name in week|Text|Tuesday; Tue|
+|u|Day number of week (1 = Monday, ..., 7 = Sunday)|Number|1|
+|a|Am/pm marker|Text|PM|
+|H|Hour in day (0-23)|Number|0|
+|k|Hour in day (1-24)|Number|24|
+|K|Hour in am/pm (0-11)|Number|0|
+|h|Hour in am/pm (1-12)|Number|12|
+|m|Minute in hour|Number|30|
+|s|Second in minute|Number|55|
+|S|Millisecond|Number|978|
+|z|Time zone|General time zone|Pacific Standard Time; PST; GMT-08:00|
+|Z|Time zone|RFC 822 time zone|-0800|
+|X|Time zone|ISO 8601 time zone|-08; -0800; -08:00|
+
+更多信息详见[SimpleDateFormat的JDK文档](https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/text/SimpleDateFormat.html)。
+
+`Calendar`可以用于设置年月日时分秒，和`Date`相比，多了一个可以做简单的日期和时间运算的功能。
+
+相关接口：
+- 获取`Calendar`只有一种方式，使用`Calendar.getInstance()`。获取到就是当前时间。如果我们想给它设置成特定的一个日期和时间，就必须先使用`clear`清除所有字段。
+- 获取信息使用`get(int field)`，返回的年份不需要转换，返回的月份仍需要加1，星期需要特别注意，1~7分别表示周日、周一到周六。
+- 利用`Calendar.getTime()`可以将`Calendar`转换为`Date`对象。
+
+
+### 10.4 LocalDateTime
+
+### 10.5 ZonedDateTime
+
+### 10.6 DateTimeFormatter
+
+### 10.7 Instant
+
+### 10.8 最佳实践
+
+
+
 ## TODO
+
 - 包与模块详解
 - 日期与时间
 - 单元测试
