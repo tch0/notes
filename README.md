@@ -16,5 +16,5 @@
 
 ## 镜像仓库
 
-- Github: [aojueliuyun/notes](https://github.com/aojueliuyun/notes)
-- Gitee: [tikot/notes](https://gitee.com/tikot/notes)
+- Github: [tch0/notes](https://github.com/tch0/notes)
+- Gitee: [tch0/notes](https://gitee.com/tch0/notes)
