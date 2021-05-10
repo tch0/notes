@@ -8,6 +8,7 @@
 - [Java.md](Java.md)：Java入门。
 - [BatchScript.md](BatchScript.md)：Windows批处理脚本了解。
 - [SICP.md](SICP.md)：SICP学习笔记，TODO。
+- [Makefile.md](Makefile.md)：Makefile笔记。
 
 ## 关于这个仓库
 
