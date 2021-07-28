@@ -195,6 +195,7 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 - `Ctrl+H` 搜索，有精细的搜索选项，类型、方法、包等。
 - `Ctrl+Shift+R` 文件搜索
 - `Alt+Shift+R` 重命名符号
+- `Ctrl+Shift+F` 格式化当前文件的编码风格
 - IDE内运行终端：`Ctrl+Alt+Shift+T`
 
 说实话有些快捷键实在是有点太啰嗦，一点都起不到快捷的作用，说的就是`Alt+Sift+Q`加上一个键的那一堆，也懒得自己改，不要增加太多心智负担，记住常用的就好。如`Ctrl+O`, `F3`, `Ctrl+T`，加上常用的查找和调试快捷键就行。快捷键的使用必须要能够方便到在两秒钟内定位到想要的某个类、方法、文件、某个符号的所有引用、某个类的派生结构层次才算是舒服。
@@ -208,14 +209,14 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 
 **Eclipse多个包或者多个入口管理：**
 - 多个包同时存在都有入口时，在某个包含合法入口`main`的文件`Ctrl+F11`运行即执行当前入口。如果当前文件没有入口，那么执行上一个配置。
-- 在学习或者测试时可以个每个要测试的类写一个`public static main`，然后在当前文件执行测试。
-- 运行配置会自动创建，也可以项目右键，运行方式，运行 配置，Java应用程序，新建配置进行新建。
+- 在学习或者测试时可以给每个要测试的类写一个`public static main`，然后在当前文件执行测试。
+- Ctrl+F11运行时会自动创建运行配置，也可以项目右键，运行方式，运行 配置，Java应用程序，新建配置进行新建。或者右键项目或者包，属性，运行/调试设置。
 - 上一个对话框中`Show Command Line`即可看到当前配置执行时的命令行。例：
     ```shell
     C:\eclipse\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_15.0.1.v20201027-0507\jre\bin\javaw.exe
     -Dfile.encoding=UTF-8
-    -classpath "C:\Users\CapT\Desktop\LearnJava\JavaStarted\bin"
-    -XX:+ShowCodeDetailsInExceptionMessages dateAndTime.Main
+    -classpath "C:\Users\tch\Desktop\LearnJava\JavaStarted\bin"
+    -XX:+ShowCodeDetailsInExceptionMessages Test.Main
     ```
 - 要更改命令行的公共参数可以在窗口，首选项，Java，已安装的JRE找到对应JRE，编辑修改默认VM参数。
 - 可以写多个入口的确很舒服，甚至可以互相调用。
@@ -229,7 +230,7 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 
 ### 1.1 hello,world!
 ```java
-public class Hello
+public class Hello  
 {
     public static void main(String[] args)
     {
@@ -245,11 +246,13 @@ public class Hello
 
 - 类名必须以英文字母开头，后接字母，数字和下划线的组合。
 - 习惯以大写字母开头。
-- 注释`/** */`,`//`同C++，多行注释需要写在类和方法的定义处，可以用于自动创建文档：
+- 注释`/** */`, `/* */`, `//`同C++，多行注释`/** */`需要写在类和方法的定义处，可以用于自动创建文档：
     ```java
     /**
     *  comments for javadoc
     */
+    public class HelloWorld {
+    }
     ```
 
 ### 1.3 基本数据类型
@@ -267,13 +270,48 @@ public class Hello
 - 布尔：取值`true`和`false`。
     - `boolean`：大小取决于JVM实现，底层不提供。
 
+字面值后缀：
+- `long` : L/l
+- `float` : F/f
+- `double` : D/d
+
+从`byte/short/char–>int–>long–>float–>double` 可以自动进行隐式转换，反过来如果是窄化转换则必须使用强制转换。
+
+强制类型转换：
+- `(targetType)variable`， 同C风格，而不是C++风格，表达式需要加括号。
+- 可以进行窄化转换：
+    - 浮点转整型，会将小数部分丢掉，如果超过表示范围，则返回整型最大值。
+    - 整型窄化转换直接截断，因为没有无符号类型，少了很多转换问题。
+
+变量作用域：
+- 和其他语言一样。
+- 局部变量和函数参数作用于块作用域`{}`。
+- 类成员作用于类作用域。
+- 不存在全局变量，也就不存在全局作用域。
+- 里层作用域符号覆盖外层作用域同名符号定义。
+
 ### 1.4 基本运算
 
-- 算术运算：`+` `-` `*` `/` `%` `+=` `-=` `*=` `/=` `%=` `++` `--` 同样有前置和后置的区别，同C
+- 算术运算：`+` `-` `*` `/` `%` `+=` `-=` `*=` `/=` `%=` `++` `--` 同样有前置和后置的区别，同C。
 - 关系运算：`>` `>=` `<` `<=` `==` `!=` 
-- 逻辑运算：`&&` `||` `!`
+- 逻辑运算：`&&` `||` `!`(`&&` `||` 短路求值)
 - 按位运算：`&` `|` `~` `^`
 - 移位运算：`>>` `<<` 算术移位，`>>>`不考虑符号位逻辑右移，有无符号右移但没有左移，支持`<<=` `>>=`。
+- 三元运算：`? :`。
+
+类型自动提升：
+- 整型运算：计算结果为较大类型的整型。
+- 整型与浮点运算：结果提升至浮点型。
+- 注意在复杂运算中，就算最终结果是浮点，但其中两个整数的运算不会出现自动先提升为浮点。同所有语言一样，适当位置`*1.0`先提升为浮点保证结果正确。
+
+溢出：
+- 溢出同样不会报错，需注意。
+- 整型除0会报错。抛出`java.lang.ArithmeticException`
+- 浮点除0不会报错，会返回一些特殊值：
+    - `NaN`表示`Not a Number`, 如`0.0/0.`0，`(3/0.0) / -(3/0.0)`
+    - `Infinity`表示无穷大，如`3/0.0`。
+    - `-Infinity`表示负无穷大，如`-3/0.0`。
+    - 实际上很少出现。
 
 ### 1.5 字符和字符串
 
@@ -300,11 +338,11 @@ public class Hello
 
 - 创建后大小即固定，也就是指向的那个数组大小就固定，但是可以将其指向新的数组。
 - 数组下标越界将引发运行时错误，抛出`java.lang.ArrayIndexOutOfBoundsException`异常。
-- 初始化时直接指定元素值，则编译器会自动推导大小：`int[] A = new int[] {1,2};`，初始化时必须指定大小或者提供初始值，两者选一者，不能同时存在。可以进一步简写为`int[] A = {1,2}`。
+- 初始化时直接指定元素值，则编译器会自动推导大小：`int[] A = new int[] {1,2};`，初始化时必须指定大小或者提供初始值，两者选一者，不能同时存在，指定大小时初始化为默认值(整型0，浮点0.0，`boolean`则是`fals`， 引用`null`)。可以进一步简写为`int[] A = {1,2}`。
 - 定义: `type[]`
 - 长度: `length`
 - 取成员: `[]`
-- range-for: `for(type val : arr)`
+- for each: `for(type val : arr)`
 - 转换为`String`: `Arrays.toString()`，输出`[elem1, elem2, ..., elemLast]`，需要`import java.util.Arrays;`
 - 排序: `Arrays.sort()`
 - 多维数组: `type[][]`，即是数组的数组，不要求每个元素统一大小。
@@ -361,14 +399,23 @@ else {
 语法糖：`case -> statement;`执行结束退出，不需要`break`。Java12开始。
 并且还可以直接返回一个值：
 ```java
-double d = switch(i) {
-        case 1 -> 1.0;
-        default -> 100;
-        };
+double d = switch (i) {
+case 1 -> 1.0;
+case 2 -> {
+    System.out.println("i is 2");
+    yield 10; // switch statement return to 10
+}
+default -> 100;
+};
+
+switch (i) {
+    case 1 -> System.out.println("i is 1");
+    default -> System.out.println("i is not 1");
+}
 ```
 如果有多种情况，中间还有语句执行，还可以用`{}`包起来，执行多个语句后用`yield`返回，就像定义一个函数那样。
 
-这种结构存在的意义是什么呢？我感觉并没有那么清晰。算是一个语法糖，完全可以找到等价的写法替代，可用可不用。
+算是一个语法糖，完全可以找到等价的写法替代。
 
 
 ### 1.9 流程控制——循环
@@ -417,7 +464,7 @@ public class Main {
 - 单从语义上理解java的引用和C++非常像，不同的是java中可以更改引用指向的对象，还可以指向`null`，就像是C++指针和引用的融合一样。
 - 构造方法(Constructor): 无返回值，当然不定义的话编译器会生成一个函数体为空的无参默认构造方法，定义之后便不再生成默认构造。光凭想象就可以想到不用管理内存之后相比C++会少掉多少考虑拷贝构造、移动构造、赋值运算符这类的事情，瞬间好像就轻松起来了。
 - 默认构造时各种类型默认值: 不同于C++如果不给初始化，对于没有构造函数的内置类型(整型浮点指针)，分配内存之后那块区域里面存什么值，成员就会是什么值。java中理所当然会执行默认初始化，引用初始化为`null`，数值类型用默认值`0`，`boolean`则是`false`。
-- 初始化：java可以直接在类内成员定义时给初始值。执行顺序理所当然是先初始化为字段默认值或定义时给定的值，然后在执行构造方法。
+- 初始化：java可以直接在类内成员定义时给初始值。执行顺序理所当然是先初始化为字段默认值或定义时给定的值，然后再执行构造方法。
 ```java
 class Person {
     private String name; // 默认初始化为null
@@ -433,12 +480,13 @@ class Person {
 - 调用基类构造：`super(args);`
 - 除了构造函数之外，从各种意义上我们都需要有一个析构函数，因为不需要管理内存，好像析构存在的意义就没有那么大了。但用不用另说，必须有是确定的。java中扮演这个角色的就是`void finalize()`方法。
     - 但其实如果去看`Object.finalize`的注释的话，上面会说，这个方法从Java9就已经废弃了，原因是这个机制在本质上存在问题。如果在`finalizer`中出现错误，可能会导致资源泄漏、线程/进程挂起、死锁、造成性能问题。而且如果没有必要也无法取消，析构时机和顺序也无法保证。这我这直接好家伙！那你这保证了个啥？
-    - 作为替代：那些持有了并非是普通的堆内存资源但是需要释放的，都应该提供方法来显示释放资源，如果合适的话应该实现`AutoCloseable`接口。`java.lang.ref.Cleaner`和`java.lang.ref.PhantomReference`提供了更灵活和高效的对象用完后释放资源的方法。具体怎么用什么场景用还需要进一步探究。
+    - 作为替代：那些持有了并非是普通的堆内存资源但是需要释放的，都应该提供方法来显式释放资源，如果合适的话应该实现`AutoCloseable`接口。`java.lang.ref.Cleaner`和`java.lang.ref.PhantomReference`提供了更灵活和高效的对象用完后释放资源的方法。具体怎么用什么场景用还需要进一步探究。
 - 访问权限：
     - `public`
     - `private`
     - `protected`
     - 默认，不写访问修饰符
+    - 用在类、方法或者字段上。
 - 思考与探索：有没有类似于C++中`=default`,`=delete`那种显式使用或者禁用默认构造/`=`运算符的语法呢？
 
 ### 2.2 方法
@@ -451,7 +499,46 @@ class Person {
 - 方法重载(Overload):
     - 同C++一致的是，方法重载只与参数列表(类型和顺序)有关，和返回值，访问修饰符无关系。C++中函数重载之后其实就是成为了不同的函数，经过名称修饰之后符号是不同的。那么java有没有类似于名称修饰一类的东西呢？是如何保证调用时正确跳转到对应的函数入口地址的呢？这可能需要后续了解了字节码之后才能知道。
     - 重载函数返回值类型和访问修饰符不必相同，这是理所当然的。
-    - 问题来了：可变参数类型参数算作数组还是多个参数呢？和重载混合在一起如何工作？如何判断调用哪一个？
+- 问题来了：可变参数类型参数算作数组还是多个参数呢？和重载混合在一起如何工作？如何判断调用哪一个？
+    - 答案是如果一个调用即匹配有可变参数的版本也可以匹配无可变参数的版本。那么优先调用无可变参数版本。如果同时匹配了两个有可变参数的版本，那么会存在歧义编译错误。也就是只有无可变参数优先于有可变参数，都有可变参数的话优先级相同。这样的重载如果不尝试去调用则并不会报冲突。
+```java
+public class Person {
+    private String name;
+    public void setName(String ... args) {
+        StringJoiner joiner = new StringJoiner(" ");
+        for (String s : args) {
+            joiner.add(s);
+        }
+        name = joiner.toString();
+    }
+    
+    public void setName(String firstName, String ... otherName) {
+        StringJoiner joiner = new StringJoiner(" ");
+        joiner.add(firstName);
+        for (String s : otherName) {
+            joiner.add(s);
+        }
+        name = joiner.toString();
+    }
+    
+    public void setName(String firstName, String lastName) {
+        name = firstName + " " + lastName;
+    }
+    
+    @Override
+    public String toString() {
+        return "Person: " + name;
+    }
+
+    public static void main(String[] args) {
+        Person p = new Person();
+        p.setName("Mary", "Jane"); // call setName(String firstName, String lastName)
+        p.setName("Mary", "Jane", "King"); // java.lang.Error
+        p.setName("Mary"); // java.lang.Error
+        System.out.println(p);
+    }
+}
+```
 - 默认参数：
     - 根据已知信息，并不存在这种东西，请通过方法重载来实现。
     ```java
@@ -461,8 +548,7 @@ class Person {
         method(v1, default_v2);
     }
     ```
-    - 也是，不然和可变参数混在一起编译器估计就要凌乱了，也减少心智负担，挺好。
-
+    - 也是，不然和可变参数混在一起编译器估计必然要凌乱，也减少心智负担，挺好。
 
 
 ### 2.3 继承
@@ -476,10 +562,11 @@ class Person {
 - 当然子类不会继承父类所有构造函数，不写的话默认构造是编译器生成，此时调基类的默认构造，即等价于在构造函数第一行添加`super();`，如果基类没有默认构造，那么是编不过的。
 - 访问限定：和C++的公有继承如出一辙，子类无法访问父类`private`，可以访问`protected`和`public`。
 - 不要在派生类中定义和基类字段同名的字段。当然并非语法上禁止，只是工程实践中不要这么做比较好，子类作用于会覆盖基类作用域，然后局部方法作用域会覆盖类作用域，你总可以使用`this.val`、`super.val`来区分它们。在C++允许多继承所以使用`baseclass::val/baseclass::func`。
+- 如果在一个很长的继承链条里面都定义了同名的字段（当然这是很脑残的行为），因为只有`super`和`this`可以指代父类对象和当前对象引用，而没有可以代表父类的父类对象的引用。如果没有定义同名字段，`this.val`是从父类继承而来，那么就等同于`super.val`。当然在实践中一般还是创建`getter`和`setter`调方法而不是直接操作父类字段比较好。
 - 阻止继承：`sealed`配合`permits`关键字只允许指定的类继承该类，`public sealed class Shape permits Rect, Circle, Triangle`，这个操作有点意思。
 - 使用`final`修饰类表明该类不能再被继承。同C++。`final calss A extends B`。
 - 类型转换：向上转换必然成功，向下转换如果类型匹配则可以成功，不匹配则会失败抛异常，很好理解。
-- 判断是否是指定类型：`instanceof`，返回`boolean`，完全匹配的类型或者基类都会返回`true`。RTTI有了，好耶！语法层面支持真棒！C++某些时候还要自己去实现RTTI就很烦了（小声说其实C++也是有的就是了）。
+- 判断是否是指定类型：`instanceof`，返回`boolean`，完全匹配的类型或者基类都会返回`true`。RTTI有了，好耶！语法层面支持真棒！C++某些时候还要自己去实现RTTI就很烦了（小声说其实C++也有原生的半吊子的RTTI就是了）。
     - 用法：`obj instanceof Type`，返回`boolean`。
     - Java14开始：`obj instanceof Type s`，返回`boolean`。且可直接使用转换后的变量`s`。默认配置本地Eclipse/Java SE15上显示`preview feature and disabled by default`？见[0.3 基本Eclipse使用](#03-%E5%9F%BA%E6%9C%ACeclipse%E4%BD%BF%E7%94%A8)。
 - 继承与组合：is与has的关系要区分清楚当然不用多说，has关系不应该用继承。
@@ -497,17 +584,26 @@ class Person {
     - `equals`，两对象判等。貌似并没有重写`operator==`这种选项（因为根本就不支持运算符重载呀），看来C++的确自由度要更高那么一点点，当然心智负担也要高那么亿点点。对引用变量来说，`==`就是判断是否指向同一个对象，也就是保存的地址是否相等。
     - `hashCode`，计算对象哈希值，java赛高！
 - 子类调用基类方法：`super.method`。
-- 字段加`final`之后表示在初始化之后不能更改。有点像C++`const`成员，只能在构造函数初始化列表中赋值，或者C++11之后的类内初始值。
+- 字段加`final`之后表示在第一次初始化（字段赋初值和在构造函数中初始化两者选其一）之后便不能更改。有点像C++`const`成员，只能在构造函数初始化列表中赋值，或者C++11之后的类内初始值。
 
 ### 2.5 抽象类
 
 - 声明：`abstract`同时用于类和方法。放在类返回值前和`class`前。方法也就称之为**抽象方法**。
 - 抽象类无法实例化，和C++抽象类同样的，还是类，也可以有成员，也可以有构造、被派生。当然也不能多继承，抽象类的修为还不够，需要舍弃血肉，灵魂飞升变为接口后才可以被多继承。
-- 面向抽象编程：尽量引用顶层抽象类，不关心具体子类型。本质：
+- 面向抽象编程：尽量引用顶层抽象类或接口，不关心具体子类型。本质：
     - 上层代码只定义规范。
     - 不需要子类就可以实现业务逻辑。
     - 具体的业务逻辑由不同的子类实现，调用者并不关心。
 - 定义了抽象方法的类必须定义为抽象类。不实现抽象方法的话，子类依然是抽象类。
+- 抽象类可以没有抽象方法，但同样无法直接实例化。但可以通过匿名类(见后文)实例化：
+```java
+abstract class Animal {
+    String name;
+    public static void main(String[] args) {
+        Animal p = new Animal() {};
+    }
+}
+```
 
 ### 2.6 接口
 
@@ -524,7 +620,7 @@ class Person {
 
 ### 2.7 静态字段与方法
 
-- 只有一个独立的内存空间，属于整个类，并不属于某个实例。所有实例都可以使用。
+- 属于整个类，并不属于某个实例，所有实例都可以使用。
 - 通过`className.staticFieldOrMethod`来访问，当然也可以通过`aInstance.staticFieldOrMethod`访问，等价于前者，但最好使用类名来访问，更加清晰。这点与C++是相同的。
 - 静态方法无法使用`this`变量，只能访问静态字段。
 - `interface`是可以有静态字段的，并且只能是`final`的。所以编译器会自动为interface的字段加上`public final static`。
@@ -542,36 +638,68 @@ class Person {
 - 在一个类中引用了其他类时，可以使用完整包名，也可以使用`import`将包中的类导入进来。类似于C++中的`using namespace XXX;`。
 - `import`用法：
     - 导入一个包所有`class`：`import package.*;`
-    - 导入一个类：`import package.class;`
-    - 导入一个类中的所有静态字段和方法：`import static pacakge.class.*;`，使用较少。
-- Java编译器最终编译出的`.class`只使用完整类名，编译器遇到一个类名时查找顺序：
+    - 导入一个类：`import package.XXXclass;`
+    - 导入一个类中的所有静态字段和方法：`import static pacakge.class.*;`，使用较少。这样引入甚至可以引入同一个包的其他类中的静态方法，和引入其他包一样，包名不能省略。
+- Java编译器最终编译出的`.class`只使用完整类名，编译器遇到一个类名时如果是完整类名，直接根据完整类名查找这个 `class`。如果是简单类名按照以下查找顺序进行查找：
     - 当前包中查找。
     - 导入的包中查找。
     - `java.lang`包查找。
     - 还无法确定类名就报错。
-- 编写一个类是，编译器默认做的事情：
+- 编写一个类时，编译器默认做的事情：
     - 默认自动导入当前包所有类。
     - 默认自动导入`java.lang.*`。但像`java.lang.reflect`这种其实和`java.lang`不是一个包，也没有父子关系，还是需要手动导入的。
 - 不同包中两个类有相同的类名，都导入就会名称冲突，因为包没有嵌套这个说法所以最多只能导入其中一个，另一个需要写完整类名。
-- 要移动或者一个文件所在的包时，IDE都会自动完成文件操作，还提供一键更新引用这种操作，可以说很方便了。
-- 相比C++的继承自C的原始的头文件包含方式、头文件宏定义保护防止重复包含、接口实现分离、交叉引用、前向声明，java可以算的上很无脑很方便了。
+- 要移动一个文件所在的包时，IDE都会自动完成文件操作，还提供一键更新引用这种操作，可以说很方便了。
+- 相比C++的继承自C的原始的头文件包含方式、头文件宏定义保护防止重复包含、接口实现分离、交叉引用、前向声明，java可以算的上很方便了。
+- 命令行编译多个包多个源文件：在`src`目录下编译到`bin`目录下。
+```shell
+javac -d ../bin ming/Person.java hong/Person.java mr/jun/Arrays.java
+```
+- 最佳实践：
+    - 推荐包名命名方法：使用倒置的域名。如：
+        - `org.apache`
+        - `org.apache.commons.log`
+    - 注意类命名不要和`java.lang`包重名。不要使用类名：`String` `Runtime` `System` ...
+    - 也不要和JDK常用类重名：`java.util.ArrayList` `java.math.BigInteger` ...
 
 ### 2.9 作用域
+
+总览：
+|修饰符\能否访问\访问位置|本类|同一个包的类|继承类|其他包的类|
+|:-:|:-:|:-:|:-:|:-:|
+|`private`|   Yes|No|No|No|
+|无(默认)|  Yes|Yes|No|No|
+|`protected`| Yes|Yes|Yes|No|
+|`public`|    Yes|Yes|Yes|Yes|
 
 - 访问修饰符限定了访问作用域
 - `public`
     - `public`的类和接口可以被其他任何类访问。
-    - `public`的方法和字段可以被其他类访问，前提是拥有类的访问权限。
+    - `public`的方法和字段可以被其他类访问，前提是能访问类。
 - `private`
-    - `private`字段和方法无法被其他类访问。仅内类可以访问。
+    - `private`字段和方法无法被其他类访问，仅类内可以访问。
     - Java支持嵌套类，嵌套的类也在类内，也可以访问该类的私有字段和方法。
-- `protected`
-    - 派生类中可访问。
-- 总结：清晰明了，比起C++，搞出了各种东西，例如友元，加上三种
 - 包作用域/默认作用域
-    - 一个类不添加访问修饰符，可以访问包内所有`public`和没有访问修饰符包作用域的类。
-    - 一个包不可访问另一个包内默认作用域的类。
+    - 包作用域的类和方法、字段可以被同一个包内的类访问。
+    - 一个包不可访问另一个包内默认作用域的类、字段或方法。
+- `protected`
+    - `protected`字段和方法可以派生类访问。
+    - `protected`字段和方法包内同样可见。
+    - 需要注意子类和父类不在同一个包时：
+        - 在实例方法中可以通过`this`或者`super`来访问父类的`protected`实例方法。
+        - 但在子类静态和实例方法中都不能通过父类引用（引用一个新`new`出来的子类或者父类对象）来访问父类的`protected`实例方法。如果是使用子类引用则可以访问。【因为编译时应该是按照引用类型的访问修饰符来确定访问权限的】算是一个没什么卵用的小细节。
+        - 静态`protected`方法则在子类中均可访问。
 - `private`和`protected`不能用来修饰类，但可以用来修饰嵌套类。一个最外层的非嵌套类只能用`public`/`final`/`abstract`修饰。或者不用`public`包内使用。
+
+- 在子类中重写实例方法时可以扩展访问限定符：
+    - 也就是可以从`protected`扩展到`public`。
+    - 同一个包内的话也可以将默认访问扩展到`protected`或者`public`。
+    - 不能在子类重写时减低访问范围。目的很明显，确保我能用父类引用访问的方法，用子类引用都能够访问。
+
+- 最佳实践：
+    - 不确定是否需要`public`，就不声明为`public`。
+    - 把方法定义为`package`权限有助于测试，因为测试类和被测试类只要位于同一个`package`，测试代码就可以访问被测试类的`package`权限方法。可以用于包内不用来公开的内部实现类。
+- 一个java类只能有一个`public`类，有`public`类时文件名必须和类名相同。没有时则不要求。
 
 ### 2.10 嵌套类
 
@@ -639,11 +767,25 @@ class Person {
     - `Runnable`是一个接口，`asyncHello`方法内`new`的时候定义了一个没有类名的匿名类重写了`run`方法，重写`run`接口之后实例化并给了`r`。
     - `Outer`类被编译为`Outer.class`，而匿名类被编译为`Outer$1.class`，如果有多个匿名类，那么被编译为`Outer$2.class` etc
     - 除了接口外，匿名类也完全可以继承自普通类。
+    - 匿名类相对来说还比较常用。
 - 静态嵌套类(Static Nested Class)
     - 和Inner Class类似，但是使用`static`修饰，称为静态内部类。
     - 用static修饰的内部类和Inner Class有很大的不同，它不再依附于Outer的实例，而是一个完全独立的类，因此无法引用`Outer.this`，但它可以访问`Outer`的`private`静态字段和静态方法。
     - 就是一个独立的类，只是有Outer Class的private访问权限。
     - 果然我觉得这才比较正常，像内部类，一个类依赖于一个对象感觉有一点点奇怪，暂不清楚应用场景。
+    ```java
+    public class Outter {
+        public static void main(String[] args) {
+            Outter.Inner inner = new Outter.Inner();
+            inner.hello();
+        }
+        static class Inner {
+            public void hello() {
+                System.out.println("hello, static nested class");
+            }
+        }
+    }
+    ```
 
 ### 2.11 classpath
 
@@ -652,8 +794,9 @@ class Person {
 - 因为Java是编译型语言，源码文件是`.java`，而编译后的`.class`文件才是真正可以被JVM执行的字节码。因此，JVM需要知道，如果要加载一个`abc.xyz.Hello`的类，应该去哪搜索对应的`Hello.class`文件。
 - 设定方法
     - 系统环境变量中设置`classpath`环境变量，不推荐，会污染整个系统环境。
-    - 启动JVM时设置`classpath`变量，推荐。启动时添加`-classpath`或者`-cp`选项，添加`;`分割的路径作为参数（Windows中）。
+    - 启动JVM时设置`classpath`变量，推荐。启动时添加`-classpath`或者`-cp`选项，添加`;`分割的路径作为参数（Windows中，linux中用`:`分割）。
 - IDE中运行时，自动传入的`-cp`参数就是工程`bin`目录和引入的`jar`包。
+- JVM不依赖classpath加载核心库，不需要将核心库的路径传入classpath。
 - 更好的做法是，不要设置`classpath`！默认的当前目录`.`对于绝大多数情况都够用了。
 
 
@@ -679,12 +822,16 @@ java -cp ./hello.jar abc.xyz.hello
     Main-Class: package.mainClass
 
     ```
-    只要给出入口类`Main-Class`就可以通过`java -jar`来执行了。
+    只要给出入口类`Main-Class`就可以通过`java -jar file.jar`来执行了。
 - 使用Eclipse导出`jar`包：
     - 包资源管理器中选择包右键导出->Java->JAR文件，选择要导出的一个或多个包，填写入口类，即可导出。
     - 不设置其他选项的话，导出的清单文件中也就只有版本和入口类的信息。
     - 当然还可以导出其他文件，清单文件也可以有很多其他配置内容，尚不清楚，有需求再了解。
-- 到这里只能说，Java的确很方便。无论是项目配置，编译，执行，依赖，打包发布都如此简单方便。怪不得是时下最流行的编程语言。
+- 命令行创建jar包命令：更多选项查看`jar -h`帮助，首先`cd`到`.class`文件根目录。
+    ```shell
+    jar -c --file target.jar --main-class YourMainClass .\package\*.class
+    ```
+- 到这里只能说，Java的确很方便。无论是项目配置，编译，执行，依赖配置，打包发布都如此简单方便。怪不得是时下最流行的编程语言。
 - **你永远可以通过增加一个中间层来解决一些问题**。永远可以通过减少一个中间层来提升一些性能。
 - 现在这个时代，硬件性能已经普遍强大到绝大部分情况下我们并不需要去抠一个程序是到底是多占了几个字节的内存还是多执行了几条指令。愉快地开始java之旅吧！
 - 最后，JVM是世界上最好的虚拟机！
@@ -692,8 +839,8 @@ java -cp ./hello.jar abc.xyz.hello
 
 ### 2.13 模块
 
-- `.class`是JVM看到的最小执行文件，`jar`包就是与`.class`的容器。但写一个大型程序时是可能需要依赖其他第三方的jar包的。最后执行时就需要将所有jar放在一起来执行，少了或者写漏了某个jar就可能会`ClassNotFoundException`。
-    ```java
+- `.class`是JVM看到的最小执行文件，`jar`包就是与`.class`的容器。但写一个大型程序时是可能需要依赖其他第三方的jar包的。最后执行时就需要将所有jar放在一起来执行，少了或者写漏了某个jar就可能会抛出`ClassNotFoundException`。
+    ```shell
     java -cp 1.jar;2.jar;...;last.jar package.mainClass
     ```
 - 引入了模块解决**依赖**的问题。如果`a.jar`依赖`b.jar`，那我们应该给`a.jar`加点东西说明这个信息。让程序编译运行时自动定位到`b.jar`，这种自带依赖关系的`class`容器就是模块。始于Java 9。
@@ -707,6 +854,14 @@ module hello.world {
 - `module-info.java`经过编译后会在`bin`下生成`module-info.class`。
 - 下一步把`bin`目录所有`class`文件打包成`jar`。使用`jar`命令。
 - 模块还可以导入导出。使用`jmod`命令从`jar`生成模块。
+- 模块要能够访问另一个模块的类，除了访问限定符支持，还需要在目标模块导出外部能访问的类：
+```java
+module Hello.World {
+    exports hello.world;
+    ...
+}
+```
+- 在包之外，模块又进一步隔离了代码的访问权限。
 - 更详细的理解和说明：TODO。
 
 ## 3. Java核心类
