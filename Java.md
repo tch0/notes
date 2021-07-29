@@ -167,6 +167,9 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 
 ### 0.3 基本Eclipse使用
 
+**项目管理：**
+Eclipse中每个Eclipse进程管理一个工作空间（WorkSpace），其中可以创建多个项目，每个项目可以添加多个包。工作空间根目录下会生成`.metadata`目录保存工作空间相关配置，每个项目目录下也会生成项目文件。
+
 **Eclipse基本调试操作：**
 - `Ctrl+Shift+B` 添加移除断点
 - `Ctrl+F11` 开始运行
@@ -209,7 +212,7 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 
 **Eclipse多个包或者多个入口管理：**
 - 多个包同时存在都有入口时，在某个包含合法入口`main`的文件`Ctrl+F11`运行即执行当前入口。如果当前文件没有入口，那么执行上一个配置。
-- 在学习或者测试时可以给每个要测试的类写一个`public static main`，然后在当前文件执行测试。
+- 在学习或者测试时可以给每个需要测试的类写一个`public static void main`，然后在当前文件编写并执行测试。
 - Ctrl+F11运行时会自动创建运行配置，也可以项目右键，运行方式，运行 配置，Java应用程序，新建配置进行新建。或者右键项目或者包，属性，运行/调试设置。
 - 上一个对话框中`Show Command Line`即可看到当前配置执行时的命令行。例：
     ```shell
@@ -225,6 +228,43 @@ JavaSE15 API文档：[Java® Platform, Standard Edition & Java Development Kit V
 - 同样在窗口，首选项，Java，已安装的JRE，添加，标准VM，找到安装的JDK目录，添加自己安装的JRE环境而不是用Eclipse默认的。设置为默认后创建新项目时选择使用默认JRE作为编译环境即可。
 - 修改已有项目的JRE环境：右键项目，属性，Java构建路径，库，模块路径找到JRE，编辑，修改为工作空间缺省JRE即可跟随首选项里面的默认JRE变化。
 - Eclipse自带了JRE，最终执行结果都是一样的，一般来说也不需要改。
+
+**使用Eclipse导出jar包：**
+- 包资源管理器中选择包右键导出->Java->JAR文件，选择要导出的一个或多个包，填写入口类，即可出。
+- 不设置其他选项的话，导出的清单文件中也就只有版本和入口类的信息。
+- 当然还可以导出其他文件，清单文件也可以有很多其他配置内容，尚不清楚，有需求再了解。
+
+### 0.4 基本IntelliJ IDEA使用
+
+[IDEA](https://www.jetbrains.com/idea/download/#section=windows)分为旗舰版和社区版，免费的社区版相比旗舰版阉割了不少功能，比如Profiling Tools，Spring/Java EE等框架，HTTP客户端，前端编程语言支持，数据库相关，Kubernetes等。旗舰版有30天实用。刚开始可以用社区版，但要开发Web和企业应用还得旗舰版，个人授权旗舰版\$149/Year，Jet Brains全家桶捆绑包\$249/Year。
+
+**安装中文插件：**
+插件商店搜索Chinese，安装**Chinese (Simplified) Language Pack / (中文语言包)**。
+
+**项目管理：**
+新建项目，选择Java模块，会自动检测添加到path的JDK，也可以添加JDK选项选择其他版本JDK。项目文件存放在`.idea`目录中。
+
+在IDEA中没有工作空间的概念，只有Project和Module的概念，分别对应于Eclipse的WorkSpace和Project。所以一个IDEA窗口只能管理一个项目，如果要打开多个项目，需要打开多个窗口。一个项目可以有多个模块。
+
+第一次新建模块时会需要创建新项目，模块不需要一定放在项目目录下（类似于VS的解决方案和项目），但最好将模块放在项目目录下，并且是子目录中，而不是项目根目录。然后打开项目之后再次新建模块就会默认在项目目录下的模块同名子目录了。模块文件`.iml`。
+
+然后模块下可以新建Package，Package中新建class/interface/enum/annotation/record，总体感受上和Eclipse差不多。只是Eclipse由项目管理自己的生成文件，而IDEA由项目管理所有模块的生成文件，生成文件保存在`Project_Dir/out/production/moduleName/package/XXX.class`。
+
+文件菜单，项目结构，打开项目结构窗口，可以修改项目、模块、库、JDK等一系列设置。比如项目默认JDK、语言级别、输出目录；模块名称、源文件夹、模块JDK版本；添加新的JDK等。
+
+可以用不同视图：项目、包、项目文件等视图观察当前项目。
+
+**引入第三方库：**
+
+**运行与调试：**
+`Shift+F10/F9` 运行/调试当前配置
+`Alt+Shift+F10/F9` 选择配置并运行/调试
+`Alt+Shift+F5` 附加到进程
+
+**常用快捷键：**
+
+**导出jar包：**
+
 
 ## 1. Java语言基础
 
@@ -839,7 +879,7 @@ java -cp ./hello.jar abc.xyz.hello
 
 ### 2.13 模块
 
-- `.class`是JVM看到的最小执行文件，`jar`包就是与`.class`的容器。但写一个大型程序时是可能需要依赖其他第三方的jar包的。最后执行时就需要将所有jar放在一起来执行，少了或者写漏了某个jar就可能会抛出`ClassNotFoundException`。
+- `.class`是JVM看到的最小执行文件，`jar`包就是`.class`的容器。但写一个大型程序时是可能需要依赖其他第三方的jar包的。最后执行时就需要将所有jar放在一起来执行，少了或者写漏了某个jar就可能会抛出`ClassNotFoundException`。
     ```shell
     java -cp 1.jar;2.jar;...;last.jar package.mainClass
     ```
