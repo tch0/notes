@@ -9,6 +9,9 @@
 - [BatchScript.md](BatchScript.md)：Windows批处理脚本了解。
 - [SICP.md](SICP.md)：SICP学习笔记，TODO。
 - [Makefile.md](Makefile.md)：Makefile笔记。
+- [CMake.md](CMake.md)：CMake笔记。
+- [Encoding.md](Encoding.md)：关于字符编码。
+- [BNF&RecursiveDescent.md](BNF&RecursiveDescent.md)：BNF文法与递归下降算法。
 
 ## 关于这个仓库
 
