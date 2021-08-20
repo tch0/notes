@@ -589,7 +589,8 @@ ABNF使用空白符而不是逗号来串联，同BNF/EBNF一样串联优先级�
 
 这里只涉及BNF/EBNF/ABNF文法的规则以及递归下降实现。本科时没有上过编译原理这门课，有时间一定要补一下，包括但不限于：
 
-- 上下文无关文法
+- 上下文无关文法（CFG）
+- PEG（[解析表达文法](https://zh.wikipedia.org/wiki/%E8%A7%A3%E6%9E%90%E8%A1%A8%E8%BE%BE%E6%96%87%E6%B3%95)），不同于CFG是另一中形式语言，关键区别就是PEG中的选择是有序的
 - DFA/NFA
 - LL分析器与LR分析器
 - lex/yacc & flex/bison
