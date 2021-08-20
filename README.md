@@ -12,6 +12,7 @@
 - [CMake.md](CMake.md)：CMake笔记。
 - [Encoding.md](Encoding.md)：关于字符编码。
 - [BNF&RecursiveDescent.md](BNF&RecursiveDescent.md)：BNF文法与递归下降算法。
+- [OperatorPrecedenceParser.md](OperatorPrecedenceParser.md)：运算符优先级分析法解析表达式。
 
 ## 关于这个仓库
 
