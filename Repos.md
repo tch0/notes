@@ -1,6 +1,6 @@
-# Github上的仓库
+# 开源项目目录
 
-选入标准：觉得有趣，拿来玩，看一看学习，很牛，学习方向，时下流行。
+选入标准：觉得有趣，拿来玩，看一看学习，很牛，学习方向，时下流行。不限于github，但大部分都在github上应该都有。
 
 推荐一个网站：[HelloGithub][hellogithub]
 
@@ -10,7 +10,7 @@
 
 - [vczh/vczh_toys][cpp-1]——轮子哥的黑魔法玩具与实验，学习学习。
 - [vczh/tinymoe][cpp-2]——轮子哥的动态类型编程语言，学习编译原理。
-- [wuye9036/cppTemplateTutorial][cpp-3]——C++模板编程入门进阶教程，可惜作者没有写完，有机会的话可以PR。
+- [wuye9036/cppTemplateTutorial][cpp-3]——C++模板编程入门进阶教程，可惜作者没有写完。
 - [Ubpa/USRefl][cpp-4]——一个C++静态反射库。
 
 [cpp-1]: https://github.com/vczh/vczh_toys
@@ -18,27 +18,32 @@
 [cpp-3]: https://github.com/wuye9036/cppTemplateTutorial
 [cpp-4]: https://github.com/Ubpa/USRefl
 
-## 成熟项目
+## GUI
 
 - [duilib/duilib][proj-1]——一个C++轻量级UI库。
 - [vczh-libraries/GacUI][proj-2]——轮子哥的C++界面库，支持GPU加速。
 - [notepad-plus-plus/notepad-plus-plus][proj-3]——notepad++编辑器。
 - [Embarcadero/Dev-Cpp][proj-4]——上古IDE，DevC++。
-- [open-source-parsers/jsoncpp][proj-5]——JsonCpp，很熟悉的json解析库。
+
 
 [proj-1]: https://github.com/duilib/duilib
 [proj-2]: https://github.com/vczh-libraries/GacUI
 [proj-3]: https://github.com/notepad-plus-plus/notepad-plus-plus
 [proj-4]: https://github.com/Embarcadero/Dev-Cpp
-[proj-5]: https://github.com/open-source-parsers/jsoncpp
 
+
+## 工具库
+
+- [open-source-parsers/jsoncpp][util-1]——JsonCpp，很熟悉的json解析库。
+
+[util-1]: https://github.com/open-source-parsers/jsoncpp
 
 ## 图形学
 
 - [ssloy/tinyrenderer][graphics-1]——OpenGL的渲染器课程，使用OpenGL。
 - [TensShinet/toy_renderer][graphics-2]——一个大佬学习上面课程的记录。
 - [yangzhenzhuozz/Renderer][graphics-3]——基于EasyX实现一个3D渲染器，有文档提供入门教程。
-- [matrixcascade/PainterEngine][graphics-4]——一个高度可移植完整开源的游戏引擎，使用C/C++。
+- [matrixcascade/PainterEngine][graphics-4]——一个高度可移植完整开源跨平台的C游戏引擎。
 - [miloyip/light2d][graphics-5]——2D图形学光照入门。
 
 
@@ -78,12 +83,14 @@
 - [linw7/Skill-Tree][skilltree-3]——后端开发面试知识体系。
 - [zhengjianglong915/note-of-interview][skilltree-4]——互联网面试笔记。
 - [CyC2018/CS-Notes][skilltree-5]——技术面试必备基础知识，计算机体系。
+- [sdmg15/Best-websites-a-programmer-should-visit][skilltree-6]——程序员必备的网站合集。
 
 [skilltree-1]: https://github.com/qianguyihao/Web
 [skilltree-2]: https://github.com/LearnOpenGL-CN/LearnOpenGL-CN
 [skilltree-3]: https://github.com/linw7/Skill-Tree
 [skilltree-4]: https://github.com/zhengjianglong915/note-of-interview
 [skilltree-5]: https://github.com/CyC2018/CS-Notes
+[skilltree-6]: https://github.com/sdmg15/Best-websites-a-programmer-should-visit
 
 
 ## 前端
@@ -100,7 +107,7 @@
 [ai-1]: https://github.com/lllyasviel/style2paints
 
 
-## 工具
+## 开发工具
 
 - [OpenCppCoverage/OpenCppCoverage][tools-1]——C++覆盖率测试工具。
 - [skywind3000/awesome-cheatsheets][tools-2]——编程语言、开发工具速查表。
@@ -113,9 +120,16 @@
 
 - [miloyip/json-tutorial][compiler-1]——从零开始的JSON库教程。
 - [fool2fish/dragon-book-exercise-answers][compiler-2]——龙书第二版课后习题答案。
+- [rswier/c4][c4]——4个函数实现的基于虚拟机的极简C语言编译器，实现了C语言的一个子集。我自己也重构了一下，并扩展了部分功能，[tch0/JustAToyCCompiler][jatcc]，但仍不能算是能用的地步，玩具级别。
+- [drh/lcc][lcc]——一个教学用的、完整的C99编译器。
+- [Tiny CC][tcc]——Fabrice Bellard大神和伙伴们写的小型C编译器。
 
 [compiler-1]: https://github.com/miloyip/json-tutorial
 [compiler-2]: https://github.com/fool2fish/dragon-book-exercise-answers
+[c4]: https://github.com/rswier/c4
+[jatcc]: https://github.com/tch0/JustAToyCCompiler
+[lcc]: https://github.com/drh/lcc
+[tcc]: https://bellard.org/tcc/tcc-doc.html
 
 
 ## 娱乐项目

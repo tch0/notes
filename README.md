@@ -1,6 +1,6 @@
 ## 内容目录
 
-- [Repos.md](Repos.md)：Github上的可以学习的仓库，随性记录，不是都看过。
+- [Repos.md](Repos.md)：感兴趣的开源项目列表，用来索引和查询。
 - [LaTex.md](LaTeX.md)：LaTex学习笔记，暂无实质内容。
 - [Git.md](Git.md)：Git学习笔记。
 - [MathFunc.md](MathFunc.md)：`<math.h>`常用数学函数分析与实现。
@@ -13,6 +13,7 @@
 - [Encoding.md](Encoding.md)：关于字符编码。
 - [BNF&RecursiveDescent.md](BNF&RecursiveDescent.md)：BNF文法与递归下降算法。
 - [OperatorPrecedenceParser.md](OperatorPrecedenceParser.md)：运算符优先级分析法解析表达式。
+- [TCC.md](TCC.md)：一个轻量极简自举的C编译器TinyCC的使用文档与源码解析。
 
 ## 关于这个仓库
 
