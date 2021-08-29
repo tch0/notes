@@ -43,7 +43,7 @@
 
 # 主流编译优化方法一览
 
-主要参考自：https://compileroptimizations.com/index.html，可以理解为翻译。
+主要参考自：[Compiler Optimizations](https://compileroptimizations.com/index.html)，基本都是直接翻译过来的。
 
 各种编译优化方法的简要描述，示例和优化后的等效代码转换。普及总览作用，不深入，有的话附对应wiki链接。
 

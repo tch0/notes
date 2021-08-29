@@ -14,6 +14,7 @@
 - [BNF&RecursiveDescent.md](BNF&RecursiveDescent.md)：BNF文法与递归下降算法。
 - [OperatorPrecedenceParser.md](OperatorPrecedenceParser.md)：运算符优先级分析法解析表达式。
 - [TCC.md](TCC.md)：一个轻量极简自举的C编译器TinyCC的使用文档与源码解析。
+- [CompilerOptimizations.md](CompilerOptimizations.md)：粗浅编译器优化方式。
 
 ## 关于这个仓库
 
