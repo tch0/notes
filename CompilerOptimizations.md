@@ -47,6 +47,8 @@
 
 各种编译优化方法的简要描述，示例和优化后的等效代码转换。普及总览作用，不深入，有的话附对应wiki链接。
 
+不深入了解编译原理看这些东西的话，总有种雾里看花，不学走先学跑的感觉。
+
 名词解释：
 - 架构一般说的是处理器硬件架构，比如x86，arm等。
 
@@ -64,10 +66,10 @@ int c;
 
 void f (void)
 {
-  a = 3;
-  b = 5;
-  c = 7;
-  return;
+    a = 3;
+    b = 5;
+    c = 7;
+    return;
 }
 ```
 优化后等效C代码：放到全局内存池。
@@ -165,7 +167,30 @@ void f (int *p, int i)
 
 ## 通过类型的别名优化(Alias Optimization (by type))
 
+简单而言就是通过语言规定通过判断类型不同假定了两个变量不会是同一个变量的别名，基于这个假定来做一些别名优化。也就是重复操作的优化。
 
+例：
+```c
+void f (short *ps, int *pi)
+{
+  int i, j;
+  i = *pi;
+  *ps = 3;
+  j = *pi;
+  g (i, j);
+}
+```
+
+优化后：
+```c
+void f (short *ps, int *pi)
+{
+  int i, j;
+  i = *pi;
+  *ps = 3;
+  g (i, i);
+}
+```
 
 ## 数组边界优化(Array Bounds Optimization)
 
@@ -515,7 +540,7 @@ void f (void)
     int i;
     sum = 0;
     for (i = 0; i < 100; i++)
-      sum += a[i];
+        sum += a[i];
 }
 ```
 
@@ -529,7 +554,7 @@ void f (void)
     register int t;
     t = 0;
     for (i = 0; i < 100; i++)
-      t += a[i];
+        t += a[i];
     sum = t;
 }
 ```
@@ -966,7 +991,7 @@ Java字节码可以在运行时修改以获得更好的性能。动态的替换�
 例：
 ```java
 {
-   	for(i = 0; i < 10; i++)
+    for(i = 0; i < 10; i++)
         arr[i] = obj.i + volatile_var;
 }
 ```
