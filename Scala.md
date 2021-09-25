@@ -8,12 +8,14 @@
   - [变量与数据类型](#%E5%8F%98%E9%87%8F%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B)
   - [运算符、控制流](#%E8%BF%90%E7%AE%97%E7%AC%A6%E6%8E%A7%E5%88%B6%E6%B5%81)
   - [函数式编程](#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B)
+  - [包管理](#%E5%8C%85%E7%AE%A1%E7%90%86)
   - [面向对象](#%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1)
   - [集合](#%E9%9B%86%E5%90%88)
   - [模式匹配](#%E6%A8%A1%E5%BC%8F%E5%8C%B9%E9%85%8D)
   - [异常处理](#%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86)
   - [隐式转换](#%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2)
   - [泛型](#%E6%B3%9B%E5%9E%8B)
+  - [总结](#%E6%80%BB%E7%BB%93)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -865,10 +867,10 @@ def sum(a: Int, b: Int): Int = {
     - 类很多时，分模块管理。
     - 访问权限控制。
 - 命名：包名称只能是常规的标识符（字母数字下划线，数字不能开头）。同样`.`作为不同层级分割符，整体作为包名。
-- 命名规范:一般情况下项是`com.company.projectname.modulename`，视项目规定而定。
+- 命名规范：一般情况下按照如下规则命名`com.company.projectname.modulename`，视项目规定而定，只是一个名称而已。
 - scala中的两种包管理方式：
-    - java风格，每个源文件一个包，写在源文件最上方。但源文件位置不需要和包名目录层级一致，只代表    逻辑层级关系，不像java一样源文件也必须按照包名目录层级关系放置。当然惯例是和java一样按照包名    目录层级来放置。
-    - 第二种，用`{}`嵌套风格包定义：
+    - 第一种，java风格，每个源文件声明一个包，写在源文件最上方。但源文件位置不需要和包名目录层级一致，只代表逻辑层级关系，不像java一样源文件也必须按照包名目录层级关系放置。当然惯例是和java一样按照包名目录层级来放置。
+    - 第二种，用`{}`嵌套风格定义包：
     ```scala
     package com {
         // code in com package
@@ -892,7 +894,7 @@ def sum(a: Int, b: Int): Int = {
     ```
     - 嵌套风格好处：
         - 一个源文件可以声明多个并列的最顶层的包。
-        - 子包中的类可以访问父包中的内容，无需import。但外层是不能直接访问内层的，需要`import`。
+        - 子包中的类可以访问父包中的内容，无需导入。但外层是不能直接访问内层的，需要导入。
     - 如果单文件VsCode测试嵌套包，而不是用IDE的话，那定义了包就不能直接执行了，需要`scalac`先编译，并指定入口类运行。编译后的字节码文件和java一样会自动按照包层级关系排列。
     ```shell
     scalac PackageManagement.scala
@@ -903,7 +905,7 @@ def sum(a: Int, b: Int): Int = {
 
 包对象：
 - 为scala包定义一个同名的单例包对象，定义在包对象中的成员，作为其对应包下的所有类和对象的共享变量，可以被直接访问，无需导入。
-- 关键字`package object`，需要和包在同一层级下。比如为`com.inner`包定义包对象的话，必须在`com`包中。
+- 关键字`package object`，需要和包在同一层级下。比如为`com.inner`包定义包对象的话，必须在`com`包中，定义形式`package obejct inner { ... }`。
 
 包的导入：
 ```scala
@@ -914,7 +916,7 @@ import users.{UserPreferences => UPrefs}  // 导入类并且设置别名
 import users.{User => _, _}               // 导入出User类以外的所有users包中的内容
 ```
 - 可以在任意位置导入（作用于代码块），可以设置别名，可以选择性导入想要导入的内容，可以屏蔽某个类。
-- 默认导入：
+- 所有scala源文件默认导入：
 ```scala
 import java.lang._
 import scala._
@@ -924,7 +926,7 @@ import scala.Predef._
 ## 面向对象
 
 类定义：
-- 回顾java中，如果是`public`，那么必须和文件名一致，只能有一个，不是则可以写多个。
+- 回顾java中，如果是`public`向外公开的，那么必须和文件名一致，也只能有一个。不写访问修饰符则可以定义多个，包访问权限。
 - scala中没有`public`关键字，默认就是公有，不能加`public`，一个文件可以写多个类，不要求和文件名一致。
 ```scala
 [descriptor] class classname {
@@ -935,29 +937,25 @@ import scala.Predef._
     }
 }
 ```
-- 访问修饰符可以是：`private` `protected`，默认就是公有，不需要加。
+- 访问修饰符可以是：`private` `protected` `private [pacakgeName]`，默认就是公有，不需要加。
 - 成员如果需要Java Bean规范的getter和setter的话可以加`@scala.beans.BeanProperty`相当于自动创建，不需要显式写出。
-- 成员给初值`_`会赋默认值，scala中定义变量必须赋值，可以这样做。值类型的值0，引用则是`null`。
+- 成员给初值`_`会赋默认值，scala中定义变量必须赋值，可以这样做。值类型的值0，引用则是`null`。定义常量的话不能用`_`，因为只能初始化一次，编译器会提示。
 
 封装：
 - Java的封装：私有化，提供getter和setter。
-- scala中考虑到Java太冗余了，脱裤子放屁一样。scala中的公有属性，底层实际为`private`，并通过get方法`obj.field()`和set方法`obj.field_=(value)`对其进行操作。所以scala不推荐设置为`private`。如果需要和其他框架互操作，必须提供Java Bean规范的getter和setter的话可以加`@scala.beans.BeanProperty`。
+- scala中考虑到Java太冗余了，脱裤子放屁一样。scala中的公有属性，底层实际为`private`，并通过get方法`obj.field()`和set方法`obj.field_=(value)`对其进行操作。所以scala不推荐设置为`private`。如果需要和其他框架互操作，必须提供Java Bean规范的getter和setter的话可以加`@scala.beans.BeanProperty`注解。
 
 访问权限：
-- Java中`private protected public`和默认
+- Java中`private protected public`和默认包访问权限。
 - scala中属性和方法默认公有，并且不提供`public`关键字。
 - `private`私有，类内部和伴生对象内可用。
 - `protected`保护权限，scala中比java中严格，只有同类、子类可访问，同包无法访问。【因为java中说实话有点奇怪】
 - `private [pacakgeName]`增加包访问权限，在包内可以访问。
 
-普通方法：
-- 调用：`.`
-- 覆写：`override def ...`
-
 构造器：
 - 包括主构造器和辅助构造器。
 ```scala
-class ClassName[(arg1: Arg1Type, arg2: ...)] { // main constructor, only one, like record in java
+class ClassName [descriptor] [([descriptor][val/var] arg1: Arg1Type, [descriptor][val/var] arg2: ...)] { // main constructor, only one, like record in java
     // assist constructor
     def this(argsList1) {
         this(args) // call main constructor
@@ -1015,10 +1013,10 @@ class Person {
     - 使用`var val`修饰那就是定义为类成员，分别是变量和常量，不需要也不能在类内再定义一个同名字段。调用时传入参数就直接给到该成员，不需要再显式赋值。
     - 主构造器中的`var val`成员也可以添加访问修饰符。
     - 不加参数列表相当于为空，`()`可以省略。
-    - 访问修饰符添加到参数列表`()`前。
+    - 主构造器的访问修饰符添加到参数列表`()`前。
 - 实践指南：
     - 推荐使用scala风格的主构造器`var val`修饰参数的编写方法，而不要被Java毒害！
-    - 如果需要多种构造器那么就添加新的的辅助构造器，调用主构造器。
+    - 如果需要多种重载的构造器那么就添加新的的辅助构造器。
 ```scala
 class Person(private var name: String) {
     var age: Int = _
@@ -1042,8 +1040,7 @@ class Person(private var name: String) {
 继承：
 - `class ChildClassName[(argList1)] extends BaseClassName[(args)] { body }`
 - 子类继承父类属性和方法。
-- 可以调用父类构造器，但感觉好像很局限，子类中只可能调用到主构造或者辅助构造中的其中一个构造器。那如果父类有多种构造方式，子类想继承也没有办法？？
-- `val`类型的成员想赋值必须放在主构造器参数列表中。
+- 可以调用父类构造器，但感觉好像很局限，子类中只可能调用到主构造或者辅助构造中的其中一个构造器。那如果父类有多种构造方式，子类想继承也没有办法？只能是其中一种。
 - 不考虑太多负担，按照scala惯用写法来写起来还是挺轻松的。
 
 多态：
@@ -1057,8 +1054,8 @@ class Person(private var name: String) {
 - `abstract calss ClassName`
 - 抽象属性：`val/var name: Type`，不给定初始值。
 - 抽象方法：`def methodName(): RetType`，只声明不实现。
-- 子类如果没有覆写全部父类属性和方法，那么就必须定义为抽象类。老生常谈了。
-- 重写非抽象方法属性必须加`override`，重写非抽象方法则可以不加`override`。
+- 子类如果没有覆写全部父类未定义的属性和方法，那么就必须定义为抽象类。老生常谈了。
+- 重写非抽象方法属性必须加`override`，重写抽象方法则可以不加`override`。
 - 子类调用父类中方法使用`super`关键字。
 - 子类重写父类抽象属性，父类抽象属性可以用`var`修饰，`val var`都可以。因为父类没有实现嘛，需要到子类中来实现。
 - 如果是**重写非抽象属性**，则父类非抽象属性只支持`val`，不支持`var`。因为`var`修饰为可变量，子类继承后可以直接使用修改，没有必要重写。`val`不可变才有必要重写。
@@ -1074,16 +1071,16 @@ val/var p: baseClass = new baseClass {
 
 伴生对象（Companion Object）：
 - 取代`static`语义。
-- 编译后其实会生成两个类，伴生对象是伴生类的单例对象。
-- `obejct`，名称和类一致，必须方同一个文件，前面已经说过了。
-- 常见用法：构造器私有化，用伴生对象中的工厂方法。和静态方法使用也没有什么区别。
-- 伴生对象实现`apply`方法后调用时可以省略`apply`，直接使用`className(args)`。库中很多这种用法创建实例。语法糖太多了！！！
-- 测试伴生对象时就在该对象内定义`main`函数编译时会出现的奇怪的错误。可能对包含入口的伴生对象做了特殊处理，具体细节尚不知道。最好将`main`定义在单独的伴生对象内。
+- 编译后其实会生成两个类，伴生对象是伴生类（类名为对应类后加`$`符号）的单例对象。
+- `obejct`，名称和类一致，必须放同一个文件，前面已经说过了。
+- 常见用法：构造器私有化，用伴生对象中的工厂方法。和静态工厂方法使用起来也没有什么区别。
+- 伴生对象实现`apply`方法后调用时可以省略`.apply`，直接使用`className(args)`。库中很多这种用法创建实例，是一个语法糖。
+- 测试伴生对象时就在该对象内定义`main`函数编译时会出现的奇怪的访问权限问题。可能对包含入口的伴生对象做了特殊处理，具体细节尚不清楚。最好将`main`定义在单独的伴生对象内。
 
 
-Trait（特征）：
-- 替代java接口的概念。
-- 多个类具有相同的特征时，就可以将这个特征提取出来。
+Trait（特征/特质）：
+- 替代java接口的概念。但比接口更为灵活，一种实现多继承的手段。
+- 多个类具有相同的特征时，就可以将这个特征提取出来，用继承的方式来复用。
 - 用关键字`trait`声明。
 ```scala
 trait traitName {
@@ -1092,12 +1089,12 @@ trait traitName {
 ```
 - 引入/混入(mixin)特征：
     - 有父类`class extends baseClass with trait1 with trait2 ... {}`
-    - 没有父类`class extends trait1 with trait2`
+    - 没有父类`class extends trait1 with trait2 ... {}`
 - 其中可以定义抽象和非抽象的属性和方法。
 - 匿名子类也可以引入特征。
-- 特征和基类中重名的属性或方法需要在子类中覆写以解决冲突，最后因为动态绑定，所有使用的地方都是子类的字段或方法。属性的话需要类型一致，不然提示不兼容。方法的话定义不一致会视为重载。
-- 如果基类和属性一个是抽象的，一个非抽象，且兼容，那么可以不覆写。很直观，就是不能冲突不能二义就行。
-- 多个特征和基类定义了同名方法的，就需要在子类重写解决冲突。其中可以调用父类和特征的方法，此时`super.methodName`指代最后一个拥有该方法的特征或基类。
+- 特征和基类或者多个特征中重名的属性或方法需要在子类中覆写以解决冲突，最后因为动态绑定，所有使用的地方都是子类的字段或方法。属性的话需要类型一致，不然提示不兼容。方法的话参数列表不一致会视为重载而不是冲突。
+- 如果基类和特征中的属性或方法一个是抽象的，一个非抽象，且兼容，那么可以不覆写。很直观，就是不能冲突不能二义就行。
+- 多个特征和基类定义了同名方法的，就需要在子类重写解决冲突。其中可以调用父类和特征的方法，此时`super.methodName`指代按照顺序最后一个拥有该方法定义的特征或基类。也可以用`super[baseClassOrTraitName].methodName`直接指代某个基类的方法，注意需要是直接基类，间接基类则不行。
 - 也就是说基类和特征基本是同等地位。
 - 例子：
 ```scala
@@ -1202,17 +1199,16 @@ object TraitInheritance {
     }
 }
 ```
-- 其实特征的多继承和C++的多继承已经很像了，只是名称冲突的解决方式不一样，菱形继承的解决方式也不一样。
-- 指定要调用哪个基类的方法：`super[baseClassOrTraitName].methodName`，避免考虑到底调用的是哪一个。
-- scala单继承多实现，实现体现在特征上。基类主要用于一个对象比较核心比较本质的部分上。
-- 特征与抽象类区别：特征构造时不能给参数。其他都是同样的，也可以用于多态。
+- 其实特征的多继承和C++的多继承已经很像了，只是名称冲突的解决方式不一样，菱形继承的解决方式也不一样，而且不能访问间接基类。
+- scala**单继承多实现**，实现体现在特征上。基类主要用于一个对象比较核心比较本质的部分上。
+- **继承特征与类的区别**：特征构造时不能给参数。其他都是同样的，都可以实现多态。
 
-特征自身类型（self type）：
+自身类型（self type）：
 - 可实现**依赖注入**的功能。
 - 一个类或者特征指定了自身类型的话，它的对象和子类对象就会拥有这个自身类型中的所有属性和方法。
 - 是将一个类或者特征插入到另一个类或者特征中，属性和方法都就像直接复制插入过来一样，能直接使用。但不是继承，不能用多态。
 - 语法，在类或特征中：`_: SelfType =>`，其中`_`的位置是别名定义，也可以是其他，`_`指代`this`。插入后就可以用`this.xxx`来访问自身类型中的属性和方法了。
-- 注入进来的目的是让你能够使用，可见，提前使用应该拥有的属性和方法。最终在子类中继承这个基类或者混入这个特征以得到其定义。
+- 注入进来的目的是让你能够使用，可见，提前使用应该拥有的属性和方法。最终只要自身类型和注入目标类型同时被继承就能够得到定义了。
 - 例子：
 ```scala
 class User(val name: String, val password: String)
@@ -1236,10 +1232,11 @@ object SelfType {
 }
 ```
 
-类型检查和转换（运行时类型识别RTTI）：
+运行时类型识别RTTI：
 - 判断类型：`obj.isInstanceOf[T]`，确切匹配的类型或者父类都返回true。
 - 转换类型：`obj.asInstance[T]`，转换为目标类型。
-- 获取类名：`classOf[className]`，得到类的全名，结果`class package.xxx.className`。
+- 获取类名：`classOf[T]`，得到类对应的`Class`对象`Class[T]`，转字符串结果是`class package.xxx.className`。
+- 获取对象的类：`obj.getClass`
 
 枚举类：
 - 继承`Enumeration`。
@@ -1260,8 +1257,8 @@ object EnumClass {
 ```
 
 应用类：
-- 继承`App`。包装了`main`方法，就不需要显式定义`main`方法了，可以直接执行。
-```
+- 继承`App`，包装了`main`方法，就不需要显式定义`main`方法了，可以直接执行。
+```scala
 object TestApp extends App {
     println("hello,world!")
 }
@@ -1269,7 +1266,479 @@ object TestApp extends App {
 
 定义类型别名：`type SelfDefineType = TargetType`。
 
+密封类： `sealed`，子类只能定义在同一个文件内。
+
 ## 集合
+
+Java集合：
+- 三大类型：列表`List`、集合`Set`、映射`Map`，有多种不同实现。
+
+Scala集合三大类型：
+- 序列`Seq`，集合`Set`，映射`Map`，所有集合都扩展自`Iterable`。
+- 对于几乎所有集合类，都同时提供**可变和不可变**版本。
+    - 不可变集合：`scala.collection.immutable`
+    - 可变集合：`scala.collection.mutable`
+    - 两个包中可能有同名的类型，需要注意区分是用的可变还是不可变版本，避免冲突和混淆。
+- 对于不可变集合，指该集合不可修改，每次修改都会返回一个新的对象，而不会修改源对象，就像java中的`final`对象。
+- 可变集合可以对源对象进行修改，不会返回新对象。
+- **建议**：操作集合时，不可变用符号，可变用方法。
+- scala中集合类的定义比java要清晰不少。
+
+不可变集合：
+- `scala.collection.immutable`包中不可变集合关系一览：
+![Scala_mutable_collections_tree](Images/Scala_immutable_collections_tree.jpg)
+- 不可变集合没有太多好说的，集合和隐射的哈希表和二叉树实现是肯定都有的，序列中分为随机访问序列（数组实现）和线性序列（链表实现），基本数据结构都有了。
+- `Range`是范围，常用来遍历，有语法糖支持`1 to 10 by 2` `10 until 1 by -1`其实就是隐式转换加上方法调用。
+- scala中的`String`就是`java.lang.String`，和集合无直接关系，所以是虚箭头，是通过`Perdef`中的低优先级隐式转换来做到的。经过隐式转换为一个包装类型后就可以当做集合了。
+- `Array`和`String`类似，在图中漏掉了。
+- 此类包装为了兼容java在scala中非常常见，scala中很多类型就是对java类型的包装或者仅仅是别名。
+- scala中可能会推荐更多地使用不可变集合。能用不可变就用不可变。
+
+可变集合；
+- `scala.collection.mutable`包中可变集合关系一览：
+![Scala_mutable_collections_tree](Images/Scala_mutable_collections_tree.jpg)
+- 序列中多了`Buffer`，整体结构差不多。
+
+不可变和可变：
+- 不可变指的是对象大小不可变，但是可以修改元素的值（不能修改那创建了也没有用对吧）。需要注意这一点。而如果用了`val`引用变量存储，那么指向对象的地址也不可变。
+- 在原集合上个插入删除数据是做不到的，只能返回新的集合。
+
+泛型：
+- 集合类型大多都是支持泛型，泛型使用时用`[Type]`，java中是`<Type>`。
+
+不可变数组：
+- 访问元素使用`()`运算符，通过`apply/update`方法实现，源码中实现只是抛出错误作为**存根方法**，具体逻辑由编译器实现。
+```scala
+// 1. new
+val arr = new Array[Int](5)
+
+// 2. factory method in companion obejct
+val arr1 = Array[Int](5)
+val arr2 = Array(0, 1, 3, 4)
+
+// 3. traverse, range for
+for (i <- 0 until arr.length) arr(i) = i
+for (i <- arr.indices) print(s"${arr(i)} ")
+println()
+
+// 4. tarverse, foreach
+for (elem <- arr) print(s"$elem ") // elem is a val
+println()
+
+// 5. tarverse, use iterator
+val iter = arr.iterator
+while (iter.hasNext)
+    print(s"${iter.next()} ")
+println()
+
+// 6. traverse, use foreach method, pass a function
+arr.foreach((elem: Int) => print(s"$elem "))
+println()
+
+println(arr2.mkString(", ")) // to string directly
+
+// 7. add element, return a new array, : should toward to object
+val newArr = arr :+ 10 //  arr.:+(10) add to end
+println(newArr.mkString(", "))
+val newArr2 = 20 +: 10 +: arr :+ 30 // arr.+:(10).+:(20).:+(30), add to begin
+println(newArr2.mkString(", "))
+```
+- 可以看到自定义运算符真的太自由太强大了，规定如果运算符首尾有`:`那么`:`一定要指向对象。
+- 下标越界当然会抛出异常，使用前应该检查。
+- 通过隐式转换使用scala的集合相关特征。不需要引入。
+
+可变数组：
+- 类型`ArrayBuffer`。
+```scala
+// 1. create
+val arr: ArrayBuffer[Int] = new ArrayBuffer[Int]()
+val arr1: ArrayBuffer[Int] = ArrayBuffer(10, 20, 30)
+println(arr.mkString(", "))
+println(arr1) // call toString ArrayBuffer(10, 20, 30)
+
+// 2. visit
+arr1(2) = 10
+// 3. add element to tail
+var newArr = arr :+ 15 :+ 20 // do not change arr
+println(newArr)
+newArr = arr += 15 // modify arr itself, add to tail return itself, do notrecommand assign to other var
+println(arr)
+println(newArr == arr) // true
+// 4. add to head
+77 +=: arr // WTF?
+println(arr)
+// 5. insert to middle
+arr.insert(1, 10)
+println(arr)
+// 6. remove element
+arr.remove(0, 1) // startIndex, count
+println(arr)
+arr -= 15 // remove specific element
+println(arr)
+// 7. convert to Array
+val newImmuArr: Array[Int] = arr.toArray
+println(newImmuArr.mkString(", "))
+// 8. Array to ArryBuffer
+val buffer: scala.collection.mutable.Buffer[Int] = newImmuArr.toBuffer
+println(buffer)
+```
+- 推荐：不可变集合用运算符，可变集合直接调用对应方法。运算符容易迷惑。
+- 更多方法查看文档和源码用到去找就行。
+- 可变数组和不可变数组可以调用方法互相转换。
+
+二维数组：
+- 就是数组的数组。
+- 使用`Array.ofDim[Type](firstDim, secondDim, ...)`方法。
+```scala
+// create 2d array
+val arr: Array[Array[Int]] = Array.ofDim[Int](2, 3)
+arr(0)(1) = 10
+arr(1)(0) = 100
+ 
+// traverse
+arr.foreach(v => println(v.mkString(",")))
+```
+
+不可变列表：
+- `List`，抽象类，不能直接`new`，使用伴生对象`apply`传入元素创建。
+- 也有`apply`能随机访问（做了优化），但是不能`update`更改。
+- `foreach`遍历。
+- 支持`+: :+`首位添加元素。
+- `Nil`空列表，`::`添加元素到表头。
+- 常用`Nil.::(elem)`创建列表，换一种写法就是`10 :: 20 :: 30 :: Nil`得到结果`List(10, 20, 30)`，糖是真滴多。
+- 合并两个列表：`list1 ::: list2` 或者`list1 ++ list2`。
+
+可变列表：
+- 可变列表`ListBuffer`，和`ArrayBuffer`很像。
+- `final`的，可以直接`new`，也可以伴生对象`apply`传入元素创建（scala中更推荐）。
+- 方法：`append prepend insert remove`
+- 添加元素到头或尾：`+=: +=`
+- 合并：`++`得到新的列表，`++=`合并到源上。
+- 删除元素也可以用`-=`运算符。
+- 具体操作很多，使用时阅读文档即可。
+
+不可变集合：
+- 数据无序，不可重复。
+- 可变和不可变都叫`Set`，需要做区分。默认`Set`定义为`immutable.Set`别名。
+- 创建时重复数据会被去除，可用来去重。
+- 添加元素：`set + elem`
+- 合并：`set1 ++ set2`
+- 移除元素：`set - elem`
+- 不改变源集合。
+
+可变集合：
+- 操作基于源集合做更改。
+- 为了区分与不可变集合，`import scala.collection.mutable`并用`mutable.Set`。
+- 不可变集合有的都有。
+- 添加元素到源上：`set += elem` `add`
+- 删除元素：`set -= elem` `remove`
+- 合并：`set1 ++= set2`
+- 都很简单很好理解，多看文档和源码就行。
+
+不可变映射：
+- `Map`默认就是`immutable.Map`别名。
+- 两个泛型类型。
+- 基本元素是一个二元组。
+```scala
+// create Map
+val map: Map[String, Int] = Map("a" -> 13, "b" -> 20)
+println(map)
+// traverse
+map.foreach((kv: (String, Int)) => println(kv))
+map.foreach(kv => println(s"${kv._1} : ${kv._2}"))
+// get keys and values
+for (key <- map.keys) {
+    println(s"${key} : ${map.get(key)}")
+}
+// get value of given key
+println(map.get("a").get)
+println(map.getOrElse("c", -1)) // avoid excption
+println(map("a")) // if no such key will throw exception
+// merge
+val map2 = map ++ Map("e" -> 1024)
+println(map2)
+```
+
+可变映射：
+- `mutable.Map`
+- 不可变的都支持。
+```scala
+// create mutable Map
+val map: mutable.Map[String, Int] = mutable.Map("a" -> 10, "b" -> 20)
+// add element
+map.put("c", 30)
+map += (("d", 40)) // two () represent tuple to avoid ambiguity
+println(map)
+// remove element
+map.remove("a")
+map -= "b" // just need key
+println(map)
+// modify element
+map.put("c", 100) // call update, add/modify
+println(map)
+// merge Map
+map ++= Map("a" -> 10, "b" -> 20, "c" -> 30) // add and will override
+println(map)
+```
+
+元组：
+- `(elem1, elem2, ...)` 类型可以不同。
+- 最多只能22个元素，从`Tuple1`定义到了`Tuple22`。
+- 使用`_1 _2 _3 ...`访问。
+- 也可以使用`productElement(index)`访问，下标从0开始。
+- `->`创建二元组。
+- 遍历：`for(elem <- tuple.productIterator)`
+- 可以嵌套，元组的元素也可以是元组。
+
+集合通用属性和方法：
+- 线性序列才有长度`length`、所有集合类型都有大小`size`。
+- 遍历`for (elem <- collection)`、迭代器`for (elem <- collection.iterator)`。
+- 生成字符串`toString` `mkString`，像`Array`这种是隐式转换为scala集合的，需要自行处理。
+- 是否包含元素`contains`。
+
+衍生集合的方式：
+- 获取集合的头元素`head`（元素）和剩下的尾`tail`（集合）。
+- 集合最后一个元素`last`（元素）和出去最后一个元素的初始数据`init`（集合）。
+- 反转`reverse`。
+- 取前后n个元素`take(n) takeRight(n)`
+- 去掉前后n个元素`drop(n) dropRight(n)`
+- 交集`intersect`
+- 并集`union`，对于线性序列的话用`concat`连接。
+- 差集`diff`，得到属于自己、不属于传入参数的部分。
+- 拉链`zip`，得到两个集合对应位置元素组合起来构成二元组的集合，大小不匹配会丢掉其中一个集合不匹配的多余部分。
+- 滑窗`sliding(n, step = 1)`，框住特定个数元素，方便移动和操作。得到迭代器，可以用来遍历，每个元素就是滑窗元素个数的集合。步长大于1的话最后一个窗口数据可能个数会少一些。
+
+集合的简单计算操作：
+- 求和`sum` 求乘积`product` 最小值`min` 最大值`max`
+- `maxBy(func)`支持传入一个函数获取元素并返回比较依据的值，比如元组默认就只会判断第一个元素，要根据第二个元素判断就返回第二个元素就行`xxx.maxBy(_._2)`。
+- 排序`sorted`，默认从小到大排序。从大到小排序`sorted(Ordering[Int].reverse)`。
+- 按元素排序`sortBy(func)`，指定要用来做排序的字段。也可以再传一个隐式参数逆序`sortBy(func)(Ordering[Int].reverse)`
+- 自定义比较器`sortWith(cmp)`，比如按元素升序排列`sortWith((a, b) => a < b)`或者`sortWith(_ < _)`，按元组元素第二个元素升序`sortWith(_._2 > _._2)`。
+- 例子：
+```scala
+object Calculations {
+    def main(args: Array[String]): Unit = {
+        // calculations of collections
+        val list = List(1, 4, 5, 10)
+        
+        // sum
+        var sum = 0
+        for (elem <- list) sum += elem
+        println(sum)
+        
+        println(list.sum)
+        println(list.product)
+        println(list.min)
+        println(list.max)
+
+        val list2 = List(('a', 1), ('b', 2), ('d', -3))
+        println(list2.maxBy((tuple: (Char, Int)) => tuple._2))
+        println(list2.minBy(_._2))
+
+        // sort, default is ascending
+        val sortedList = list.sorted
+        println(sortedList)
+        // descending
+        println(list.sorted(Ordering[Int].reverse))
+
+        // sortBy
+        println(list2.sortBy(_._2))
+
+        // sortWith
+        println(list.sortWith((a, b) => a < b))
+        println(list2.sortWith(_._2 > _._2))
+    }
+}
+```
+- 简单操作还是太少了，不足以应对复杂的需求。
+
+集合高级计算函数：
+- 大数据的处理核心就是映射（map）和规约（reduce）。
+- 映射操作（广义上的map）：
+    - 过滤：自定义过滤条件，`filter(Elem => Boolean)`
+    - 转化/映射（狭义上的map）：自定义映射函数，`map(Elem => NewElem)`
+    - 扁平化（flatten）：将集合中集合元素拆开，去掉里层集合，放到外层中来。`flatten`
+    - 扁平化+映射：先映射，再扁平化。`flatMap(Elem => NewElem)`先映射再扁平化。
+    - 分组（group）：指定分组规则，`groupBy(Elem => Key)`得到一个Map，key根据传入的函数运用于集合元素得到。
+- 规约操作（reduce）：
+    - 简化/规约（reduce）：对所有数据做一个处理，规约得到一个结果（比如连加连乘操作）。`reduce((TmpRes, NextElem) => NextRes)`，传入函数有两个参数，第一个参数是第一个元素（第一次运算）和上一轮结果（后面的计算），第二个是当前元素，得到本轮结果，最后一轮的结果就是最终结果。`reduce`调用`reduceLeft`从左往右，也可以`reduceRight`从右往左（实际上是递归调用，和一般意义上的从右往左有区别，看下面例子）。
+    - 折叠（fold）：`fold(InitialVal)((CurRes, Elem) => NextRes)`相对于`reduce`来说其实就是`fold`自己给初值，从第一个开始计算，`reduce`用第一个做初值，从第二个元素开始算。`fold`调用`foldLeft`，从右往左则用`foldRight`（翻转之后再`foldLeft`）。具体逻辑还得还源码。从右往左都有点绕和难以理解。
+- 以上：
+```scala
+object HighLevelCalculations {
+    def main(args: Array[String]): Unit = {
+        val list = List(1, 10, 100, 3, 5, 111)
+        
+        // 1. map functions
+        // filter
+        val evenList = list.filter(_ % 2 == 0)
+        println(evenList)
+
+        // map
+        println(list.map(_ * 2))
+        println(list.map(x => x * x))
+
+        // flatten
+        val nestedList: List[List[Int]] = List(List(1, 2, 3), List(3, 4, 5), List(10, 100))
+        val flatList = nestedList(0) ::: nestedList(1) ::: nestedList(2)
+        println(flatList)
+
+        val flatList2 = nestedList.flatten
+        println(flatList2) // equals to flatList
+
+        // map and flatten
+        // example: change a string list into a word list
+        val strings: List[String] = List("hello world", "hello scala", "yes no")
+        val splitList: List[Array[String]] = strings.map(_.split(" ")) // divide string to words
+        val flattenList = splitList.flatten
+        println(flattenList)
+
+        // merge two steps above into one
+        // first map then flatten
+        val flatMapList = strings.flatMap(_.split(" "))
+        println(flatMapList)
+
+        // divide elements into groups
+        val groupMap = list.groupBy(_ % 2)
+        val groupMap2 = list.groupBy(data => if (data % 2 == 0) "even" else "odd")
+        println(groupMap)
+        println(groupMap2)
+
+        val worldList = List("China", "America", "Alice", "Curry", "Bob", "Japan")
+        println(worldList.groupBy(_.charAt(0)))
+
+        // 2. reduce functions
+        // narrowly reduce
+        println(List(1, 2, 3, 4).reduce(_ + _)) // 1+2+3+4 = 10
+        println(List(1, 2, 3, 4).reduceLeft(_ - _)) // 1-2-3-4 = -8
+        println(List(1, 2, 3, 4).reduceRight(_ - _)) // 1-(2-(3-4)) = -2, a little confusing
+
+        // fold
+        println(List(1, 2, 3, 4).fold(0)(_ + _)) // 0+1+2+3+4 = 10
+        println(List(1, 2, 3, 4).fold(10)(_ + _)) // 10+1+2+3+4 = 20
+        println(List(1, 2, 3, 4).foldRight(10)(_ - _)) // 1-(2-(3-(4-10))) = 8, a little confusing
+    }
+}
+```
+
+集合应用案例：
+- Map的默认合并操作是用后面的同key元素覆盖前面的，如果要定制为累加他们的值可以用`fold`。
+```scala
+// merging two Map will override the value of the same key
+// custom the merging process instead of just override
+val map1 = Map("a" -> 1, "b" -> 3, "c" -> 4)
+val map2 = mutable.Map("a" -> 6, "b" -> 2, "c" -> 5, "d" -> 10)
+val map3 = map1.foldLeft(map2)(
+    (mergedMap, kv) => {
+        mergedMap(kv._1) = mergedMap.getOrElse(kv._1, 0) + kv._2
+        mergedMap
+    }
+)
+println(map3) // HashMap(a -> 7, b -> 5, c -> 9, d -> 10)
+```
+- 经典案例：单词计数：分词，计数，取排名前三结果。
+```scala
+// count words in string list, and get 3 highest frequency words
+def wordCount(): Unit = {
+    val stringList: List[String] = List(
+        "hello",
+        "hello world",
+        "hello scala",
+        "hello spark from scala",
+        "hello flink from scala"
+    )
+
+    // 1. split
+    val wordList: List[String] = stringList.flatMap(_.split(" "))
+    println(wordList)
+
+    // 2. group same words
+    val groupMap: Map[String, List[String]] = wordList.groupBy(word => word)
+    println(groupMap)
+
+    // 3. get length of the every word, to (word, length)
+    val countMap: Map[String, Int] = groupMap.map(kv => (kv._1, kv._2.length))
+
+    // 4. convert map to list and sort
+    val countList: List[(String, Int)] = countMap.toList
+        .sortWith(_._2 > _._2)
+        .take(3)
+
+    println(countList) // result
+}
+```
+- 单词计数案例扩展，每个字符串都可能出现多次并且已经统计好出现次数，解决方式，先按次数合并之后再按照上述例子成立。
+```scala
+// strings has their frequency
+def wordCountAdvanced(): Unit = {
+    val tupleList: List[(String, Int)] = List(
+        ("hello", 1),
+        ("hello world", 2),
+        ("hello scala", 3),
+        ("hello spark from scala", 1),
+        ("hello flink from scala", 2)
+    )
+
+    val newStringList: List[String] = tupleList.map(
+        kv => (kv._1.trim + " ") * kv._2
+    )
+
+    // just like wordCount
+    val wordCountList: List[(String, Int)] = newStringList
+        .flatMap(_.split(" "))
+        .groupBy(word => word)
+        .map(kv => (kv._1, kv._2.length))
+        .sortWith(_._2 > _._2)
+        .take(3)
+
+    println(wordCountList) // result
+}
+```
+- 当然这并不高效，更好的方式是利用上已经统计的频率信息。
+```scala
+def wordCountAdvanced2(): Unit = {
+    val tupleList: List[(String, Int)] = List(
+        ("hello", 1),
+        ("hello world", 2),
+        ("hello scala", 3),
+        ("hello spark from scala", 1),
+        ("hello flink from scala", 2)
+    )
+
+    // first split based on the input frequency
+    val preCountList: List[(String, Int)] = tupleList.flatMap(
+        tuple => {
+            val strings: Array[String] = tuple._1.split(" ")
+            strings.map(word => (word, tuple._2)) // Array[(String, Int)]
+        }
+    )
+
+    // group as words
+    val groupedMap: Map[String, List[(String, Int)]] = preCountList.groupBy(_._1)
+    println(groupedMap)
+
+    // count frequency of all words
+    val countMap: Map[String, Int] = groupedMap.map(
+        kv => (kv._1, kv._2.map(_._2).sum)
+    )
+    println(countMap)
+
+    // to list, sort and take first 3 words
+    val countList = countMap.toList.sortWith(_._2 > _._2).take(3)
+    println(countList)
+}
+```
+
+队列：
+- 可变队列`mutable.Queue`
+- 入队`enqueue(Elem*)` 出队`Elem = dequeue()`
+- 不可变队列`immutable.Queue`，使用伴生对象创建，出队入队返回新队列。
+
+并行集合（Parllel Collection）：
+- 使用并行集合执行时会调用多个线程加速执行。
+- 集合类的`.par`方法。
+- 具体细节待补。
+- 依赖`scala.collection.parallel.immutable/mutable`，2.13版本后不再在标准库中提供，需要单独下载，暂未找到下载地址，从源码构造需要sbt。
 
 ## 模式匹配
 
@@ -1279,7 +1748,11 @@ object TestApp extends App {
 
 ## 泛型
 
+协变和逆变。
 
 ## 总结
 
+- 看起来是一门静态类型语言，提供了很其强大的类型推导，一定程度上可以实现隐式静态类型，但写起来就像动态类型一样简洁，仅需提供少量必须的类型，有点牺牲可读性就是了。
+- 函数式编程很有趣。
 - 语法糖太太太多了，虽然看起来更简洁了，但是读起来不一定更简单，学起来心智负担也更大。
+- 运算符非常灵活，我遇到过的运算符最灵活的语言。
