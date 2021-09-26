@@ -44,6 +44,7 @@ Scala（发音为/ˈskɑːlə, ˈskeɪlə/）是一门多范式的编程语言�
         scalac              scala
 ```
 
+
 阅读：
 - [尚硅谷大数据技术之Scala入门到精通教程](https://www.bilibili.com/video/BV1Xh411S7bP)（本文参考）
 
@@ -69,7 +70,7 @@ println("hello,world!")
 
 暂时不管项目配置，还是单文件编译执行为主，项目开发肯定要以包的形式组织可以使用IntelliJ IDEA开发，使用maven或者sbt进行项目配置。
 
-使用VSCode编辑器，安装插件Scala Syntax (official)。
+使用VSCode编辑器，安装插件Scala Syntax (official)和Scala (Mentals)。
 
 新建文件`HelloScala.scala`。
 ```scala
@@ -1934,15 +1935,175 @@ object PartialFunctionTest {
 ```
 ## 异常处理
 
+scala异常处理整体上的语法和底层处理细节和java非常类似。
+
+Java异常处理：
+- 用`try`语句包围要捕获异常的内容，多个不同`catch`语句捕获不同的异常，`finally`是捕获异常与否都会执行的语句。
+```java
+try {
+    int a = 0;
+    int b = 0;
+    int c = a / b;
+} catch (ArithmeticException e) {
+    e.printStackTrace();
+} catch (Exception e) {
+    e.printStackTrace();
+} finally {
+    System.out.println("finally");
+}
+```
+
+scala异常处理：
+- `try`包围要捕获异常的内容，`catch`仅仅是关键字，将捕获异常的所有逻辑包围在`catch`块中。`finally`块和java一样都会执行，一般用于对象的清理工作。
+- scala中没有编译期异常，所有异常都是运行时处理。
+- scala中也是用`throw`关键字抛出异常，所有异常都是`Throwable`的子类，`throw`表达式是有类型的，就是`Nothing`。`Nothing`主要用在一个函数总是不能正常工作，总是抛出异常的时候。
+- java中用了`throws`关键字声明此方法可能引发的异常信息，在scala中对应地使用`@throws`注解来声明，用法差不多。
+```scala
+object Exceptionstest {
+    def main(args: Array[String]): Unit = {
+        // test of exceptions
+        try {
+            val n = 10 / 0
+        } catch {
+            case e: ArithmeticException => {
+                println(s"ArithmeticException raised.")
+            }
+            case e: Exception => {
+                println("Normal Exceptions raised.")
+            }
+        } finally {
+            println("finally")
+        }
+    }
+}
+```
+
 ## 隐式转换
+
+前面说了很多了，编译器什么时候会去做隐式转换：
+- 编译器第一次编译失败时，会在当前环境中查找能让代码编译通过的方法，将类型隐式转换，尝试二次编译。
+
+隐式函数：
+- 函数定义前加上`implicit`声明为隐式函数。
+- 当编译错误时，编译器会尝试在当前作用域范围查找能调用对应功能的转换规则，这个过程由编译器完成，称之为隐式转换或者自动转换。
+```scala
+// convert Int to MyRichInt
+implicit def convert(arg: Int): MyRichInt = {
+    new MyRickInt(arg)
+}
+```
+- 在当前作用域定义时需要在使用前定义才能找到。
+```scala
+object  ImplicitConversion {
+    def main(args: Array[String]): Unit = {
+        implicit def convert(num: Int): MyRichInt = new MyRichInt(num)
+
+        println(12.myMax(15)) // will call convert implicitly
+    }
+}
+
+class MyRichInt(val self: Int) {
+    // self define compare method
+    def myMax(n: Int): Int = if (n < self) self else n
+    def myMin(n: Int): Int = if (n > self) self else n
+}
+```
+
+隐式参数：
+- 普通方法或者函数中的参数可以通过`implicit`关键字声明为隐式参数，调用方法时，如果传入了，那么以传入参数为准。如果没有传入，编译器会在当前作用域寻找复合条件的隐式值。例子：集合排序方法的排序规则就是隐式参数。
+- 隐式值：
+    - 同一个作用域，相同类型隐式值只能有一个。
+    - 编译器按照隐式参数的类型去寻找对应隐式值，与隐式值名称无关。
+    - 隐式参数优先于默认参数。（也就是说隐式参数和默认参数可以同时存在，加上默认参数之后其实就相当于两个不同优先级的默认参数）
+- 隐式参数有一个很淦的点：
+    - 如果参数列表中只有一个隐式参数，无论这个隐式参数是否提供默认参数，那么如果要用这个隐式参数就应该**将调用隐式参数的参数列表连同括号一起省略掉**。如果调用时又想加括号可以在函数定义的隐式参数列表前加一个空参数列表`()`，那么`()`将使用隐式参数，`()()`将使用默认参数（如果有，没有肯定编不过），`()()`使用传入参数。
+    - 也就是说一个隐式参数时通过是否加括号可以区分隐式参数、默认参数、传入参数三种情况。
+    - 那么如果多参数情况下：隐式参数、默认参数、普通参数混用会怎么样呢？答案是不要这么用，思考这些东西搞什么哦！
+    - 只有具体要不要加这个柯里化的空参数列表，那看习惯就行。不加可能更好一点，加了可能有点让人费解。
+- 可以进一步简写隐式参数，在参数列表中直接去掉，在函数中直接使用`implicity[Type]`（`Predef`中定义的）。但这是就不能传参数了，有什么用啊？
+```scala
+object ImplicitArgments {
+    def main(args: Array[String]): Unit = {
+        implicit val str: String = "Alice from implicit argument"
+        
+        def sayHello()(implicit name: String = "Alice from default argument"): Unit = {
+            println(s"hello $name")
+        }
+
+        sayHello() // implicit
+        sayHello()() // default
+        sayHello()("Alice from normal argument") // normal
+
+        def sayHi(implicit name: String = "Alice from default argument"): Unit = {
+            println(s"hi $name")
+        }
+
+        sayHi // implicit
+        sayHi() // default
+        sayHi("Alice from normal argument") // normal
+
+        def sayBye() = {
+            println(s"bye ${implicitly[String]}")
+        }
+
+        sayBye()
+    }
+}
+```
+
+
+隐式类：
+- scala2.10之后提供了隐式类，使用`implicit`声明为隐式类。将类的构造方法声明为隐式转换函数。
+- 也就是说如果编译通不过，就可能将数据直接传给构造转换为对应的类。
+- 隐式函数的一个扩展。
+- 说明：
+    - 所带构造参数有且只能有一个。
+    - 隐式类必须被定义在类或者伴生对象或者包对象中，隐式类不能是顶层的。
+- 同一个作用域定义隐式转换函数和隐式参数会冲突，定义一个就行。
+
+隐式解析机制的作用域：
+- 首先在**当前代码作用域下**查找隐式实体（隐式方法、隐式类、隐式对象）。
+- 如果第一条规查找隐式对象失败，会继续在**隐式参数的类型的作用域**中查找。
+- 类型的作用域是指该类型相关联的全部伴生对象以及该类型所在包的包对象。
+
+作用：
+- 隐式函数和隐式类可以用于扩充类的功能，常用语比如内建类`Int Double String`这种。
+- 隐式参数相当于就是一种更高优先级的默认参数。用于多个函数需要同一个默认参数时，就不用每个函数定义时都写一次默认值了。为了简洁无所不用其极啊真是。
 
 ## 泛型
 
-协变和逆变。
+泛型：
+- `[Type]`，定义和使用都是。
+- 常用于集合类型中用于支持不同元素类型。
+- 和java一样通过类型擦除/擦拭法来实现。
+- 定义时可以用`+-`表示协变和逆变，不加则是不变。
+```scala
+class MyList[+T] {} // 协变
+class MyList[-T] {} // 逆变
+class MyList[T] {} // 不变
+```
+
+协变和逆变：
+- 比如`Son`和`Father`是父子关系，`Son`是子类。
+    - 协变（Covariance）：`MyList[Son]`是`MyList[Father]`的子类，协同变化。
+    - 逆变（Contravariance）：`MyList[Son]`是`MyList[Father]`的父类，逆向变化。
+    - 不变（Invariant）：`MyList[Father] MyList[Son]`没有父子关系。
+- 还需要深入了解。
+
+泛型上下限：
+- 泛型上限：`class MyList[T <: Type]`，可以传入`Type`自身或者子类。
+- 泛型下限：`class MyList[T >: Type]`，可以传入`Type`自身或者父类。
+- 对传入的泛型进行限定。
+
+上下文限定：
+- `def f[A : B](a: A) = println(a)`等同于`def f[A](a: A)(implicit arg: B[A])`
+- 是将泛型和隐式转换结合的产物，使用上下文限定（前者）后，方法内无法使用隐式参数名调用隐式参数，需要通过`implicitly[Ordering[A]]`获取隐式变量。
+- 了解即可，可能基本不会用到。
 
 ## 总结
 
-- 看起来是一门静态类型语言，提供了很其强大的类型推导，一定程度上可以实现隐式静态类型，但写起来就像动态类型一样简洁，仅需提供少量必须的类型，有点牺牲可读性就是了。
+- 看起来是一门静态类型语言，提供了很其强大的类型推导，一定程度上可以实现隐式静态类型，但写起来如果高度依赖类型推导的话会和动态类型一样简洁，仅需提供少量必须的类型，只是有点牺牲可读性。
 - 函数式编程很有趣。
 - 语法糖太太太多了，虽然看起来更简洁了，但是读起来不一定更简单，学起来心智负担也更大。
 - 运算符非常灵活，我遇到过的运算符最灵活的语言。
+- 并发编程还没有学，TODO。
