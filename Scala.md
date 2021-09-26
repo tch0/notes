@@ -45,7 +45,7 @@ Scala（发音为/ˈskɑːlə, ˈskeɪlə/）是一门多范式的编程语言�
 ```
 
 阅读：
-- [尚硅谷大数据技术之Scala入门到精通教程](https://www.bilibili.com/video/BV1Xh411S7bP)
+- [尚硅谷大数据技术之Scala入门到精通教程](https://www.bilibili.com/video/BV1Xh411S7bP)（本文参考）
 
 ## 环境配置
 
@@ -1279,35 +1279,35 @@ Scala集合三大类型：
     - 不可变集合：`scala.collection.immutable`
     - 可变集合：`scala.collection.mutable`
     - 两个包中可能有同名的类型，需要注意区分是用的可变还是不可变版本，避免冲突和混淆。
-- 对于不可变集合，指该集合不可修改，每次修改都会返回一个新的对象，而不会修改源对象，就像java中的`final`对象。
-- 可变集合可以对源对象进行修改，不会返回新对象。
-- **建议**：操作集合时，不可变用符号，可变用方法。
+- 对于不可变集合，指该集合长度数量不可修改，每次修改（比如增删元素）都会返回一个新的对象，而不会修改源对象。
+- 可变集合可以对源对象任意修改，一般也提供不可变集合相同的返回新对象的方法，但也可以用其他方法修改源对象。
+- **建议**：操作集合时，不可变用操作符，可变用方法。操作符也不一定就会返回新对象，但大多是这样的，还是要具体看。
 - scala中集合类的定义比java要清晰不少。
 
 不可变集合：
 - `scala.collection.immutable`包中不可变集合关系一览：
 ![Scala_mutable_collections_tree](Images/Scala_immutable_collections_tree.jpg)
-- 不可变集合没有太多好说的，集合和隐射的哈希表和二叉树实现是肯定都有的，序列中分为随机访问序列（数组实现）和线性序列（链表实现），基本数据结构都有了。
+- 不可变集合没有太多好说的，集合和映射的哈希表和二叉树实现是肯定都有的，序列中分为随机访问序列（数组实现）和线性序列（链表实现），基本数据结构都有了。
 - `Range`是范围，常用来遍历，有语法糖支持`1 to 10 by 2` `10 until 1 by -1`其实就是隐式转换加上方法调用。
 - scala中的`String`就是`java.lang.String`，和集合无直接关系，所以是虚箭头，是通过`Perdef`中的低优先级隐式转换来做到的。经过隐式转换为一个包装类型后就可以当做集合了。
 - `Array`和`String`类似，在图中漏掉了。
 - 此类包装为了兼容java在scala中非常常见，scala中很多类型就是对java类型的包装或者仅仅是别名。
 - scala中可能会推荐更多地使用不可变集合。能用不可变就用不可变。
 
-可变集合；
+可变集合：
 - `scala.collection.mutable`包中可变集合关系一览：
 ![Scala_mutable_collections_tree](Images/Scala_mutable_collections_tree.jpg)
 - 序列中多了`Buffer`，整体结构差不多。
 
 不可变和可变：
-- 不可变指的是对象大小不可变，但是可以修改元素的值（不能修改那创建了也没有用对吧）。需要注意这一点。而如果用了`val`引用变量存储，那么指向对象的地址也不可变。
-- 在原集合上个插入删除数据是做不到的，只能返回新的集合。
+- 不可变指的是对象大小不可变，但是可以修改元素的值（不能修改那创建了也没有用对吧），需要注意这一点。而如果用了`val`不变量存储，那么指向对象的地址也不可变。
+- 不可变集合在原集合上个插入删除数据是做不到的，只能返回新的集合。
 
 泛型：
-- 集合类型大多都是支持泛型，泛型使用时用`[Type]`，java中是`<Type>`。
+- 集合类型大多都是支持泛型，使用泛型的语法是`[Type]`，不同于java的`<Type>`。
 
 不可变数组：
-- 访问元素使用`()`运算符，通过`apply/update`方法实现，源码中实现只是抛出错误作为**存根方法**，具体逻辑由编译器实现。
+- 访问元素使用`()`运算符，通过`apply/update`方法实现，源码中的实现只是抛出错误作为**存根方法**（stab method），具体逻辑由编译器填充。
 ```scala
 // 1. new
 val arr = new Array[Int](5)
@@ -1340,12 +1340,12 @@ println(arr2.mkString(", ")) // to string directly
 // 7. add element, return a new array, : should toward to object
 val newArr = arr :+ 10 //  arr.:+(10) add to end
 println(newArr.mkString(", "))
-val newArr2 = 20 +: 10 +: arr :+ 30 // arr.+:(10).+:(20).:+(30), add to begin
+val newArr2 = 20 +: 10 +: arr :+ 30 // arr.+:(10).+:(20).:+(30)
 println(newArr2.mkString(", "))
 ```
-- 可以看到自定义运算符真的太自由太强大了，规定如果运算符首尾有`:`那么`:`一定要指向对象。
+- 可以看到自定义运算符可以非常灵活，规定如果运算符首尾有`:`那么`:`一定要指向对象。
 - 下标越界当然会抛出异常，使用前应该检查。
-- 通过隐式转换使用scala的集合相关特征。不需要引入。
+- 通过`Predef`中的隐式转换为一个混入了集合相关特征的包装类型从而得以使用scala的集合相关特征，`Array`类型中并没有相关混入。
 
 可变数组：
 - 类型`ArrayBuffer`。
@@ -1401,16 +1401,16 @@ arr.foreach(v => println(v.mkString(",")))
 
 不可变列表：
 - `List`，抽象类，不能直接`new`，使用伴生对象`apply`传入元素创建。
-- 也有`apply`能随机访问（做了优化），但是不能`update`更改。
-- `foreach`遍历。
-- 支持`+: :+`首位添加元素。
+- `List`本身也有`apply`能随机访问（做了优化），但是不能`update`更改。
+- `foreach`方法遍历。
+- 支持`+: :+`首尾添加元素。
 - `Nil`空列表，`::`添加元素到表头。
-- 常用`Nil.::(elem)`创建列表，换一种写法就是`10 :: 20 :: 30 :: Nil`得到结果`List(10, 20, 30)`，糖是真滴多。
+- 常用`Nil.::(elem)`创建列表，换一种写法就是`10 :: 20 :: 30 :: Nil`得到结果`List(10, 20, 30)`，糖是真滴多！
 - 合并两个列表：`list1 ::: list2` 或者`list1 ++ list2`。
 
 可变列表：
 - 可变列表`ListBuffer`，和`ArrayBuffer`很像。
-- `final`的，可以直接`new`，也可以伴生对象`apply`传入元素创建（scala中更推荐）。
+- `final`的，可以直接`new`，也可以伴生对象`apply`传入元素创建（总体来说scala中更推荐这种方式）。
 - 方法：`append prepend insert remove`
 - 添加元素到头或尾：`+=: +=`
 - 合并：`++`得到新的列表，`++=`合并到源上。
@@ -1428,7 +1428,7 @@ arr.foreach(v => println(v.mkString(",")))
 
 可变集合：
 - 操作基于源集合做更改。
-- 为了区分与不可变集合，`import scala.collection.mutable`并用`mutable.Set`。
+- 为了与不可变集合区分，`import scala.collection.mutable`并用`mutable.Set`。
 - 不可变集合有的都有。
 - 添加元素到源上：`set += elem` `add`
 - 删除元素：`set -= elem` `remove`
@@ -1493,20 +1493,20 @@ println(map)
 集合通用属性和方法：
 - 线性序列才有长度`length`、所有集合类型都有大小`size`。
 - 遍历`for (elem <- collection)`、迭代器`for (elem <- collection.iterator)`。
-- 生成字符串`toString` `mkString`，像`Array`这种是隐式转换为scala集合的，需要自行处理。
+- 生成字符串`toString` `mkString`，像`Array`这种是隐式转换为scala集合的，`toString`是继承自`java.lang.Object`的，需要自行处理。
 - 是否包含元素`contains`。
 
 衍生集合的方式：
 - 获取集合的头元素`head`（元素）和剩下的尾`tail`（集合）。
-- 集合最后一个元素`last`（元素）和出去最后一个元素的初始数据`init`（集合）。
+- 集合最后一个元素`last`（元素）和除去最后一个元素的初始数据`init`（集合）。
 - 反转`reverse`。
 - 取前后n个元素`take(n) takeRight(n)`
 - 去掉前后n个元素`drop(n) dropRight(n)`
 - 交集`intersect`
-- 并集`union`，对于线性序列的话用`concat`连接。
+- 并集`union`，线性序列的话已废弃用`concat`连接。
 - 差集`diff`，得到属于自己、不属于传入参数的部分。
 - 拉链`zip`，得到两个集合对应位置元素组合起来构成二元组的集合，大小不匹配会丢掉其中一个集合不匹配的多余部分。
-- 滑窗`sliding(n, step = 1)`，框住特定个数元素，方便移动和操作。得到迭代器，可以用来遍历，每个元素就是滑窗元素个数的集合。步长大于1的话最后一个窗口数据可能个数会少一些。
+- 滑窗`sliding(n, step = 1)`，框住特定个数元素，方便移动和操作。得到迭代器，可以用来遍历，每个迭代的元素都是一个n个元素集合。步长大于1的话最后一个窗口元素数量可能个数会少一些。
 
 集合的简单计算操作：
 - 求和`sum` 求乘积`product` 最小值`min` 最大值`max`
@@ -1558,11 +1558,11 @@ object Calculations {
     - 过滤：自定义过滤条件，`filter(Elem => Boolean)`
     - 转化/映射（狭义上的map）：自定义映射函数，`map(Elem => NewElem)`
     - 扁平化（flatten）：将集合中集合元素拆开，去掉里层集合，放到外层中来。`flatten`
-    - 扁平化+映射：先映射，再扁平化。`flatMap(Elem => NewElem)`先映射再扁平化。
-    - 分组（group）：指定分组规则，`groupBy(Elem => Key)`得到一个Map，key根据传入的函数运用于集合元素得到。
-- 规约操作（reduce）：
-    - 简化/规约（reduce）：对所有数据做一个处理，规约得到一个结果（比如连加连乘操作）。`reduce((TmpRes, NextElem) => NextRes)`，传入函数有两个参数，第一个参数是第一个元素（第一次运算）和上一轮结果（后面的计算），第二个是当前元素，得到本轮结果，最后一轮的结果就是最终结果。`reduce`调用`reduceLeft`从左往右，也可以`reduceRight`从右往左（实际上是递归调用，和一般意义上的从右往左有区别，看下面例子）。
-    - 折叠（fold）：`fold(InitialVal)((CurRes, Elem) => NextRes)`相对于`reduce`来说其实就是`fold`自己给初值，从第一个开始计算，`reduce`用第一个做初值，从第二个元素开始算。`fold`调用`foldLeft`，从右往左则用`foldRight`（翻转之后再`foldLeft`）。具体逻辑还得还源码。从右往左都有点绕和难以理解。
+    - 扁平化+映射：先映射，再扁平化，`flatMap(Elem => NewElem)`
+    - 分组（group）：指定分组规则，`groupBy(Elem => Key)`得到一个Map，key根据传入的函数运用于集合元素得到，value是对应元素的序列。
+- 规约操作（广义的reduce）：
+    - 简化/规约（狭义的reduce）：对所有数据做一个处理，规约得到一个结果（比如连加连乘操作）。`reduce((CurRes, NextElem) => NextRes)`，传入函数有两个参数，第一个参数是第一个元素（第一次运算）和上一轮结果（后面的计算），第二个是当前元素，得到本轮结果，最后一轮的结果就是最终结果。`reduce`调用`reduceLeft`从左往右，也可以`reduceRight`从右往左（实际上是递归调用，和一般意义上的从右往左有区别，看下面例子）。
+    - 折叠（fold）：`fold(InitialVal)((CurRes, Elem) => NextRes)`相对于`reduce`来说其实就是`fold`自己给初值，从第一个开始计算，`reduce`用第一个做初值，从第二个元素开始算。`fold`调用`foldLeft`，从右往左则用`foldRight`（翻转之后再`foldLeft`）。具体逻辑还得还源码。从右往左都有点绕和难以理解，如果要使用需要特别注意。
 - 以上：
 ```scala
 object HighLevelCalculations {
@@ -1599,8 +1599,8 @@ object HighLevelCalculations {
         println(flatMapList)
 
         // divide elements into groups
-        val groupMap = list.groupBy(_ % 2)
-        val groupMap2 = list.groupBy(data => if (data % 2 == 0) "even" else "odd")
+        val groupMap = list.groupBy(_ % 2) // keys: 0 & 1
+        val groupMap2 = list.groupBy(data => if (data % 2 == 0) "even" else "odd") // keys : "even" & "odd"
         println(groupMap)
         println(groupMap2)
 
@@ -1659,7 +1659,7 @@ def wordCount(): Unit = {
     // 3. get length of the every word, to (word, length)
     val countMap: Map[String, Int] = groupMap.map(kv => (kv._1, kv._2.length))
 
-    // 4. convert map to list and sort
+    // 4. convert map to list, sort and take first 3
     val countList: List[(String, Int)] = countMap.toList
         .sortWith(_._2 > _._2)
         .take(3)
@@ -1667,7 +1667,7 @@ def wordCount(): Unit = {
     println(countList) // result
 }
 ```
-- 单词计数案例扩展，每个字符串都可能出现多次并且已经统计好出现次数，解决方式，先按次数合并之后再按照上述例子成立。
+- 单词计数案例扩展，每个字符串都可能出现多次并且已经统计好出现次数，解决方式，先按次数合并之后再按照上述例子处理。
 ```scala
 // strings has their frequency
 def wordCountAdvanced(): Unit = {
@@ -1688,6 +1688,7 @@ def wordCountAdvanced(): Unit = {
         .flatMap(_.split(" "))
         .groupBy(word => word)
         .map(kv => (kv._1, kv._2.length))
+        .toList
         .sortWith(_._2 > _._2)
         .take(3)
 
@@ -1736,12 +1737,201 @@ def wordCountAdvanced2(): Unit = {
 
 并行集合（Parllel Collection）：
 - 使用并行集合执行时会调用多个线程加速执行。
-- 集合类的`.par`方法。
+- 使用集合类前加一个`.par`方法。
 - 具体细节待补。
-- 依赖`scala.collection.parallel.immutable/mutable`，2.13版本后不再在标准库中提供，需要单独下载，暂未找到下载地址，从源码构造需要sbt。
+- 依赖`scala.collection.parallel.immutable/mutable`，2.13版本后不再在标准库中提供，需要单独下载，暂未找到编好的jar的下载地址，从源码构造需要sbt，TODO。
 
 ## 模式匹配
 
+`match-case`中的模式匹配：
+- 用于替代传统C/C++/Java的`switch-case`结构，但补充了更多功能，拥有更强的能力。
+- 语法：（Java中现在也支持`=>`的写法了）
+```scala
+value match {
+    case caseVal1 => returnVal1
+    case caseVal2 => returnVal2
+    ...
+    case _ => defaultVal
+}
+```
+- 每一个case条件成立才返回，否则继续往下走。
+- `case`匹配中可以添加模式守卫，用条件判断来代替精确匹配。
+```scala
+def abs(num: Int): Int= {
+    num match {
+        case i if i >= 0 => i
+        case i if i < 0 => -i
+    }
+}
+```
+- 模式匹配支持类型：所有类型字面量，包括字符串、字符、数字、布尔值、甚至数组列表等。
+- 你甚至可以传入`Any`类型变量，匹配不同类型常量。
+- 需要注意默认情况处理，`case _`也需要返回值，如果没有但是又没有匹配到，就抛出运行时错误。默认情况`case _`不强制要求通配符（只是在不需要变量的值建议这么做），也可以用`case abc`一个变量来接住，可以什么都不做，可以使用它的值。
+- 通过指定匹配变量的类型（用特定类型变量接住），可以匹配类型而不匹配值，也可以混用。
+- 需要注意类型匹配时由于泛型擦除，可能并不能严格匹配泛型的类型参数，需要注意（编译器也会报警告）。但`Array`是基本数据类型，对应于java的原生数组类型，能够匹配泛型类型参数。
+```scala
+// match type
+def describeType(x: Any) = x match {
+    case i: Int => "Int " + i
+    case s: String => "String " + s
+    case list: List[String] => "List " + list
+    case array: Array[Int] => "Array[Int] " + array
+    case a => "Something else " + a 
+}
+println(describeType(20)) // match
+println(describeType("hello")) // match
+println(describeType(List("hi", "hello"))) // match
+println(describeType(List(20, 30))) // match
+println(describeType(Array(10, 20))) // match
+println(describeType(Array("hello", "yes"))) // not match
+println(describeType((10, 20))) // not match
+```
+- 对于数组可以定义多种匹配形式，可以定义模糊的元素类型匹配、元素数量匹配或者精确的某个数组元素值匹配，非常强大。
+```scala
+for (arr <- List(
+    Array(0),
+    Array(1, 0),
+    Array(1, 1, 0),
+    Array(10, 2, 7, 5),
+    Array("hello", 20, 50)
+)) {
+    val result = arr match {
+        case Array(0) => "0"
+        case Array(1, 0) => "Array(1, 0)"
+        case Array(x: Int, y: Int) => s"Array($x, $y)" // Array of two elements
+        case Array(0, _*) => s"an array begin with 0"
+        case Array(x, 1, z) => s"an array with three elements, no.2 is 1"
+        case Array(x:String, _*) => s"array that first element is a string"
+        case _ => "somthing else"
+    }
+    println(result)
+```
+- `List`匹配和`Array`差不多，也很灵活。还可用用集合类灵活的运算符来匹配。
+    - 比如使用`::`运算符匹配`first :: second :: rest`，将一个列表拆成三份，第一个第二个元素和剩余元素构成的列表。
+- 注意模式匹配不仅可以通过返回值来用，也可以执行语句不关心返回值，也可以即执行语句同时也返回。
+- 元组匹配：
+    - 可以匹配n元组、匹配元素类型、匹配元素值。如果只关心某个元素，其他就可以用通配符或变量。
+    - 元组大小固定，所以不能用`_*`。
+
+
+变量声明匹配：
+- 变量声明也可以是一个模式匹配的过程。
+- 元组常用于批量赋值。
+- `val (x, y) = (10, "hello")`
+- `val List(first, second, _*) = List(1, 3, 4, 5)`
+- `val List(first :: second :: rest) = List(1, 2, 3, 4)`
+
+`for`推导式中也可以进行模式匹配：
+- 元组中取元素时，必须用`_1 _2 ...`，可以用元组赋值将元素赋给变量，更清晰一些。
+- `for ((first, second) <- tupleList)`
+- `for ((first, _) <- tupleList)`
+- 指定特定元素的值，可以实现类似于循环守卫的功能，相当于加一层筛选。比如`for ((10, second) <- tupleList)`
+- 其他匹配也同样可以用，可以关注数量、值、类型等，相当于做了筛选。
+- 元组列表匹配、赋值匹配、`for`循环中匹配非常灵活，灵活运用可以提高代码可读性。
+
+匹配对象：
+- 对象内容匹配。
+- 直接`match-case`中匹配对应引用变量的话语法是有问题的。编译报错信息提示：不是样例类也没有一个合法的`unapply/unapplySeq`成员实现。
+- 要匹配对象，需要实现伴生对象`unapply`方法，用来对对象属性进行拆解以做匹配。
+
+样例类：
+- 第二种实现对象匹配的方式是样例类。
+- `case class className`定义样例类，会直接将打包`apply`和拆包`unapply`的方法直接定义好。
+- 样例类定义中主构造参数列表中的`val`甚至都可以省略，如果是`var`的话则不能省略，最好加上的感觉，奇奇怪怪的各种边角简化。
+- 对象匹配和样例类例子：
+```scala
+object MatchObject {
+    def main(args: Array[String]): Unit = {
+        val person = new Person("Alice", 18)
+
+        val result: String = person match {
+            case Person("Alice", 18) => "Person: Alice, 18"
+            case _ => "something else"
+        }
+        println(result)
+
+        val s = Student("Alice", 18)
+        val result2: String = s match {
+            case Student("Alice", 18) => "Student: Alice, 18"
+            case _ => "something else"
+        }
+        println(result2)
+    }
+}
+
+
+class Person(val name: String, val age: Int)
+object Person {
+    def apply(name: String, age: Int) = new Person(name, age)
+    def unapply(person: Person): Option[(String, Int)] = {
+        if (person == null) { // avoid null reference
+            None
+        } else {
+            Some((person.name, person.age))
+        }
+    }
+}
+
+case class Student(name: String, age: Int) // name and age are val
+```
+
+偏函数：
+- 偏函数是函数的一种，通过偏函数我们可以方便地对参数做更精确的检查，例如偏函数输入类型是`List[Int]`，需要第一个元素是0的集合，这既是通过模式匹配实现的。
+- 定义：
+```scala
+val partialFuncName: PartialFunction[List[Int], Option[Int]] = {
+    case x :: y :: _ => Some(y)
+}
+```
+- 通过一个变量定义方式定义，`PartialFunction`的泛型类型中，前者是参数类型，后者是返回值类型。函数体中用一个`case`语句来进行模式匹配。上面例子返回输入的`List`集合中的第二个元素。
+- 一般一个偏函数只能处理输入的一部分场景，实际中往往需要定义多个偏函数用以组合使用。
+- 例子：
+```scala
+object PartialFunctionTest {
+    def main(args: Array[String]): Unit = {
+        val list: List[(String, Int)] = List(("a", 12), ("b", 10), ("c", 100), ("a", 5))
+
+        // keep first constant and double second value of the tuple
+        // 1. use map
+        val newList = list.map(tuple => (tuple._1, tuple._2 * 2))
+        println(newList)
+
+        // 2. pattern matching
+        val newList1 = list.map(
+            tuple => {
+                tuple match {
+                    case (x, y) => (x, y * 2)
+                }
+            }
+        )
+        println(newList1)
+
+        // simplify to partial function
+        val newList2 = list.map {
+            case (x, y) => (x, y * 2) // this is a partial function
+        }
+        println(newList2)
+
+        // application of partial function
+        // get absolute value, deal with: negative, 0, positive
+        val positiveAbs: PartialFunction[Int, Int] = {
+            case x if x > 0 => x
+        }
+        val negativeAbs: PartialFunction[Int, Int] = {
+            case x if x < 0 => -x
+        }
+        val zeroAbs: PartialFunction[Int, Int] = {
+            case 0 => 0
+        }
+
+        // combine a function with three partial functions
+        def abs(x: Int): Int = (positiveAbs orElse negativeAbs orElse zeroAbs) (x)
+        println(abs(-13))
+        println(abs(30))
+        println(abs(0))
+    }
+}
+```
 ## 异常处理
 
 ## 隐式转换
