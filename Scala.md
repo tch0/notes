@@ -44,6 +44,7 @@ Scala（发音为/ˈskɑːlə, ˈskeɪlə/）是一门多范式的编程语言�
         scalac              scala
 ```
 
+测试代码：[Scala分支](../../tree/Scala/)
 
 阅读：
 - [尚硅谷大数据技术之Scala入门到精通教程](https://www.bilibili.com/video/BV1Xh411S7bP)（本文参考）
