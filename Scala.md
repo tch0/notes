@@ -16,6 +16,13 @@
   - [异常处理](#%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86)
   - [隐式转换](#%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2)
   - [泛型](#%E6%B3%9B%E5%9E%8B)
+  - [Style Guide](#style-guide)
+  - [sbt](#sbt)
+    - [通过案例入门sbt](#%E9%80%9A%E8%BF%87%E6%A1%88%E4%BE%8B%E5%85%A5%E9%97%A8sbt)
+    - [sbt使用](#sbt%E4%BD%BF%E7%94%A8)
+    - [build.sbt](#buildsbt)
+    - [多项目构建](#%E5%A4%9A%E9%A1%B9%E7%9B%AE%E6%9E%84%E5%BB%BA)
+    - [任务图](#%E4%BB%BB%E5%8A%A1%E5%9B%BE)
   - [总结](#%E6%80%BB%E7%BB%93)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -49,6 +56,7 @@ Scala（发音为/ˈskɑːlə, ˈskeɪlə/）是一门多范式的编程语言�
 
 阅读：
 - [尚硅谷大数据技术之Scala入门到精通教程](https://www.bilibili.com/video/BV1Xh411S7bP)（本文参考）
+- [Scala官网语法速查](https://docs.scala-lang.org/zh-cn/cheatsheets/index.html)
 
 ## 环境配置
 
@@ -568,7 +576,7 @@ object Vector2 {
 
 实践指南：
 - 一元前缀和一元后缀运算符定义时不加参数列表，运算符形式使用。
-- 在复杂表达式中使用一元前缀和后缀运算符使用时最好加括号表明优先级，不然在复杂表达式中编译器可能难以区分这是一元的还是二元的。
+- 在复杂表达式中使用一元前缀和后缀运算符使用时最好加括号表明优先级，不然在复杂表达式中编译器可能难以区分这是一元的还是二元的。至少定义了一元前置和后置`-`的类中无法像`a - -`和`- - a`这样来用。
 - 二元运算符定义只给一个参数，运算符形式使用。
 - 参数多于1个时不要通过运算符形式使用，但如果很清晰的话其实也无妨。
 - 函数也是运算符，非特殊符号运算符形式使用也可以很有用，表达能力很强，比如`1 to 10`。
@@ -2270,6 +2278,833 @@ class MyList[T] {} // 不变
 - 是将泛型和隐式转换结合的产物，使用上下文限定（前者）后，方法内无法使用隐式参数名调用隐式参数，需要通过`implicitly[Ordering[A]]`获取隐式变量。
 - 了解即可，可能基本不会用到。
 
+## Style Guide
+
+[官方的Style Guide](https://docs.scala-lang.org/style/index.html)中的一些建议：
+- 缩进鼓励为2个，当然我上面都是用的4个。Scala中很多时候嵌套层次会很深，也鼓励这样做，模式匹配、匿名函数、循环、条件等各种嵌套，层次深了之后4空格可能会比较折磨。
+- 一个表达式一行放不下要换行时，语义上不会产生歧义就行，比如一个运算符放在末尾将其必需的操作数换到下一行。
+- 多参数函数调用需要换行书写时，将第一个参数放到第二行并缩进2个空格书写，而不是第一个参数放到第一行，然后缩进到对齐（典型java风格）。
+```scala
+// right!
+val myLongFieldNameWithNoRealPoint =
+  foo(
+    someVeryLongFieldName,
+    andAnotherVeryLongFieldName,
+    "this is a string",
+    3.1415)
+
+// wrong!
+val myLongFieldNameWithNoRealPoint = foo(someVeryLongFieldName,
+                                         andAnotherVeryLongFieldName,
+                                         "this is a string",
+                                         3.1415)
+```
+- 仅介绍第一页的内容，也没有空去看完，以后真写得多了再去看。
+
+## sbt
+
+上面已经简单介绍了IDEA使用Maven项目编写Scala的配置，但学习scala，官方的构建工具sbt还是必须要了解一下的。
+
+关于SBT：
+- SBT是Scala的构建工具，全称Simple Build Tool，类似于 Maven 或 Gradle。
+- [GETTING STARTED WITH SCALA AND SBT ON THE COMMAND LINE](https://docs.scala-lang.org/getting-started/sbt-track/getting-started-with-scala-and-sbt-on-the-command-line.html)
+- [sbt Reference Manual](https://www.scala-sbt.org/1.x/docs/index.html) 要使用sbt，阅读完第一章Getting Started with sbt是必要的。下面的内容皆是第一章翻译。
+
+特性：
+- 简单项目零配置。
+- 用Scala源码管理项目构建。
+- 精确的重编译，节省时间。
+- 使用Coursier的库管理器。
+- 支持Scala和Java的混合项目。
+- 等等等，具体就不列了，总之一个大型项目构建系统该有的东西。
+
+安装：
+- sbt依赖Java，确保已经安装了JDK1.8或以上版本。
+- 下载压缩包或者安装包，这里的版本是1.5.5。
+- 解压或者安装。
+- 配置环境变量`SBT_HOME`，并添加`%SBT_HOME%\bin`到path环境变量，安装包的话会自动配置。
+
+### 通过案例入门sbt
+
+创建一个项目hello作为例子：
+
+- windows上没有的命令按照含义操作即可。
+```shell
+$ mkdir foo-build
+$ cd foo-build
+$ touch build.sbt
+```
+
+开始sbt shell：
+```shell
+$ sbt
+[info] Updated file /tmp/foo-build/project/build.properties: set sbt.version to 1.1.4
+[info] Loading project definition from /tmp/foo-build/project
+[info] Loading settings from build.sbt ...
+[info] Set current project to foo-build (in build file:/tmp/foo-build/)
+[info] sbt server started at local:///Users/eed3si9n/.sbt/1.0/server/abc4fb6c89985a00fd95/sock
+sbt:foo-build>
+```
+- 第一次初始化时间会很长。
+- 退出shell：
+```shell
+sbt:foo-build> exit
+```
+- 编译：
+```shell
+sbt:foo-build> compile
+```
+- sbt shell中Tab可以补全。
+
+对修改重新编译：
+- 在`compile`命令（或其他命令同理）前加一个`~`前缀，会进入等待状态，当项目发生修改是会自动重新编译。当然退出这个状态后就不会了。
+```shell
+sbt:foo-build> ~compile
+[success] Total time: 0 s, completed May 6, 2018 3:52:08 PM
+1. Waiting for source changes... (press enter to interrupt)
+```
+
+创建源文件：
+- 执行`~compile`并保持，创建目录`src/main/scala/example`根目录新建源文件保存就能看到编译过程了。
+```scala
+// src/main/scala/example/Hello.scala
+package example
+
+object Hello extends App {
+  println("Hello")
+}
+```
+
+sbt shell常用操作：
+- `help`帮助。
+- `help run`具体条目的帮助。
+- `run`运行程序。
+- 上下箭头切换已执行命令。
+- `scalaVersion` scala版本。
+
+配置修改：
+- 切换当前项目的scala版本：`set ThisBuild / scalaVersion := "2.13.6"`。
+- `session save`保存配置到`build.sbt`，此时其中就会多出`ThisBuild / scalaVersion := "2.13.6"`。
+- 编辑`build.sbt`：
+```scala
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+lazy val hello = (project in file("."))
+  .settings(
+    name := "Hello"
+  )
+```
+- 重新加载配置`reload`。
+
+测试：
+- 添加ScalaTest到依赖
+```scala
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+lazy val hello = (project in file("."))
+  .settings(
+    name := "Hello",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.7" % Test,
+  )
+```
+- 执行测试：`test`。
+- 后续继续运行追加的测试：`~testQuick`
+
+编写测试：`src/test/scala/HelloSpec.scala`
+```scala
+// src/test/scala/HelloSpec.scala
+import org.scalatest.funsuite._
+
+class HelloSpec extends AnyFunSuite {
+  test("Hello should start with H") {
+    assert("hello".startsWith("H"))
+  }
+}
+```
+- 测试结果当然是失败
+```shell
+sbt:Hello> test
+[info] HelloSpec:
+[info] - Hello should start with H *** FAILED ***
+[info]   "hello" did not start with "H" (HelloSpec.scala:5)
+[info] Run completed in 214 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 0, failed 1, canceled 0, ignored 0, pending 0
+[info] *** 1 TEST FAILED ***
+[error] Failed tests:
+[error]         HelloSpec
+[error] (Test / test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 0 s, completed 2021年9月27日 下午11:58:01
+```
+- 改一下源码再测试就能通过了：
+```scala
+// src/test/scala/HelloSpec.scala
+import org.scalatest.funsuite._
+
+class HelloSpec extends AnyFunSuite {
+  test("Hello should start with H") {
+    assert("Hello".startsWith("H"))
+  }
+}
+```
+
+添加库依赖：
+```scala
+// build.sbt
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+lazy val hello = (project in file("."))
+  .settings(
+    name := "Hello",
+    libraryDependencies += "com.typesafe.play" %% "play-json" % "2.9.2",
+    libraryDependencies += "com.eed3si9n" %% "gigahorse-okhttp" % "0.5.0",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.7" % Test,
+  )
+```
+
+
+使用REPL（Read-Eval-Print Loop）：
+```shell
+sbt:Hello> console
+```
+- 在scala的REPL环境中粘贴：`:paste`。
+- 退出：`:q`
+
+修改`build.sbt`创建一个子项目：
+```scala
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+lazy val hello = (project in file("."))
+  .settings(
+    name := "Hello",
+    libraryDependencies += "com.eed3si9n" %% "gigahorse-okhttp" % "0.5.0",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.7" % Test,
+  )
+
+lazy val helloCore = (project in file("core"))
+  .settings(
+    name := "Hello Core",
+  )
+```
+- `reload`时会自动创建目录`core/`。
+- 列出所有子项目：`projects`
+- 编译子项目：
+```shell
+helloCore/compile
+```
+- 子项目添加依赖：
+```scala
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.7"
+
+lazy val hello = (project in file("."))
+  .settings(
+    name := "Hello",
+    libraryDependencies += "com.eed3si9n" %% "gigahorse-okhttp" % "0.5.0",
+    libraryDependencies += scalaTest % Test,
+  )
+
+lazy val helloCore = (project in file("core"))
+  .settings(
+    name := "Hello Core",
+    libraryDependencies += scalaTest % Test,
+  )
+```
+
+广播命令、添加依赖：
+- 设置`.aggregate(...)`，这样发送到`hello`的命令都会被广播到`helloCore`
+- 使用`.dependsOn(...)`可以设置依赖，下面的设置使`hello`依赖于`helloCore`
+- 将Gigahorse的依赖移到`helloCore`。
+```scala
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.7"
+val gigahorse = "com.eed3si9n" %% "gigahorse-okhttp" % "0.5.0"
+
+lazy val hello = (project in file("."))
+  .aggregate(helloCore)
+  .dependsOn(helloCore)
+  .settings(
+    name := "Hello",
+    libraryDependencies += scalaTest % Test,
+  )
+
+lazy val helloCore = (project in file("core"))
+  .settings(
+    name := "Hello Core",
+    libraryDependencies += scalaTest % Test,
+    libraryDependencies += gigahorse,
+  )
+```
+
+使用Play JSON解析JSON：
+- 添加依赖。
+```scala
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.7"
+val gigahorse = "com.eed3si9n" %% "gigahorse-okhttp" % "0.5.0"
+val playJson  = "com.typesafe.play" %% "play-json" % "2.9.2"
+
+lazy val hello = (project in file("."))
+  .aggregate(helloCore)
+  .dependsOn(helloCore)
+  .settings(
+    name := "Hello",
+    libraryDependencies += scalaTest % Test,
+  )
+
+lazy val helloCore = (project in file("core"))
+  .settings(
+    name := "Hello Core",
+    libraryDependencies ++= Seq(gigahorse, playJson),
+    libraryDependencies += scalaTest % Test,
+  )
+```
+- 重载，添加文件：`core/src/main/scala/example/core/Weather.scala`
+```scala
+// core/src/main/scala/example/core/Weather.scala
+package example.core
+
+import gigahorse._, support.okhttp.Gigahorse
+import scala.concurrent._, duration._
+import play.api.libs.json._
+
+object Weather {
+  lazy val http = Gigahorse.http(Gigahorse.config)
+
+  def weather: Future[String] = {
+    val baseUrl = "https://www.metaweather.com/api/location"
+    val locUrl = baseUrl + "/search/"
+    val weatherUrl = baseUrl + "/%s/"
+    val rLoc = Gigahorse.url(locUrl).get.
+      addQueryString("query" -> "New York")
+    import ExecutionContext.Implicits.global
+    for {
+      loc <- http.run(rLoc, parse)
+      woeid = (loc \ 0  \ "woeid").get
+      rWeather = Gigahorse.url(weatherUrl format woeid).get
+      weather <- http.run(rWeather, parse)
+    } yield (weather \\ "weather_state_name")(0).as[String].toLowerCase
+  }
+
+  private def parse = Gigahorse.asString andThen Json.parse
+}
+```
+- 修改`src/main/scala/example/Hello.scala`:
+```scala
+package example
+
+import scala.concurrent._, duration._
+import core.Weather
+
+object Hello extends App {
+  val w = Await.result(Weather.weather, 10.seconds)
+  println(s"Hello! The weather in New York is $w.")
+  Weather.http.close()
+}
+```
+- 运行：`run`
+```shell
+sbt:Hello> run
+[info] running example.Hello
+Hello! The weather in New York is light cloud.
+[success] Total time: 5 s, completed 2021年9月28日 上午10:29:57
+```
+
+添加sbt-native-packager插件：
+- 创建`project/plugins.sbt`
+```scala
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.4")
+```
+- 修改`build.sbt`对`Hello`项目添加`.enablePlugins(JavaAppPackaging)`
+- 重载，本地没有执行成功，所以下面的`dist`命令也就不能用。
+
+重载并创建.zip分发包：`dist`
+```shell
+sbt:Hello> dist
+[info] Wrote /tmp/foo-build/target/scala-2.12/hello_2.12-0.1.0-SNAPSHOT.pom
+[info] Wrote /tmp/foo-build/core/target/scala-2.12/hello-core_2.12-0.1.0-SNAPSHOT.pom
+[info] Your package is ready in /tmp/foo-build/target/universal/hello-0.1.0-SNAPSHOT.zip
+```
+
+应用容器化：
+- `Docker/publishLocal`
+- 运行容器化后的应用：`docker run hello:0.1.0-SNAPSHOT`
+
+设置应用版本：
+```scala
+// build.sbt
+ThisBuild / version      := "0.1.0"
+ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / organization := "com.example"
+
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.7"
+val gigahorse = "com.eed3si9n" %% "gigahorse-okhttp" % "0.5.0"
+val playJson  = "com.typesafe.play" %% "play-json" % "2.9.2"
+
+lazy val hello = (project in file("."))
+  .aggregate(helloCore)
+  .dependsOn(helloCore)
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    name := "Hello",
+    libraryDependencies += scalaTest % Test,
+  )
+
+lazy val helloCore = (project in file("core"))
+  .settings(
+    name := "Hello Core",
+    libraryDependencies ++= Seq(gigahorse, playJson),
+    libraryDependencies += scalaTest % Test,
+  )
+```
+
+临时切换Scala版本：
+- `++2.12.14`
+
+在Bash中直接运行sbt的命令：
+```shell
+sbt clean "testOnly HelloSpec"
+```
+- 这样程序运行起来会慢一些。
+- 连续的开发的话，推荐使用sbt shell或者连续测试比如`~testQuick`。
+
+`new`命令：
+```shell
+$ sbt new scala/scala-seed.g8
+....
+A minimal Scala project.
+
+name [My Something Project]: hello
+
+Template applied in ./hello
+```
+- 会创建一个简单的项目，要求输入项目名时输入`hello`，会在`hello/`下创建一个新项目。
+
+
+### sbt使用
+
+项目的目录结构：
+- base directory是包含项目的目录，这里称为项目根目录。
+- sbt使用和Maven一样的源码结构，源文件路径都是基于项目根目录的相对路径。
+```
+src/
+  main/
+    resources/
+       <files to include in main jar here>
+    scala/
+       <main Scala sources>
+    scala-2.12/
+       <main Scala 2.12 specific sources>
+    java/
+       <main Java sources>
+  test/
+    resources
+       <files to include in test jar here>
+    scala/
+       <test Scala sources>
+    scala-2.12/
+       <test Scala 2.12 specific sources>
+    java/
+       <test Java sources>
+```
+- 其他`src/`中的目录会被忽略，所有隐藏目录都会被忽略。
+- 源码可以被放在根目录的`hello/app.scala`，对小项目是可行的。然而一般来说，人们倾向于将项目放在`src/main/`下面来保证事情能够有条理地进行。如果你自行管理定制了项目的构建的话，自定义源码的位置也是可行的。
+- sbt的构建定义文件：`build.sbt`
+- 除此之外，`project`目录中的`.scala`文件可以定义项目帮助文件和一次性的插件。
+```
+build.sbt
+project/
+  Dependencies.scala
+```
+- 生成文件：`.class`，生成的`jar`，其他文件和文档等会被默认输出到`target`目录。
+- 一般生成文件应该要排除在版本控制之外，在`.gitignore`中添加：
+```
+target/
+```
+
+
+运行：
+- 运行sbt shell：`sbt`无参数运行，进入sbt的提示符，有tab补全和执行历史。
+- 编译：`compile`
+- 运行：`run`
+- 不进入sbt shell直接运行sbt命令：用`""`包起来表示是一个命令，相对来说会慢一些。
+```
+sbt clean compile "testOnly TestA TestB"
+```
+- 会一次执行`clean compile testOnly`，`TestA TestB`是传给`testOnly`的参数。
+- 保存文件时自动重编译运行测试：`~testQuick`。
+- 命令加上`~`后会进入循环模式，保存文件都会自动运行。回车退出。
+- 常用命令：
+
+Command|Description
+:-:|:-
+clean|Deletes all generated files (in the target directory).
+compile|Compiles the main sources (in src/main/scala and src/main/java directories).
+test|Compiles and runs all tests.
+console|Starts the Scala interpreter with a classpath including the compiled sources and all dependencies. To return to sbt, type :quit, Ctrl+D (Unix), or Ctrl+Z (Windows).
+run argument*|Runs the main class for the project in the same virtual machine as sbt.
+package|Creates a jar file containing the files in src/main/resources and the classes compiled from src/main/scala and src/main/java.
+help command|Displays detailed help for the specified command. If no command is provided, displays brief descriptions of all commands.
+reload|Reloads the build definition (build.sbt, project/*.scala, project/*.sbt files). Needed if you change the build definition.
+
+### build.sbt
+
+`build.sbt`构建定义：
+- 指定sbt版本，这样就使用不同版本的sbt构建同一个项目了。如果指定的版本不可用，那么会自动下载。
+```scala
+sbt.version=1.5.5
+```
+- 构建定义（build definition）：
+- 包含了一系列项目（[Scala中的Project类型](https://www.scala-sbt.org/1.x/api/sbt/Project.html)），项目这个名词有一定的模糊性，所以其中的一个个项目一般将之称为子项目。
+- 在`build.sbt`中可以定义一个在当前目录中的子项目：
+```scala
+lazy val root = (project in file("."))
+  .settings(
+    name := "Hello",
+    scalaVersion := "2.12.7"
+  )
+```
+- 项目的名称在`.setting`方法中用一个键值对定义，key是`name`，值是一个字符串表示项目名称。
+- `build.sbt`定义所有的子项目，包含一些的键值对称为`setting`表达式，使用一门build.sbt DSL（本质上其实就是Scala）来定义项目。
+```scala
+ThisBuild / organization := "com.example"
+ThisBuild / scalaVersion := "2.12.14"
+ThisBuild / version      := "0.1.0-SNAPSHOT"
+
+lazy val root = (project in file("."))
+  .settings(
+    name := "hello"
+  )
+```
+- 看一看这门DSL的定义：
+![setting expression](Images/Scala_sbt_dsl_setting_expression.png)
+- 每一个都叫做一个setting expression，其中的一些又被叫做task expression。
+- 一个setting expression包含三部分：
+    1. 左边是key。
+    2. 操作符，这个例子中是`:=`
+    3. 右边是setting body。
+- 一个key的类型是`sbt.SettingKey[T] sbt.TaskKey[T] sbt.InputKey[T]`其中一者的实例，T是期望的值类型。
+- 比如`name`就绑定到了`SettingKey[String]`类型，给个其他类型比如整数的话就会编译错误。
+- 在`build.sbt`中可以穿插`val` `lazy val` `def`，但是不能有顶层`object class`定义。
+
+expression的key：
+- 三种类型：
+    - `SettingKey[T]` 值仅在加载子项目时计算一次，然后保持。
+    - `TaskKey[T]` 值被称为一个任务（task），每次都会重新计算（何时？），存在潜在的副作用。
+    - `InputKey[T]` 值是有命令行输入作为参数的任务，细节见[Input Tasks](https://www.scala-sbt.org/1.x/docs/Input-Tasks.html)。
+- 内建的keys就是`sbt.Keys`单例伴生对象的域。`build.sbt`隐式导入`import sbt.Keys._`，`sbt.Keys.name`就是`name`，所以其实就是对这些字段做赋值。
+- 自定义key：使用各自的方法`settingKey taskKey inputKey`，每个方法需要一个value的类型和描述。key的名称就是被赋值到的引用变量名称。
+- 定义一个自定义key，名称是`hello`，类型是`TaskKey`，对应值类型是`Unit`：
+```scala
+lazy val hello = taskKey[Unit]("An example task")
+```
+- 所有这种定义都在设置前被求值，无论定义在文件什么位置。
+- 一般来说，使用`lazy val`而不是`val`来避免初始化顺序导致的问题。
+- Task和Setting区别：
+    - Task是任务，比如`compile` `package`都是`sbt.Keys`中的域，同时也是sbt shell中可执行的命令。应该返回`Unit`或者返回和这个任务相关的值，比如`package`是`TaskKey[File]`值是其创建的jar文件。
+    - 每一次开始一个任务，比如sbt shell中执行`compile`，sbt都会重新跑（仅）一次这个任务相关的所有任务。
+    - 而Setting仅仅只是一个朴素的设置项。
+
+定义任务和设置：
+- 使用`:=`可以将一个设置或者一项计算任务赋值。设置只会在记载项目时计算一次，任务则会在每次执行这个任务被执行时重新执行。
+- 新建一个任务：
+```scala
+lazy val hello = taskKey[Unit]("An example task")
+
+lazy val root = (project in file("."))
+  .settings(
+    hello := { println("Hello!") }
+  )
+```
+- 任务也在`.settings`中被赋值。
+- 每次在sbt shell中执行`hello`都会执行其中`println`语句。
+- 定义设置的话已经说过。
+- 从类型系统的视角来看，对任务赋值得到一个`Setting[Task[T]]`，对设置赋值得到`Setting[T]`。`T Task[T]`的区别有一层隐含的含义：一个设置不能依赖于一个任务。因为设置仅记载是求值一次不会每次都重新运行。
+
+sbt shell中的key：
+- sbt shell中可以输入任何任务名称都会运行该任务，因为这个任务名称是key。运行该任务但并不会显示运行结果值（也就是返回值，类型就是`taskKey[T]`中的`T`），要显示结果值，应该使用`show <task name>`而不是单纯的`<task name>`。
+- 如果输入设置的key的话，会显示设置的值。
+- 要知道一个key的更多信息，可以使用`inspect <keyname>`。某些信息现在看起来可能不知道含义，但最顶上有类型和简要描述。
+
+在`build.sbt`中导入信息：
+- 比如：
+```scala
+import sbt._
+import Keys._
+```
+- 中间不能有空行。
+- 如果有自动插件（[`sbt.AutoPlugin`](https://www.scala-sbt.org/1.x/api/sbt/AutoPlugin.html)，可以从其派生实现自己的插件），那么在其中的`autoImport`单例对象下的名称会被自动导入。
+
+Bare .sbt build definition：
+- 也就是裸的构建定义，设置可以被直接写到`.sbt`而不是项目的`.setting(...)`调用下，称之为bare style。
+```scala
+ThisBuild / version := "1.0"
+ThisBuild / scalaVersion := "2.12.14"
+```
+- 这种语法推荐用来写在`ThisBuild`作用域下的设置和添加插件。后续会有作用域和插件的说明。
+
+添加库依赖：
+- 为了能够依赖第三方库，有两种方式：
+- 一是将jar文件直接放在`lib/`（未管理的依赖）目录下，第二种是添加管理的依赖，通过在`.setting(..)`调用中对`libraryDependencies`key做`+=`操作做到。
+```scala
+val derby = "org.apache.derby" %% "derby" % "10.4.1.3"
+
+ThisBuild / organization := "com.example"
+ThisBuild / scalaVersion := "2.12.14"
+ThisBuild / version      := "0.1.0-SNAPSHOT"
+
+lazy val root = (project in file("."))
+  .settings(
+    name := "Hello",
+    libraryDependencies += derby
+  )
+```
+- 包含包的组织、包名、和包的版本。可以定义变量来复用。`%`运算符被用来从字符串构建一个模块ID。
+
+### 多项目构建
+
+多个项目定义：
+- 在一次构建中编译多个相关联的子项目是很有用的，特别是其间存在依赖，想更改他们所有的时候。
+- 每个子项目都有自己的目录，构建时都会生成自己的jar文件，
+- 项目使用`lazy val`定义一个[sbt.Project](https://www.scala-sbt.org/1.x/api/sbt/Project.html)来实现。
+```scala
+lazy val util = (project in file("util"))
+
+lazy val core = (project in file("core"))
+```
+- 这个`val`的不变量名称被用做子项目的ID（也即是项目名称），在sbt shell中也用来指代一个子项目。
+- 后面的`in file()`调用指定他们的base directory是可选的，目录名就是他们的名称。
+```scala
+lazy val util = project
+
+lazy val core = project
+```
+
+公共设置；
+- 为了分离出跨子项目的设置，可以将其定义在`ThisBuild`范围下。`ThisBuild`表现的像一个普通的子项目名称一样使用，其下用来定义默认值。
+- 如果定义了多个子项目，并且子项目下没有定义比如`scalaVersion`这个key，就会查找`ThisBuild / scalaVersion`。
+- 这样定义的限制是右边的值只能是纯粹的值或者在`Global`/`ThisBuild`下的设置。
+- 子项目范围下没有默认值。
+```scala
+ThisBuild / organization := "com.example"
+ThisBuild / version      := "0.1.0-SNAPSHOT"
+ThisBuild / scalaVersion := "2.12.14"
+
+lazy val core = (project in file("core"))
+  .settings(
+    // other settings
+  )
+
+lazy val util = (project in file("util"))
+  .settings(
+    // other settings
+  )
+```
+- 重载后，现在`versoin`和其他的设置在所有子项目中都会生效。
+
+另一种定义公共设置的方式：
+- 将默认设置放在`commonSettings`下，然后添加到所有子项目中`.setting()`调用中。
+```scala
+lazy val commonSettings = Seq(
+  target := { baseDirectory.value / "target2" }
+)
+
+lazy val core = (project in file("core"))
+  .settings(
+    commonSettings,
+    // other settings
+  )
+
+lazy val util = (project in file("util"))
+  .settings(
+    commonSettings,
+    // other settings
+  )
+```
+
+项目间依赖：
+- 项目间可以完全独立，也通常可能会有某种方式的依赖。
+- 有两种方式的依赖：aggregate and classpath，用`.aggregate .dependsOn`定义。
+- 聚合用来广播命令，类路径依赖则是指项目之间存在依赖关系。
+
+
+聚合（Aggregation）：
+```scala
+lazy val root = (project in file("."))
+  .aggregate(util, core)
+
+lazy val util = (project in file("util"))
+
+lazy val core = (project in file("core"))
+```
+- 这种方式在聚合项目上运行任务时会同样在它聚合的所有子项目上运行。
+- 比如上面的子项目定义，编译`root`是会同时编译`util core`。
+- 通过在做聚合的项目中定义设置可以修改这种默认行为：
+```scala
+lazy val root = (project in file("."))
+  .aggregate(util, core)
+  .settings(
+    update / aggregate := false
+  )
+
+[...]
+```
+- 上面设置表示在root项目上执行`update`是就不会在被聚合的子项目上执行。`update / aggregate`是update作用域下的key。
+
+类路径依赖：
+- 一个项目可能依赖另一个项目的代码，通过`.dependsOn(proj1, proj2, ...)`方法调用来定义。依赖之后就会被添加到classpth，从而能够导入。
+```scala
+lazy val core = project.dependsOn(util)
+```
+- 现在在`core`中就可以调用`util`中的代码了。这同样也确定了代码编译顺序必然是先`util`后`core`。
+- `core dependsOn(util)`意味着`core`的编译配置依赖`util`，也可以显式通过`dependsOn(util % "compile->compile")`这种方式来指定，`compile->compile`中的`->`意味着依赖。因此如果是`"test->compile"`就以为着`core`的`test`配置依赖`util`的`compile`配置。可以忽略后面的`->config`部分意味着就是`->comile`。
+- 一个比较有用的定义是`test->test`意味着测试`core`是先测试`util`。
+- 可以用分好分隔：`dependsOn(util % "test->test;compile->compile")`。
+
+项目间依赖：
+- 在大项目中，会有许多文件，持续监视文件修改并重新编译将会消耗大量磁盘和IO资源。
+- sbt使用`trackInternalDependencies` 和 `exportToInternal`设置用来控制执行`compile`任务时是否触发独立子项目的编译。两个key都接受三个输入：
+    - `TrackLevel.NoTracking`
+    - `TrackLevel.TrackIfMissing`
+    - `TrackLevel.TrackAlways` 默认是这一项。
+    - 含义显而易见。
+- `trackInternalDependencies`设置如果是`TrackLevel.TrackIfMissing`，那么sbt将不会尝试自动编译项目间依赖，除非输出目录中的`*.class`文件缺失了（或者`exportJars`时jar文件缺失了）。
+- 当被设置为`TrackLevel.NoTracking`，项目将依赖将被跳过。但是classpth仍然会被添加，依赖图也会显示他们还是依赖的。这么做的目的是为了减小检查文件修改的IO负担。
+- 设置方法：
+```scala
+ThisBuild / trackInternalDependencies := TrackLevel.TrackIfMissing
+ThisBuild / exportJars := true
+
+lazy val root = (project in file("."))
+  .aggregate(....)
+```
+- `exportToInternal`设置允许依赖于当前项目的子项目跳过内部追踪。用在一个子项目上，用在当前不关心的依赖于其他项目的子项目，当其他项目发生修改重新编译，它也不会重新编译。
+```scala
+lazy val dontTrackMe = (project in file("dontTrackMe"))
+  .settings(
+    exportToInternal := TrackLevel.NoTracking
+  )
+```
+- `trackInternalDependencies`和`exportToInternal`，比如当前修改项目时A，A依赖B，C依赖A，那么前者是针对B也就是当前项目依赖的那些子项目，后者针对C也就是依赖当前项目的子项目。这是我的理解，应该是这个样子！
+- 如果没理解错的话，项目的依赖关系（指classpth，会调用的那种依赖）应该是一棵树，而不会有环图。
+
+
+默认的根项目：
+- 如果没有为最顶层目录`.`定义项目，那么sbt会创建一个默认的然后在构建时聚合所有子项目。
+
+与项目的交互：
+- `projects`列出所有子项目。
+- `proejct`列出当前项目，`project <projectname>`切换项目。运行一个任务比如`compile`时是针对当前项目。
+- 也可以通过指定项目名称来在某个项目上运行任务：`subProjectID / <taskname>`。
+
+公共代码：
+- `.sbt`文件之间的定义是不共享的。
+- 为了能够在不同`.sbt`之间共享代码，需要在根目录的`project/`下面（子目录中的是没有用的，会被忽略，只有根目录中的才会有效）定义一个或多个scala文件。后续会详述。
+
+子项目中的`.sbt`文件：
+- 所有的`.sbt`文件都会被合并到一个整体的构建（build）中来，但是只在他们自己的范围内起作用。定义不会被共享。
+- 比如顶层`hello`目录中初始化`sbt`，`.`定义根项目`hello`，`hello/foo/ hello/bar`分别定义项目foo和bar并且有自己的`build.sbt`并把项目定义在了其中，其中定义了自己的不同版本。
+- 那么执行`show version`的结果就是这样的：
+```shell
+> show version
+[info] hello-foo/*:version
+[info]  0.7
+[info] hello-bar/*:version
+[info]  0.9
+[info] hello/*:version
+[info]  0.5
+```
+- 所有的`build.sbt`都是整个构建的一部分，但都有自己的作用范围。
+- 可以分开定义，也可以合起来定义`build.sbt`，项目很多时都定义在根目录中可能就太复杂了，定义在子目录找起来好像又挺麻烦。
+- 风格选择：
+    - 子项目的设置在子项目的`.sbt`中定义，根`build.sbt`中只定义最小的项目声明，形如：`lazy val foo = (project in file("foo"))`不修改任何设置。
+    - 推荐是将所有项目定义全都放在根目录中的`build.sbt`，保持项目定义在一个文件中。
+    - 都可以，这完全取决于你。
+
+
+### 任务图
+
+任务图：
+- 除了将设置视作一个个键值对，更好的比喻其实是以有向无环图（DAG）。边的方向表示**在之前发生**，称之为任务图（Task Graph） 。
+- Setting/Task expression就是前面的在`.setting(...)`中定义了设置或者任务的表达式。
+
+任务间依赖：
+- 使用一个特殊的`.value`方法调用来解释任务之间的依赖。
+- 直到非常熟悉`hello.sbt`之前，都推荐将`.value`调用放在task定义块中最上方。
+- 除了使用一个不变量赋值的方式，也可以使用内联的`.value`调用，更加间接，也不用去想变量名。
+- `.value`调用会在进入task body之前被求值，这是需要非常注意的。
+- 测试：
+```scala
+lazy val hi = taskKey[Unit]("An example task for dependency")
+
+lazy val hello = (project in file("."))
+  .aggregate(helloCore)
+  .dependsOn(helloCore)
+  // .enablePlugins(JavaAppPackaging)
+  .settings(
+    name := "Hello",
+    libraryDependencies += scalaTest % Test,
+    hi := {
+      val ur = update.value // streams task happens-before hi
+      if (false) {
+        val x = clean.value // clean task happens-before hi
+      }
+    }
+  )
+```
+- 此时任务`hi`就会依赖于任务`update`和`clean`，并且这两个任务是在进入`hi`任务体前执行的，且不确定两者先后顺序，可先可后可并行。
+- 在任务体中调用`.value`仅用来表明任务之间的依赖关系。
+- 先编译项目，执行`hi`后会发现`target/scala-2.13/clsses/`被清除，就是因为执行了`clean`任务。
+- 查看任务间依赖：在`Dependencies:`后可以看到。
+```shell
+inspect hi
+```
+- 执行`inspect tree compile`会看到`compile`命令的依赖树，什么含义暂时不知。
+- sbt中的构建任务依赖是自动的而不是显式定义的，如果通过`.value`定义了，那么会造成任务间依赖。
+
+任务依赖设置：
+- 在任务体定义中调用设置的`.value`就行。
+- 但设置是不能依赖任务的，因为设置只在重载时执行一次，而任务一直都可以执行。
+
+设置依赖设置：
+- 可以将设置看做仅在记加载是执行一次的任务，所以设置也可以依赖设置。
+- 同样其中调用`.value`就可以依赖，并且执行时求值：
+- 一个实际的例子：当Scala版本是2.11时讲将`Compile / scalaSource`定义到一个不同的目录。
+```scala
+Compile / scalaSource := {
+  val old = (Compile / scalaSource).value
+  scalaBinaryVersion.value match {
+    case "2.11" => baseDirectory.value / "src-2.11" / "main" / "scala"
+    case _      => old
+  }
+}
+```
+
+再看`build.sbt`DSL：
+- 构建了一个设置和任务的有向无环图。
+- 设置表达式编码了设置、任务以及他们之间的依赖。
+- 这种结构在Make/Ant/Rake等构建工具中很常见。
+- 基于流的编程，减少了重复过程，好处：
+- 一个任务仅仅只会执行一次，即使它被多个任务所依赖比如`Compile / compile`。
+- 基于任务图，任务引擎会安排不相关的任务并行执行。
+- 关注点分离和灵活性，任务图让用户可以将任务以不同的方式连接到一起，sbt和各种插件可以提供各种各样的特性比如库依赖管理等。
+
+总结：
+- 核心就是任务图，任务之间的关系是一个有向无环图。
+- `hello.sbt`是一个设计来面向依赖编程（dependency-oriented programming）的DSL，或者叫基于流（flow）的编程。就像Makefile。
+- 基于流的编程的核心是：减少重复过程、并行处理和定制化。
+
 ## 总结
 
 总结：
@@ -2280,7 +3115,7 @@ class MyList[T] {} // 不变
 - 并发编程还没有学，TODO。
 - Scala语法确实有点太强大了，当然软件工程的东西都是tradeoff，写起来爽用起来复杂学起来难。
 
-Scala是我目前学过的最舒服的语言，很多特点简直太棒了，吸引我的点：
+Scala是我目前学过的最舒服的语言，很多特点简直太棒了，如果此生只能选一门语言的话，那我可能真会选这门刚学了几天的语言。吸引我的点：
 - 函数式编程，和集合的映射推导结合起来很有用。
 - 类型推导，像动态语言用起来的感觉，但也有编译期类型检查，再加上隐式类型转换，真我全都要。
 - 各种能简则简的语法糖，初看可能很诧异，习惯之后只能说去**的java，简洁而不简单。
