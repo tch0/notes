@@ -23,6 +23,8 @@
     - [build.sbt](#buildsbt)
     - [多项目构建](#%E5%A4%9A%E9%A1%B9%E7%9B%AE%E6%9E%84%E5%BB%BA)
     - [任务图](#%E4%BB%BB%E5%8A%A1%E5%9B%BE)
+    - [更多内容](#%E6%9B%B4%E5%A4%9A%E5%86%85%E5%AE%B9)
+  - [并发编程](#%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B)
   - [总结](#%E6%80%BB%E7%BB%93)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -57,6 +59,7 @@ Scala（发音为/ˈskɑːlə, ˈskeɪlə/）是一门多范式的编程语言�
 阅读：
 - [尚硅谷大数据技术之Scala入门到精通教程](https://www.bilibili.com/video/BV1Xh411S7bP)（本文参考）
 - [Scala官网语法速查](https://docs.scala-lang.org/zh-cn/cheatsheets/index.html)
+- [Scala官方文档 Tour Of Scala](https://docs.scala-lang.org/zh-cn/tour/tour-of-scala.html)
 
 ## 环境配置
 
@@ -2365,7 +2368,7 @@ sbt:foo-build> ~compile
 ```
 
 创建源文件：
-- 执行`~compile`并保持，创建目录`src/main/scala/example`根目录新建源文件保存就能看到编译过程了。
+- 执行`~compile`并保持，创建目录`src/main/scala/example`新建源文件保存就能看到编译过程了。
 ```scala
 // src/main/scala/example/Hello.scala
 package example
@@ -3102,8 +3105,16 @@ Compile / scalaSource := {
 
 总结：
 - 核心就是任务图，任务之间的关系是一个有向无环图。
-- `hello.sbt`是一个设计来面向依赖编程（dependency-oriented programming）的DSL，或者叫基于流（flow）的编程。就像Makefile。
+- `hello.sbt`是一个设计来面向依赖编程（dependency-oriented programming）的DSL，或者叫基于流（flow）的编程。就像Makefile。语法就像Scala，但并不等同于Scala，语义上是有区别的。
 - 基于流的编程的核心是：减少重复过程、并行处理和定制化。
+
+### 更多内容
+
+更多内容就不翻译了，官网上第一章也有中文翻译。需要时再去阅读，现阶段感觉都用不到，真写项目了再看不迟。
+
+## 并发编程
+
+TODO
 
 ## 总结
 
