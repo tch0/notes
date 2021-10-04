@@ -1,3 +1,33 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Python语言入门](#python%E8%AF%AD%E8%A8%80%E5%85%A5%E9%97%A8)
+  - [环境](#%E7%8E%AF%E5%A2%83)
+  - [变量与字符串](#%E5%8F%98%E9%87%8F%E4%B8%8E%E5%AD%97%E7%AC%A6%E4%B8%B2)
+  - [常用数据结构](#%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84)
+  - [控制流](#%E6%8E%A7%E5%88%B6%E6%B5%81)
+  - [函数](#%E5%87%BD%E6%95%B0)
+  - [集合高级特性](#%E9%9B%86%E5%90%88%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7)
+  - [函数式编程](#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B)
+  - [模块](#%E6%A8%A1%E5%9D%97)
+  - [面向对象](#%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1)
+  - [错误、调试与测试](#%E9%94%99%E8%AF%AF%E8%B0%83%E8%AF%95%E4%B8%8E%E6%B5%8B%E8%AF%95)
+  - [IO](#io)
+  - [并发编程](#%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B)
+  - [正则表达式](#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+  - [常用内建模块](#%E5%B8%B8%E7%94%A8%E5%86%85%E5%BB%BA%E6%A8%A1%E5%9D%97)
+  - [virtualenv](#virtualenv)
+  - [图形界面](#%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2)
+  - [网路编程](#%E7%BD%91%E8%B7%AF%E7%BC%96%E7%A8%8B)
+  - [电子邮件](#%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6)
+  - [数据库](#%E6%95%B0%E6%8D%AE%E5%BA%93)
+  - [Web开发](#web%E5%BC%80%E5%8F%91)
+  - [异步IO](#%E5%BC%82%E6%AD%A5io)
+  - [总结](#%E6%80%BB%E7%BB%93)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Python语言入门
 
 Python（英国发音：/ˈpaɪθən/ 美国发音：/ˈpaɪθɑːn/）是一种广泛使用的解释型、高级和通用的编程语言。Python支持多种编程范型，包括函数式、指令式、结构化、面向对象和反射式编程。它拥有动态类型系统和垃圾回收功能，能够自动管理内存使用，并且其本身拥有一个巨大而广泛的标准库。
@@ -23,9 +53,9 @@ Python由吉多·范罗苏姆（Guido van Rossum，荷兰人）创造，第一�
 - [Python 语言参考手册](https://docs.python.org/zh-cn/3/reference/index.html) Python句法和核心语义，有一定基础可直接阅读。
 - [Python 教程](https://docs.python.org/zh-cn/3/tutorial/index.html) Python官方非正式教程，无基础可先从这开始阅读。
 - [Python 标准库](https://docs.python.org/zh-cn/3/library/index.html) Python标准库的文档，用来查阅。
-- [廖雪峰Python教程](https://www.liaoxuefeng.com/wiki/1016959663602400)
+- [廖雪峰Python教程](https://www.liaoxuefeng.com/wiki/1016959663602400)（本文主要参考）
 
-## 环境配置
+## 环境
 
 Python3和Python2不兼容，Python2已经停止维护，原则上不应再使用。时下（2021.10.1）最新版本3.9.7。
 
@@ -36,6 +66,22 @@ Python3和Python2不兼容，Python2已经停止维护，原则上不应再使�
 ```python
 print("hello,world!")
 ```
+
+各种Python相关文件后缀：
+- `.py` python源文件。
+- `.pyw` 默认的`.py`是控制台应用，而`.pyw`是用于编写GUI应用的，运行时`stdout stderr`输出无效，`stdin`只会读取到`EOF`。用`pythonw.exe`运行。
+- `.pyc` 类似于Java字节码文件，编译后的Python字节码脚本文件，供解释器使用，不想提供源码时可以提供。某些情况`__pycache__`就会生成和Python源文件同名并加上后缀`.cpython-3X.pyc`的文件，其实就是编译后字节码。如果源文件未发生改变，那么就不会再次编译，而是直接执行。
+- `.pyo` 优化编译后的`.pyc`文件，截止至Python3.5，现已不再使用。
+- `.pyd` 一般是其他语言编写的编译后Python扩展模块，提供给python用来调用。其实就是编译后的动态链接库。
+- `.pyi` 存根文件。
+- `.pyz` Python脚本存档，包含标准Python脚本头之后的二进制形式的压缩Python脚本（ZIP）的脚本。
+- `.pyx` Cython源文件，Python的C扩展，可以调用本地C/C++代码，提供接近C的性能。
+- `.pxd` Cython脚本，相当于C/C ++标头。
+
+
+编译运行：
+- `python -m compileall <xxx.py or dir/>` 编译结果保存在`__pycache__/`下。编译后的`.pyc`可以通过`python xxx.pyc`运行。`compileall`其实就是python提供的一个模块。
+- 一般情况下是直接运行：`python xxx.py`。
 
 ## 变量与字符串
 
@@ -525,5 +571,484 @@ now3()
 print(now3.__name__) # now3, if without @functools.wraps(func), will be wrapper
 ```
 
+## 模块
 
+模块：
+- 在Python中，一个`.py`就是一个模块。
+- 可以避免函数变量名冲突，编写模块时不必考虑名字会与其他模块冲突，但要注意尽量不要和内置函数重名。
+- 为了避免模块名冲突，Python又引入了按目录组织模块的方法，称为包（Package）。
+- 引入包以后，只有顶层的名字不与别人冲突，那所有模块就不会与别人冲突。
+```
+mycompany
+├─ __init__.py
+├─ abc.py
+└─ xyz.py
+```
+- 上述例子中`mycompany`中的模块名就分别是`mycompany.abc` `mycompany.utils`。
+- 每个包目录下都会有一个`__init__.py`文件，是必须存在的，否则Python不会将其视为包。`__init__.py`可以是空文件，也可以有Python代码，因为`__init__.py`本身就是一个模块，而它的模块名就是`mycompany`。【Python3.3后版本模块已经可以不要这个文件了。】
+- 自定义模块时只有命名不要和Python自带模块冲突。例如系统引入了`sys`模块，就不要再命名`sys.py`，否则将无法导入系统自带的`sys`模块。
+- 模块名要遵循Python变量命名规范，不要使用中文、特殊字符。
+- 模块名（文件名）不要和系统模块冲突，最好先查看系统是否有这个模块，交互环境下`import abc`成功则说明存在。
+
+写一个模块的标椎手法：
+- 脚本和编码注释。
+- 模块代码的第一个字符串都被视为模块的文档注释。
+- 使用`__author__`变量表明作者。
+- 后面是真正的代码部分。一般导入模块写在最前面。
+```python
+if __name__=='__main__':
+    test()
+```
+- 然后是通过命名行运行模块文件时，`__name__`会被置为`__main__`，其中逻辑就会执行，而如果在其他文件中导入（此时`__name__`是模块名）判断就会失败，就不会执行。最常见是将模块内测试代码写在此处。
+
+作用域：
+- 在一个模块中，我们可能会定义很多函数和变量，但有的函数和变量我们希望给别人使用，有的函数和变量我们希望仅仅在模块内部使用。在Python中，是通过`_`前缀来实现的。
+- 正常的函数和变量名是公开的，可以被直接引用。
+- 类似`__xxx__`这种变量是特殊变量，可以直接引用，但是有特殊用途，比如`__author__ __name__`，模块文档注释可以通过特殊变量`__doc__`引用。自己定义变量一般不要定义为这种形式。
+- 类似于`_xxx __xxx`这种命名的变量是非公开（private）的，不应该直接引用（其实也是可以引用的，只是编程习惯约定而已）。
+- 外部不需要使用的函数全部定义为`private`，只有需要引用的才定义为`public`（通过命名的方式，非常简单粗暴）。
+- 引入模块的操作只作用于当前模块，也就是当前文件，其他模块引入了该模块并不会引入该模块引入的模块。
+
+包管理工具pip：
+- [PyPI](https://pypi.org/)（The Python Package Index）是Python的包管理工具，可以搜索安装第三方库，命令是`pip`。
+- 比如：`pip install numpy`。
+- 版本：`pip --version`
+- 更新`pip`：` python -m pip install --upgrade pip`。
+- 换源安装：
+```shell
+pip install numpy -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+- 国内镜像设为默认源：
+```shell
+# 清华源
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 或：
+# 阿里源
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+# 腾讯源
+pip config set global.index-url http://mirrors.cloud.tencent.com/pypi/simple
+# 豆瓣源
+pip config set global.index-url http://pypi.douban.com/simple/s
+```
+- 更新包：
+```shell
+pip install --upgrade <package-name>
+```
+- 安装包：
+```shell
+pip install packagename         # 最新版本
+pip install packagename==1.0.4  # 指定版本
+```
+- 卸载包：
+```shell
+pip uninstall <package-name>
+```
+- windows下一般Python安装到了`Program Files`目录中的话，安装第三方库时会没权限写入，转而安装到`Users\user\AppData\Roaming\Python\Python39\site-packages`下。
+- `import sys`，`sys.path`下存放着包的搜索目录，包含安装目录和用户目录，都能搜索到。不需要太过关心。
+- 要添加自己的搜索目录：
+    - 第一种`sys.path.append("your_path")`。这种方法是运行时修改，运行后失效。
+    - 第二种方法是设置环境变量`PYTHONPATH`，该环境变量中路径会自动添加到模块搜索路径中。只需要添加自己的搜索路径，Python标准库和第三方库的路径不受影响。
+
+使用Anaconda：
+- Anaconda自带了很多python第三方科学计算库。可以方便地直接使用。
+- 安装时如果选择添加环境变量到path，就会将系统path中的Python指向自己的Python，在命令行下就能使用这些库了。
+
+## 面向对象
+
+面向对象：
+- Python中，所有数据类型都可以视作对象。同样也支持自定义类。
+- 类的数据成员在Python中称为属性（Property），成员函数称为方法（Method）。
+- 定义类：
+```python
+class Person(object):
+    def __init__(self, name, age) -> None:
+        super().__init__()
+        self.name = name
+        self.age = age
+    def print(self):
+        print(f"name: {self.name}, age: {self.age}")
+    def hello():
+        print("hello")
+```
+- 如果没有合适的基类，就使用`object`。
+- 担任构造方法角色的是`__init__`方法。
+- Python中定义实例方法第一个参数一定是`self`，通过实例调用时解释器会默认传入实例自身，但定义时需要显式声明。
+- 定义类方法则不用传入`self`，这是时可以通过类名调用。以第一个参数是否是`self`区分实例和类方法。
+- 在实例方法中调用其他实例方法需要通过`self.method()`，调用类方法需要通过类名`ClassName.method()`。
+- 和静态类型语言不通，Python允许实例变量绑定任何数据，通过`instance.newproperty = val`就可以绑定新属性到实例上。
+- 构造新实例：`instance = ClassName(*args)`。
+- 类方法和实例方法是有区分的，也就是有没有传`self`，调用时也能明确的确定。但是属性就不一样了，类的属性（也就相当于静态字段或静态数据成员）是可以通过实例访问的，所以千万不要定义同名的实例属性和类属性。在类中可以通过`self`或者类名调用区分，但外部调用时就区分不了了（用实例可以调，但不能通过实例改，一改其实就相当于定义了同名实例属性了）。
+    - 即**不要定义同名类属性/方法和实例属性/方法**。
+    - 一般来说经验也是不要通过实例调用类属性。
+
+访问修饰：
+- 不通过任何修饰符，还是通过变量名称，属性或者方法前添加`__`就变成了私有的，只能内部访问。
+- 当然同样，特殊方法和属性，前后都有`__`的方法外部还是可以访问。
+- 封装依然可以做，可以添加getter和setter，可以在其中视情况做一些参数检查和容错。
+- 也会有单下划线开头的，外部可以访问，但一般约定为私有的。
+- 其实并不是不可访问，只是双下划线开头的做了修饰，`__attr`被修饰成了`_ClassName__attr`，其实依旧可以访问。脱裤子放屁有一套，简单粗暴，能用就行。毕竟代码是死的人是活的。这算是CPython解释器特性，所以不建议这么干，不同解释器规则可能不同。
+- 如果在外部设置私有变量是可以成功的，但和想设置的那一个不是一个变量了，毕竟内部的已经做了名称修饰。比如`p.__name = "lisa"`其实是新加了一个变量。
+
+
+继承与多态：
+- `class ClassName(baseClass):`
+- 子类会继承父类的全部实例属性和方法。
+- 子类中不能访问父类的私有属性和方法，因为经过了名称修饰之后子类中再去访问同名属性经过修饰后和基类是不一样的，会相当于在子类中新增了同名属性，而不会访问到基类的那一个。
+- 子类父类存在相同方法时，子类的覆盖父类的。
+- 所有类型最终都有共同基类`object`，不写基类默认就是`object`。
+```python
+print(isinstance(1, object)) # True
+print(isinstance(None, object)) # True
+print(isinstance("hello", object)) # True
+print(isinstance(True, object)) # True
+```
+- 类方法（也就是其他语言中所说的静态方法）不会继承，只能通过自己的类名访问。
+
+
+鸭子类型：
+- 动态语言是鸭子类型的，就决定了实现多态不必像静态类型一样必须继承，只要实现同样的方法，就可以视为实现了多态。
+
+对象信息：
+- 类型：`type(obj)`，得到的`type`类型对象。
+- 可以理解`int str bytes`等类型都是这个`type`类型实例。所以内置类型可以直接这样判断类型`type(1) == int`
+- 函数则可以使用`types`中定义的常量：
+```python
+def f():
+    pass
+# all True
+print(type(1) == int)
+print(type(type) == type)
+print(type(object) == type)
+print(type(int) == type)
+print(type(f) == types.FunctionType)
+print(type(abs) == types.BuiltinFunctionType)
+print(type(x for x in range(100)) == types.GeneratorType)
+print(type([].append) == types.BuiltinMethodType)
+print(type(lambda x : x) == types.LambdaType)
+```
+- `type`是确定对象的严格类型，`isinstance`则是可以匹配对象类型或者其基类类型。
+-  `isinstance`第二个参数可以是类型，也可以是类型元组，用于匹配多个类型，只有有一个匹配，就返回`True`。
+- 一般来说为了支持多态总是优先使用`isinstance`。
+- 获取一个对象的所有属性和方法：`dir(obj)`，得到一个列表。
+- 前后双下划线的特殊方法都是有用途的，比如`__len__`方法，就用于内建的`len`函数，`len`函数实际上就是调用`__len__`方法。只要实现了`__len__`方法，就可以用于`len`函数。
+- 除了列出属性和方法，配合`getattr()`、`setattr()`以及`hasattr()`，可以直接操作一个对象的状态。
+```python
+# dir, getattr(), setattr(), hasattr()
+class Person():
+    def __init__(self, name) -> None:
+        self.name = name
+    def sayHi(self):
+        print(f"hi, {self.name}")
+    def sayHello():
+        print("hello")
+
+p = Person("Adam")
+print(dir(p))
+print(hasattr(p, "name"))
+setattr(p, "age", 10)
+print(p.age)
+print(getattr(p, "age"))
+print(getattr(p, "nonexist", "default value"))
+
+f = getattr(Person, "sayHello")
+f()
+print(f) # <function Person.sayHello at 0x0000023E6318C670>
+f = getattr(p, "sayHi")
+f()
+print(f) # <bound method Person.sayHi of <__main__.Person object at 0x000001AC29507E50>>
+```
+- 也可以获取方法，获取到后就是一个函数，实例方法就通过对象获取，相当于第一个参数已经传递。而类方法，就通过类名（其实也是一个对象）来获取。
+- 通过内置函数，可以对Python对象进行剖析，拿到对象信息，一般只有不知道对象信息时才这样做。
+
+
+动态绑定属性：
+- 动态类型具有静态类型不具有的灵活性，例如动态给对象或者类添加属性和方法。
+```python
+class Person:
+    def __init__(self, *args, **kwargs) -> None:
+        self.age = kwargs.pop("age")
+
+def setAge(self, age):
+    self.age = age
+def getAge(self):
+    return self.age
+
+# bind to a single Person object
+p = Person(age = 20)
+p.setAge = MethodType(setAge, p)
+p.getAge = MethodType(getAge, p)
+p.setAge(10)
+print(p.age) # 10
+print(p.getAge()) # 10
+
+# bind to Person class (instance of type class)
+Person.setAge = MethodType(setAge, Person)
+Person.getAge = MethodType(getAge, Person)
+Person.setAge(18)
+print(Person.getAge()) # 18
+print(Person.age) # 18
+
+# bind instance method to class, just assignment
+Person.setAge = setAge
+p = Person(age = 10)
+p.setAge(100)
+print(p.age) # 100
+print(p.getAge()) # 18, Person has no instance method call getAge(), so will call Person.getAge() -> 18
+Person.getAge = getAge
+print(p.getAge()) # 100
+```
+- 注意就算定义了`self`，`MethodType`第二个参数是要添加方法的实例，所以通过这种方式绑定方法到类其实是成为类方法而不是成为实例方法。【Python中类也是对象(`type`类的实例)！！！】
+- 要绑定类的实例方法到类上，直接赋值就可以搞定！
+- 总结：
+    - 通过`MethodType`绑定，**第二个参数作为`self`被传入方法**，方法必须有`self`参数。
+    - 通过赋值绑定的不会传入一个默认的`self`。
+    - 通过赋值直接绑定到类上就和直接定义在类里面没有区别，绑定到类上通过实例调用则会将实例作为`self`传入。
+    - 通过赋值绑定到对象上也可以，不能有`self`参数。
+    - `MethodType`的结果给人感觉就像是定义了一个偏函数(类型本身打印出来并不是)，然后指定了`self`参数。
+- 类方法和实例方法并不像其他语言区分那么严格（或许就不该这么区分）：通过实例调用会隐式传`self`，同时通过类也可以调用，只要把实例放在`self`位置，效果是完全一样的。
+```python
+class Student(object):
+    __slots__ = ("name", "age", "getName")
+    def getAge(self):
+        return self.age
+
+s = Student()
+s.age = 10
+f = s.getAge
+print(f) # <bound method Student.getAge of <__main__.Student object at 0x000001993E72F800>>
+print(Student.getAge) # <function Student.getAge at 0x000001A601B2CAF0>
+print(f()) # 10
+print(Student.getAge(s)) # 10
+```
+- 需要分清楚绑定方法和函数：`MethodType`返回的结果就是一个绑定方法，通过对象调用的实例方法也是一个绑定方法。
+
+使用`__slots__`：
+- 动态添加属性很方便也可能被滥用，Python中允许限制实例的属性，通过定义一个特殊的`__slots__`变量，限制能添加的属性。
+```python
+class Student:
+    __slots__ = ("name", "age")
+
+s = Student()
+s.age = 10
+s.name = "Adam" 
+# s.grade = 4.0 # AttributeError
+```
+- 此时再添加其他属性，就会失败。方法也可以看做函数类型的属性，所以添加同样会失败。
+- `__slots__`定义的属性仅对当前类实例的属性起限制作用，对继承子类实例和类本身属性不起作用。如果继承的子类中使用`__slots__`，那么能用的属性就是自身加上父类的。
+- 如果父类不限制，仅子类限制，那么子类实例也是可以绑定新属性的。【这确实有点让人迷惑！】
+- 也就是说要限制属性必须要继承链条上所有类都有`__slots__`才行。
+
+
+`@property`：
+- 直接暴露属性简单但是如果要做参数有效性检查就麻烦了，设置为私有并添加对应的getter和setter也可以不过调用起来就有点繁琐了。
+- 通过Python内置的`@property`装饰器可以把一个getter方法变成属性调用，然后本身又会创建另一个装饰器`@attr.setter`添加到`setter`上就可以直接通过属性形式转调方法实现读写。
+```python
+class Person:
+    __slots__ = ("_age")
+    @property
+    def age(self):
+        return self._age
+    @age.setter
+    def age(self, value):
+        if not isinstance(value, int):
+            raise ValueError("age must be a integer!")
+        if value < 0:
+            raise ValueError("age must non-negative!")
+        self._age = value
+
+p = Person()
+p.age = 10
+print(p.age)
+p.age = "18" # ValueError: age must be a integer!
+```
+- 只定义getter不定义setter就是只读属性。
+- 属性的方法不要和实例变量重名，实例变量最好使用`_`开头的私有访问。
+
+多继承/Mixin：
+- `class ClassName(BaseClass1, BaseClass2, ...)`
+- 基类可以有多个，如果多个类有同一个方法，那么继承顺序按照顺位调用第一个。
+- 多继承也叫混入，不同语言有不同语言的叫法。
+- `__mro__`特殊变量是基类的元组，一个实例的方法解析期间基于此来查找基类。
+- 已知`__mro__`，在使用[`super`](https://docs.python.org/zh-cn/3/library/functions.html?highlight=super#super)时可以在类定义中调用基类方法的情形中从`__mro__`元组中的特定位置开始查找。
+```python
+# -*- coding: utf-8 -*-
+
+class A(object):
+    def foo(self):
+        print('A foo')
+    def bar(self):
+        print('A bar')
+
+class B(object):
+    def foo(self):
+        print('B foo')
+    def bar(self):
+        print('B bar')
+
+class C1(A, B):
+    pass
+
+class C2(A, B):
+    def bar(self):
+        print('C2-bar')
+
+class D(C1, C2):
+    pass
+
+if __name__ == '__main__':
+    print(D.__mro__) # (<class '__main__.D'>, <class '__main__.C1'>, <class '__main__.C2'>, <class '__main__.A'>, <class '__main__.B'>, <class 'object'>)
+    d = D()
+    d.foo() # A foo
+    d.bar() # C2-bar
+```
+- 菱形继承不会有多份数据，最终都是通过`__mro__`中的查找顺序来确定的。
+
+定制类：
+- 通过定义特殊变量和方法可以定制特定的功能。
+- `__xxx__` 特殊变量的用途：
+- `__slots__`
+- `__len__()` 用于`len`函数。
+- `__str__()` 返回字符串，调用`print`打印对象时会打印这个字符串。
+- `__repr__()` 为调试服务，python交互环境中输入变量打印出的那个字符串，通常`__repr__`和`__str__`是一样的，可以直接`__repr__ = __str__`。
+- `__iter__()` 返回迭代器(`Iterator`)，要在`for in`循环中使用必须重写这个方法，`for`循环拿到迭代器后会调用器`__next__()`获取下一个元素，直到`StopIteration`。`collections.abc.Iterable`是提供了这个方法的抽象基类。`iter(obj)`内置函数调用这个方法。
+- `__next__()` 返回下一个元素，`Iterator`类型是提供了`__iter__()`和`__next__()`的抽象基类。`next(obj)`调用这个函数。
+- `__getitem__()` 用于通过下标访问`[]`，可能传入整数下标，可能传入切片对象（`slice`），比如对于`dict`，可能传入的是一个作为key的对象。视支持情况实现。
+- `__setitem__()` 通过下标设置元素`[]`。
+- `__delitem__()` 删除元素。
+- `__getattr__()` 动态返回属性，只有类中没有的才会尝试通过这个方法获取，类似于`method_missing()`的功能。
+- `__call__()` 一个对象实例可以有自己的属性和方法，定义`__call__()`之后就可以直接对实例进行调用，可以类比为C++中的函数对象，可以有参数。这样其实函数和对象的边界就很模糊了。`callable(obj)`会检查对象是否可调用。比如其实自定义类也是一个`type`的对象，创建时调用`className()`其实就是调用了`type`的`__call__()`然后可能是转调了自定义类的`__init__`。
+- 每种内置类型都会定义很多的特殊属性和方法。通过实现同样的方法就可以模拟这些行为，甚至不需要去继承抽象类，因为Python是鸭子类型的，依赖方法而不依赖接口。
+- 很多内置函数都是依赖于特殊属性和方法的，将所有[特殊属性、方法](https://docs.python.org/zh-cn/3/reference/datamodel.html#special-method-names)和[内置函数](https://docs.python.org/zh-cn/3/library/functions.html)都理解一遍是有必要的。
+
+枚举类：
+```python
+from enum import Enum
+WeekDay = Enum('WeekDay', ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'))
+```
+- 更精确的控制可以派生`Enum`：`@unique`装饰器检查没有重复值。
+```python
+@unique
+class WeekD(Enum):
+    Sun = 0
+    Mon = 1
+    Tue = 2
+    Wed = 3
+    Thu = 4
+    Fri = 5
+    Sat = 6
+print(WeekD) # <enum 'WeekD'>
+print(WeekD.Sun)
+print(WeekD["Tue"])
+print(WeekD(1))
+print(WeekD.Fri.value)
+
+for name, member in WeekD.__members__.items():
+    print(name, "->", member)
+```
+- 访问：
+    - `EnumClassName.member`
+    - `EnumClassName["membername"]`
+    - `EnumClass(valueofenum)` 从常量构建枚举值。
+    - `EnumClass.__members__` 获取枚举名到枚举常量的字典。
+    - `EnumClass.member.value` 枚举常量的值。
+
+`type`：
+- 动态语言和静态语言最大的不同，就是函数和类的定义，不是编译时定义的，而是运行时动态创建的。
+- 当Python解释器载入一个模块时，就会依次执行该模块的所有语句，执行结果就是动态创建出一个其中类的class对象。
+- `type`函数查看一个类型或者变量的类型，也就是用类名表示的那个`type`类型实例。传入类名得到的结果就是`type`，自定义的类其实就是`type`类型的实例。
+- `type`函数还可以用于创建一个新的类型。依次传入：
+    - 类名。
+    - 继承父类的元组。
+    - 方法名称与函数绑定的字典。
+```python
+def fn(self, name = "world"):
+    print(f"hello, {name}!")
+
+Hello = type("Hello", (object, ), dict(hello = fn))
+
+h = Hello()
+h.hello()
+print(type(h)) # <class '__main__.Hello'>
+print(Hello) # <class '__main__.Hello'>
+```
+- 通过`type`创建类直接通过`calss`关键字创建时完全一致的，也非常简单。而在静态语言中创建类必须通过各种方式动态编译才能做到。
+
+元类metaclass：
+- 除了`type`还可以通过元类来管理类的创建行为。
+- 可以将类理解为元类的实例，要通过元类来创建类，就需要先定义元类。可以通过元类来创建或者修改类。
+- 元类是Python面向对象中最难理解、最难使用的魔法代码，正常情况下不会碰到。
+- 元类是类的模板，所以需要从`type`派生。
+```python
+# create class dynamically using metaclass
+
+# first define metaclass, derived from type
+class ListMetaClass(type):
+    def __new__(cls, name, bases, attrs):
+        attrs['add'] = lambda self, value: self.append(value)
+        return type.__new__(cls, name, bases, attrs)
+    
+# create class using metaclass
+class MyList(list, metaclass = ListMetaClass):
+    pass
+
+print(MyList) # <class '__main__.MyList'>
+print(type(MyList)) # <class '__main__.ListMetaClass'>
+
+# create instance using calss
+l = MyList()
+l.add(10)
+l.add(100)
+print(l) # [10, 100]
+```
+- 定义类时传入`metaclass`关键字参数即可使用元类。
+- 此时创建出的`MyList`类（对象）的类型不再是`type`，而是自定义的从`type`派生的元类，在其中重写`__new__`并添加方法，调用`__type__`的`__new__`并且添加了自定义的`add`方法。
+- `__new__`接收参数：
+    - 当前准备创建的类对象。
+    - 类名字。
+    - 类父类集合。
+    - 类方法集合。
+- 最终`MyList`是`list`子类，同时类型是`ListMetaClass`（`type`子类）。
+- 那么可以理解为`type`就是一个元类，并且应该作为自定义元类的基类。有一点点抽象，可能需要深入了解一个类的具体创建过程才理解。
+- `__new__ __init__`区别是前者是创建过程，是一个静态方法，返回这个实例，后者是已经创建好了后的初始化过程，实例方法，构造时使用前者返回的实例调用`__init__`，返回`None`。两者加起来是实例化过程。
+- 元类可以隐式继承到子类中。
+
+元类使用例子：
+- 定义一个简单的ORM（Object Relational Mapping，对象关系映射）框架，将数据库的一张表映射为一个类，每一行映射为一个实例。通过定义调用方法就可以实现`update insert delete`等操作。
+- [代码在Python分支](../../tree/Python/OOP/ORM.py)
+
+
+总结：
+- Python面向对象实现相当自由与简单，但动态类型的确是这样的。
+- 写惯了静态类型切换过来感觉确实诸多魔法。
+- 万物皆对象，甚至类也是对象，函数也是对象，对象也可以被调用。
+- 特殊属性非常有用非常魔法，自由度可能不及运算符重载，稍微繁琐了一点，但调用规则都是语法内置的，不像运算符重载读起来那么摸不着头脑。
+- 还需要进一步深入。
+
+
+## 错误、调试与测试
+
+## IO
+
+## 并发编程
+
+## 正则表达式
+
+## 常用内建模块
+
+## virtualenv
+
+## 图形界面
+
+## 网路编程
+
+## 电子邮件
+
+## 数据库
+
+## Web开发
+
+## 异步IO
+
+## 总结
 
