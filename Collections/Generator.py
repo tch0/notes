@@ -1,4 +1,4 @@
-# -*- encoding -*-
+# -*- coding -*-
 
 from re import I
 from typing import Iterable, Iterator

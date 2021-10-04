@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # string encoding
 print('\u4e2d\u6587') # unicode escape
