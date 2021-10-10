@@ -1028,9 +1028,215 @@ print(l) # [10, 100]
 
 ## 错误、调试与测试
 
+各种各样错误：
+- 输入非法。添加检测。
+- 逻辑问题，修改逻辑。
+- 运行时错误，比如磁盘写满，网络连接中断等。这时候就需要异常处理。
+
+异常处理：
+- 可以使用错误代码返回值，需要大量代码判读是否出错。没执行一个函数都要检查返回值。
+- 异常处理：`try...except...finally...`，将可能出错的逻辑放在`try`中运行，出错则会跳转到`except`，然后执行`finally`（finally中语句无论是否发生错误都会执行，可以没有`finally`）。
+- 可以有多个`except`依次捕获不同类型的错误，直到捕获到。未捕获到则会继续向上抛，直到被Python解释器捕获，打印出调用栈，结束程序运行。
+- 所有错误的基类`BaseException`。
+- [Python内置的异常的派生结构层次](https://docs.python.org/zh-cn/3/library/exceptions.html#exception-hierarchy)。
+
+记录错误：
+- 使用`logging`模块，捕获错误记录下后继续执行。
+- `import logging`
+- 捕获错误时：`logging.exception(e)`
+
+抛出错误：
+- 错误不是凭空产生的，而是有意创建并抛出的。Python的内置函数会抛出很多错误，自己编写的函数也可以抛出错误。
+- 可以自定义错误类，选择好继承关系，使用`raise AnExceptionInstance`抛出。
+- 在捕获一个错误后可以记录下错误，如果无法处理，再向外抛出。直接`raise`可以原样抛出，也可以抛出另一种类型的错误（需要有道理可言比如说把多种错误合并成一种公共的错误，不能说转换成一种不相干的错误，那样会干扰错误诊断）。
+- 出错都是希望得到处理的，分析错误信息并定位错误发生的代码位置并修正错误才是最关键的。
+- 如果程序给别人用，应当说明什么情况下会抛哪些错误，以帮助使用者编写错误处理逻辑。
+
+调试：
+- `print`大法永远可行，但是调完后得删，其实就是简略版日志。
+- 断言：`assert assertionCondition, errinfoString`，断言失败会抛出`AssertionError`。启动时加上`-O`选项关闭断言。
+- 日志：`import logging`。
+    - 不同级别：`NOTSET DEBUG INFO WARNING/WARN ERROR FATAL/CRITICAL`
+    - 设置输出级别：`logging.basicConfig(level = logging.INFO)`
+    - 对应输出方法：`debug info warning error/exception critical/fatal`
+    - 指定`level = INFO`时`debug`就不起作用了。
+    - 默认日志级别为`WARNING`。
+    - 通过简单的配置，一条语句可以输出到不同地方，比如控制台和文件。
+    - 日志是比较方便的工具。
+- `pdb`单步调试：`python -m pdb xxx.py`
+    - `l`查看代码。
+    - `n`单步执行。
+    - `p variable`查看变量。
+    - `a` 查看当前函数所有变量。
+    - `q` 退出程序。
+    - `c` 继续执行。
+- `pdb`设置断点：
+    - `import pdb`
+    - `pdb.set_trace()` 设置断点。
+- 命令行调试还是太麻烦了，使用VsCode或者PyCharm就行。
+- 使用IDE调试虽然方便，但到最后`logging`才是终极武器。对于大型系统单步调试关注局部，大量日志分析更关注整体，都必不可少。
+
+单元测试：
+- 单元测试是对一个模块、一个类或者一个函数进行正确性检验的测试工作。
+- 思路，比如对于函数`abs()`：
+    - 输入正数期待与输入相同。
+    - 输入负数期待与输入相反。
+    - 输入0期待返回0。
+    - 输入非数值类型，比如`[] () {} None`期待抛出`TypeError`。
+    - 以上测试放到一个模块中就是一个完整的针对`abs`函数的单元测试。
+- 如果测试未通过，需要确定是单元测试编写得有问题还是函数有bug，有则修复，使之能够测试通过。
+- 单元测试的意义：在我们修改了`abs()`代码之后，再跑一边测试用例，通过则说明修改对现有`abs()`函数原有的行为未造成影响。不通过的话，要么修改代码与原来需求一致，要么修改测试函数功能发生变化（使用的地方同样需要注意）。
+- 这种测试驱动开发的好处就是确保程序模块行为符合设计的测试用例，在将来修改重构时，可以极大程度保证该模块行为仍然是正确的。
+- python自带的单元测试模块：`unittest`
+- 测试类从`unittest.TestCase`继承，其中以`test`开头的方法就是测试方法，不以`test`开头的方法不会被认为是测试方式，测试时不会被执行。
+- `unittest.TestCase`提供了很多内置的条件判断：
+    - `assertEqual` 最常用
+    - `assertTrue`
+    - `assertRaises` 处理错误输入，会抛出异常的情况。
+- 最后执行测试的逻辑中直接执行`unittest.main()`（放到`__name__ == "__main__"`中）即可执行这些测试，不需要一个一个添加到代码中。
+- 运行测试：`python xxx.py`或者`python -m unittest xxx`测试模块。
+- 可以在单元测试中编写两个特殊的`setUp()`和`tearDown()`方法。这两个方法会分别在每调用一个测试方法的前后分别被执行。设想你的测试需要启动一个数据库，这时，就可以在`setUp()`方法中连接数据库，在`tearDown()`方法中关闭数据库。
+- 单元测试通过并不代表没有bug了，但是没有通过一定就有bug，无论是测试代码还是具体逻辑。
+
+文档测试：
+- Python内置的文档测试`doctest`可以直接提取注释中的代码并执行测试。
+- `doctest`严格按照Python交互式命令行的输入和输出来判断测试结果是否正确。只有在测试异常时，可以用`...`表示其中一大段烦人的输出。
+- 执行测试：`import doctest` `doctest.testmod()` 一般同样写在`__name__ == "__main__"`条件中，被其他模块导入时不会被执行，只有单独执行改文件才会执行。执行失败会有提示，执行成功不会有任何提示。
+
+
 ## IO
 
+IO分为同步IO和异步IO，因为磁盘读写网络操作等都比CPU处理慢，所以发起一个IO操作CPU可以选择等待处理结束再继续执行，还是说直接继续执行，以其他方式处理IO（IO处理结束后回调或者CPU去轮询IO状态）。异步IO复杂高效，同步IO简单但是低效，这里仅先探讨同步IO。
+
+文件读写：
+- 打开文件：`f = open("Test.txt", "r")`
+- 函数原型：`open(file, mode='r', buffering=- 1, encoding=None, errors=None, newline=None, closefd=True, opener=None)`
+- 读写模式：可以读或者写，写时可以选择覆盖还是添加到末尾，读写可以选择文本格式还是二进制格式，写时可以选择文件不存在和存在时的默认操作（创建还是报错）。
+- 具体读写选项：`rwxa` `bt` `+` 可以排列组合，根据需要添加，默认是`rt`文本格式读打开。
+
+|字符|含意|
+|:-:|:-|
+|`'r'`|读取（默认）
+|`'w'`|写入，并先截断文件
+|`'x'`|排它性创建，如果文件已存在则失败
+|`'a'`|打开文件用于写入，如果文件存在则在末尾追加
+|`'b'`|二进制模式
+|`'t'`|文本模式（默认）
+|`'+'`|打开用于更新（读取与写入）
+
+- Python区分二进制和文本IO，二进制格式打开的内容返回`bytes`对象，不进行任何解码。文本格式打开内容返回`str`，使用指定的`encoding`（如果指定了的话）或者平台默认字节编码解码。
+- 平台无关，不依赖操作系统底层的文本文件概念，所有处理由python自身完成。
+- 更多参数细节查看[文档](https://docs.python.org/zh-cn/3/library/functions.html#open)。
+- 返回一个文件对象，类型取决于所用模式，文本二进制、是否使用缓冲都会有影响，一般文本模式读或写打开是返回的是一个`io.TextIOBase`子类（特别是`io.TextIOWrapper`）。
+- 调用`read`读取全部内容，得到的文件对象可以迭代，文本模式下迭代单位是行。
+- 使用结束后需要`close`关闭。
+- 文件读写时都有可能错误，可以使用`try ... finally`确保文件一定被关闭。
+```python
+try:
+    f = open("Test.txt", "r")
+    print(f.read())
+finally:
+    if f:
+        f.close()
+```
+- 为了简化，Python引入了`with`语句来自动调用`close`。
+```python
+with open("Test.txt", "r") as f:
+    print(f.read())
+```
+- 文件很大时`read`直接读取可能并不好，可以使用`read(size)`读取指定字节内容，`readline()`每次读取一行，`readlines()`读取所有行放到列表中。
+```python
+for line in f.readlines(): # iterate list of lines
+    print(line)
+for line in f: # iterate line in file
+    print(line)
+```
+- `open`返回的具有`read()`方法的对象成为file-like object，除了文件还可以是字节流、网络流、自定义流等，可以自定义，不要求从特定类派生，因为是鸭子类型的，只需要实现`read()`方法就行。
+- 写文件使用`write`。写时会缓冲，不会立即写到磁盘，文件关闭时才被写到磁盘。
+- python中最好使用`with`语句操作文件IO。
+
+`StringIO`/`BytesIO`：
+- 很多时候数据读写不一定就是文件，也可以在内存中读写，内存中读写`str`和`bytes`分别使用`io.StringIO io.BytesIO`。
+- 用法和文件流一样，创建之后就可以使用，另外可以使用`getvalue()`获取内容。
+- 除了读写，其实IO对象有一个指针指向当前的位置，使用`tell`获取，并且可以使用`seek(offset, whence)`移动（偏移可负可正表向前后移动，后一个参数表相对的位置，默认为0文件开头，1当前位置，2文件末尾），读写、读取行等操作后指针就会移动到写的内容末尾或者下一行。
+- 搞清楚当前位置，同时只用来读或写，一般不要同时读或写，会很迷惑容易出错。
+
+操作系统接口：
+- 使用`os`模块直接调用操作系统提供了接口。
+- `import os`
+- `os.name`表明当前系统，类Unix系统是`posix`，windows系统是`nt`。
+- `os.uname()`获取系统详细信息。windows上不提供，某些函数是与操作系统相关的。
+- 环境变量：
+```python
+print(os.environ) # environment variables
+print(os.environ.get("path")) # get specific environment variable
+```
+
+操作文件与目录：
+- 接口一部分在`os`模块，`os.path`下。
+- `os.mkdir() os.rmdir()`新建和删除目录。
+- `os.path.abspath('.')`获取绝对路径。
+- 合并路径时，使用`os.path.join()`而不是使用字符串的`join`，这个接口会处理不同操作系统中的目录分隔符。
+```python
+print(os.path.join('..', "test", "hello")) # ../test/hello in Unix-like, ..\test\hello in windows
+```
+- 同理拆分路径时使用`os.path.split()`，拆成目录和文件名的元组。
+- 拆分文件扩展名`os.path.splitext()`。
+- 路径拆分不要求文件存在，仅处理路径。
+- 更多函数`os.rename() os.remove()`
+- `os`中不存在复制文件的接口，在`shutil`模块中提供了`copyfile`用于复制，这个模块可以看做是`os`模块的补充。
+- 还有更多接口，可以查看标准库文档。
+
+序列化：
+- 序列化就是将对象写进文件，反过来的过程称为反序列化。Python中称之为Pickling和Unpickling。
+- Python的对象序列化可以使用`pickle`模块，使用`pickle.dumps(obj)`将对象转换为字节序列`bytes`，可以直接保存到文件`pickle.dump(obj, fd)`。
+- 反序列化则使用`obj = pickle.load(fd)`从文件加载，`obj = pickle.loads(s)`从`bytes`加载。
+- 使用`pickle`模块问题和其他语言特有的序列化问题一样，只能用于Python语言，不同版本可能不兼容。泛用性有限。
+- 更一般的序列化方法还是使用JSON或者XML这种结构化描述。JSON表示的对象就是标准的Javascript语言的对象。
+- JSON和python内置类型对应关系。
+
+|JSON类型|Python类型|
+|:-:|:-|
+`{}`|`dict`
+`[]`|`list`
+`"string"`|`str`
+`1234.56`|`int`或`float`
+`true/false`|`True/False`
+`null`|`None`
+- Python内置的`json`模块提供了非常完善的JSON格式转换。
+- `json.dumps(obj) -> str` `json.dump(obj, fd)`
+- `json.loads(json_str) -> obj` `json.load(fd) -> obj`
+- 实际使用中还需要能序列化一般对象，为此对象需要是能够序列化为JSON的对象才行，为此需要实现一个将对象转换为字典的方法，作为关键字参数`default`传入`dumps dump`。
+```python
+class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    def __str__(self) -> str:
+        return f"Person -> name : {self.name}, age : {self.age}"
+
+def person2dict(p):
+    return {
+        "name": p.name,
+        "age": p.age
+    }
+
+def dict2person(d):
+    return Person(d['name'], d['age'])
+
+json_str = json.dumps(Person("Kim", 18), default=person2dict)
+print(json_str)
+print(json.dumps(Person("Jim", 17), default=lambda x : x.__dict__))
+print(json.loads(json_str, object_hook=dict2person))
+```
+- 同理反序列化时也可以定制一个将字典转换为对象的钩子方法，作为`object_hook`关键字参数传入。
+- 通常的实例都有一个`__dict__`属性，就是一个字典，用来存储实例变量，所以序列化时可以传入`default=lambda x : x.__dict__`。也有少数例外，比如定义了`__slots__`的class。
+- 当默认的序列化或反序列机制不满足我们的要求时，我们又可以传入更多的参数来定制序列化或反序列化的规则，既做到了接口简单易用，又做到了充分的扩展性和灵活性。
+- 比如`ensure_ascii`参数可以确保写到Json字符串中的字符是否允许非ASCII字符，默认是`True`则会将非ASCII的Unicode字符用`\uxxxx`转义。
+
+
 ## 并发编程
+
 
 ## 正则表达式
 
