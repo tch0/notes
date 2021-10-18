@@ -17,6 +17,7 @@
   - [并发编程](#%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B)
   - [正则表达式](#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
   - [常用内建模块](#%E5%B8%B8%E7%94%A8%E5%86%85%E5%BB%BA%E6%A8%A1%E5%9D%97)
+  - [常用第三方模块](#%E5%B8%B8%E7%94%A8%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97)
   - [virtualenv](#virtualenv)
   - [图形界面](#%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2)
   - [网路编程](#%E7%BD%91%E8%B7%AF%E7%BC%96%E7%A8%8B)
@@ -1624,6 +1625,291 @@ Python中的正则表示式：
 - 捕获、零宽断言、负向零宽断言、注释、平衡组、递归匹配等有机会接触到再详细了解。
 
 ## 常用内建模块
+
+`datetime`
+- `from datetime import datetime`，前者是模块，后者是类表示日期和时间。
+- 当前时区时间`datetime.now()`，标准时区时间`datetime.utcnow()`。
+- 构造指定日期时间：`datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])`
+- 时间戳：`datetimeInstance.timestamp()`，从UTC+00:00时区的1970年1月1日00:00:00时刻（Epoch Time）到现在的时刻的秒数成为时间戳，单位是秒，浮点数，精确到微妙（小数点后6位）。时间戳和时区、闰年闰秒等无关。
+- 时间戳转`datetime`：`datetime.fromtimestamp(stamp)`，结果是本地时区。
+- 时间戳转UTC标准时区（UTC+00:00）时间：`datetime.utcfromtimestamp(stamp)`。
+- 字符串转`datetime`：`datetime.strptime("2021-1-1 10:00:01", "%Y-%m-%d %H:%M:%S")`，时间字符串和格式化字符串格式要吻合，详见[文档](https://docs.python.org/zh-cn/3/library/datetime.html#strftime-strptime-behavior)。得到的时间没有时区信息。
+- `datetime`转字符串：`datetime.now().strftime('%a, %b %d %H:%M')`。格式化字符串同上见文档。
+- 表时间间隔的类：`timedelta`，支持加减、正负号绝对值、和`timedelta`比较，与整数做乘除法。构造：`timdelta(days, seconds, microseconds)`。两个`datetime`相减会得到一个`timedelta`。
+- 时区信息：`timezone`类。
+    - 创建UTC+8:00时区：`timezone(timedelta(hours=8))`
+    - `datetime`有`tzinfo`属性，默认是`None`时表示当前时区。
+    - 强制替换时区：`datetimeinstance.replace(tzinfo=timezone(timedelta(hours=7)))`，时间日期不会变，只是强制改变时区。
+- 时区转换：
+    - `astimezone(self, tz=None)`方法切换到某一时区，默认当前时区。
+    - 如果以前没有时区信息`None`，那么就是从当前时区转到特定时区。
+    - 关键在于要知道拿到一个`datetime`时它的时区，一般比如`datetime.now()`是不包含时区信息的，可以通过`tzinfo`属性设置或者先调用一次加上时区信息。
+
+`collections`
+- 命名元组：`namedtuple`函数，用来创建一个命名了的元组，元素个数固定，并可以指定属性名称，除了下标还可以通过属性名称来访问元素。`Point = namedtuple('Point', ['x', 'y'])`。
+- 双向列表：`deque`，使用`list`插入删除效率不高，`deque`可以用作队列和栈，提供高效头尾插入和删除元素。方法`append pop appendleft popleft`。
+- `defaultdict`：使用`dict`时，如果key不存在，会抛出`KeyError`，如果希望key不存在时返回一个默认值，可以用`defaultdict`。
+- `OrderedDict`：有序字典，元素会按照key插入顺序排列。
+- `ChainMap`：将多个`dict`有序地组合起来，构成一个逻辑上的字典，查找时会按照顺序依次查找每一个字典，和多个字典取并集有区别。可以实现多个层次优先级查找，比如应用程序往往都需要传入参数，参数可以通过命令行传入，可以通过环境变量传入，还可以有默认参数。我们可以用ChainMap实现参数的优先级查找。
+- `Counter`：计数器，`dict`子类，value类型是整数，用来计数。
+- Python命名感觉有点混乱，有时大驼峰有时全小写。
+
+`base64`
+- Base64编码是一种用64个字符来编码任意二进制数据的方法。
+- 众所周知文本编辑器无法处理二进制文件，因为编码不一致，用ASCII的话可能存在非ASCII的字符，其他编码字符编码也不一定符合。为了能用文本字符串来表示二进制数据，就可以将二进制数据用Base64进行编码。
+- 原理：准备64个字符的数组，将二进制数据按照每6位编码为一个8位的字符（这6位的值作为数组下标的数组元素），每3个字节就会编码为4个字节的字符串，体积膨胀33%。如果二进制数据长度不是3个倍数，用`\x00`字节在二进制数据末尾补足，再在编码末尾添加`=`或`==`表示补了多少字节。
+- 这个字符数组是：`['A', 'B', ..., 'Z', 'a', 'b', ..., 'z', '0', ..., '9', '+', '/']` 字母数字加上加减号共64个字符。
+- 编码解码都非常简单，编码就查表替换就行，解码则反推索引，恢复二进制数据即可。
+- Python内置`base64`模块提供Base64编解码功能。
+- 编码：`base64.b64encode(b'helloworld')`
+- 解码：`base64.b64decode(b'aGVsbG93b3JsZA==')`
+- 编解码是可以提供一个长度为2的字节序列关键字参数`altchars`用来替换`+/`以获得合法的url或者文件系统路径字符串。
+- 内置的用`-`和`_`来替换`+/`的编解码方法：`urlsafe_b64encode urlsafe_b64decode`。
+- 还可以自定义64个字符的排列顺序，这样就可以自定义Base64编码，不过通常情况下完全没有必要。
+- Base64可以用以编解码，不能用于加密，即使使用自定义编码表（太过原始，不安全）。
+- Base64适用于小段内容的编码，比如数字证书签名、Cookie的内容等。
+- 但`=`用在URL、Cookie里面会造成歧义，所以，很多Base64编码后会把`=`去掉。因为Base64是把3字节变4字节，所以解码前只需要在Base64字符串后加上`=`使长度变成4个整数倍即可。
+
+`struct`
+- `struct`模块提供`bytes`和其他二进制数据类型比如整数浮点数之类的转换。
+- `import struct`。
+- `strcut.pack(format, *args)`将多个数据打包成一个二进制序列，格式字符见[文档](https://docs.python.org/zh-cn/3/library/struct.html#format-characters)，比如`>I`就表示用大端序编码一个4字节无符号整数。
+- Python不适合编写底层操作字节流的代码，但在对性能要求不高的地方，可以使用`struct`。
+- 解析二进制序列：`struct.unpack(format, bytes)`，得到元组。
+- 使用场景：一些特定的二进制文件格式（比如图片BMP、JPG等）都会有特定结构，此时读入二进制流，然后使用`struct`解析或者打包文件头就可以很方便。
+
+`hashlib`
+- `hashlib`提供了常见的摘要算法，比如MD5，SHA1等。
+- 摘要算法的目的主要是通过摘要函数对任意长度的数据计算出固定长度的摘要`digest`，可以用以确认原始数据是否被人篡改过。
+```python
+import hashlib
+md5 = hashlib.md5()
+md5.update('how to use md5 in '.encode('utf-8'))
+md5.update('python hashlib?'.encode('utf-8'))
+print(md5.hexdigest())
+```
+- 其他比如`sha1 sha256 sha512`用法类似，对较长数据做哈希时可以分多次传入`update`，和一次传入计算结果一致。
+- MD5生成128位的字节，通常用长度32的16进制字符串表示。SHA1生成160位的字节，通常用长度40的字符串表示。比SHA1更安全的算法是SHA256和SHA512，分别生成256和512位，摘要长度越长越安全，计算起来越慢。
+- 通常在很多网站下载文件时都会给一个SHA256检验码，可以拿到文件后计算文件的SHA256是否吻合以确保文件在网络上传输过程中没有被篡改。
+- 应用：在保存用户密码时保存经过摘要之后的哈希，而不是原始的密码字符串，用户输入密码后计算出哈希然后对比哈希，这样即使运维人员能访问数据库、数据库被黑客攻击窃取，也无法知道用户输入的密码明文，从而防止撞库等攻击手段。当然这一定程度上也是取决于摘要算法本身是否能够被破解的，这就是另一个问题了。摘要并不一定就是唯一的，做哈希那很显然对不同数据做哈希得到的哈希值可能是相同的，只是在实践中这种情况发生概率是非常非常小的。
+- 采用MD5等哈希存储密码是否一定安全呢？也不一定，因为用户极有可能使用很简单的密码比如123456，qwerty等这种常用密码，从哈希值反推密文是非常费劲的，但黑客可以维护一个常见密码到哈希值的数据库（彩虹表），如果用户密码很简单在库中，那么就可以通过哈希反推出密码。所以作为用户来说，为了防止这种攻击，一般不要使用太简单的密码。
+- 为了保护较为简单的密码被反推，也可以对原始密文字符串加上一个复杂字符串之后再做哈希，俗称“加盐”。经过加盐之后，只要Salt不被黑客知道，就无法推出原始密文。甚至计算哈希时将密码加上用户名和盐一起计算。
+- 哈希算法无法用于加密，因为信息是有损的且无法反推明文，只能用于防篡改。它的单向计算特性决定了可以在不存储明文口令的情况下验证用户口令。
+
+
+`hmac`
+- 上述计算哈希时如果Salt是我们随机生成的，那么计算MD5通常采用`md5(message+salt)`，如果把盐看做口令，计算消息的哈希时需要提供这个口令，验证时也必须要提供正确的口令。
+- 这实际上就是Hmac算法：Keyed-Hashing for Message Authentication。它通过一个标准算法，在计算哈希的过程中，把key混入计算过程中。不同于我们自己计算MD5加盐，Hmac算法对所有哈希算法都适用，无论MD5还是SHA1，采用Hmac算法代替自己编写加盐代码，可以使程序更加标准化也更安全。
+- Python的`hmac`模块可以做这件事情。
+```python
+import hmac
+message = b"hello,world!"
+key = b"sercet"
+h = hmac.new(key, message, digestmod="MD5")
+print(h.hexdigest())
+
+h = hmac.new(key, message, digestmod="SHA1") # SHA256, SHA512, ...
+print(h.hexdigest())
+```
+- 需要注意的是，如果黑客知道了用户的盐，那么还是可以通过已知密码列表和这个盐算出一个库，最后和哈希值对比，如果有那么就破解成功了。实践中一般会给每个用户生成一个随机的盐，保存在服务端，这样黑客就无法通过每次计算一个盐得到一个库来尝试撞出所有用户的密码，而是要对每一个盐都对密码表中所有密码生成一个库，极大地增大了黑客的计算成本，使拿到数据库的黑客批量计算出密码这件事情变得几乎不可行了。但黑客还是可以针对一个特定的用户去尝试，这时候还是需要用户设置更加复杂的密码，以及不在不同网站使用同样的密码才可以很好地避免。一般人其实也不具备被黑客攻击的价值，但还是要有最基本的安全意识。
+- 摘要算法的输入是字节序列。
+
+`itertools`
+- 其中提供了一些用于迭代的有用的函数。
+- 比如Map/Reduce相关操作的补充。
+- 几个无限迭代器：
+    - `count(start, step = 1)`从n开始的无限迭代器。
+    - `cycle(iterator)`循环迭代一个迭代器，结束后又从头开始。
+    - `repeat(elem, times)`迭代一个元素指定次数，不传次数则是无数次。
+    - 迭代时才回去访问元素，不会事先创建无限的元素。
+- 串联多个迭代器，形成一个更大的迭代器：`chain(*iters)`。
+- 把迭代器中相邻的重复元素挑出来放在一起：`groupby(iterable, grouprule)`，挑选规则为传入的函数，只要作用于两个元素返回的值相等就被放到一组。
+- 还有很多有用的函数。
+
+`contextlib`
+- Python中读写文件这种资源处理需要特别注意，需要确保关闭，一个方法是使用`try...finally`，不过很繁琐，更常见的是使用`with`语句。
+- 除了`open()`函数打开文件对象，其实对于任何对象，只要正确实现了上下文管理，都能用于`with`语句。
+- 实现上下文管理是通过`__enter__`和`__exit__`这两个方法实现的。
+```python
+class Query(object):
+    def __init__(self, name) -> None:
+        self.name = name
+    def __enter__(self):
+        print('Begin')
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            print('Error')
+        else:
+            print('End')
+    def query(self):
+        print(f"Query info about {self.name}")
+
+with Query('Bob') as q:
+    q.query()
+```
+- 因为是鸭子类型的，所以不需要继承什么类，只需要实现这两个方法，就可以在`with`语句中使用。
+- 使用`__enter__ __exit__`依然比较繁琐，Python标准库`contextlib`提供了更简单的写法。上面的代码可以改写为：
+```python
+from contextlib import contextmanager
+
+class Query2(object):
+    def __init__(self, name):
+        self.name = name
+    def query(self):
+        print(f"Query info about {self.name}")
+
+@contextmanager
+def create_query(name):
+    print("Begin")
+    q = Query2(name)
+    yield q
+    print('End')
+
+with create_query('Bob') as q:
+    q.query()
+```
+- 使用`@contextmanager`装饰器，定义函数，执行要执行的操作，将要放在`with`语句中的对象`yield`出去，将进入和离开释放资源的逻辑写在其中即可。
+- 执行顺序：`yield`前的语句，`with`块中语句，然后是`yield`后的语句。
+- 很多时候，希望在某段代码执行前后自动执行特定代码，也可以用`@contextmanager`实现。
+- 比如输出xml时输出内容后自动输出元素的结束标记。
+```python
+@contextmanager
+def tag(name):
+    print(f"<{name}>")
+    yield
+    print(f"</{name}>")
+
+with tag("h1"):
+    print("hello")
+```
+- 如果一个对象没有实现上下文，我们就不能把它用于with语句。这个时候，可以用`closing()`来把该对象变为上下文对象。
+- 效果类似于：结束后自动调用`close`方法。
+```python
+@contextmanager
+def closing(thing):
+    try:
+        yield thing
+    finally:
+        thing.close()
+```
+- 这个库中还有许多用于上下文管理的装饰器，见[文档](https://docs.python.org/zh-cn/3/library/contextlib.html)。
+
+`urllib`
+- 提供了一系列操作URL的功能，`urllib`模块的`request`模块可以方便的抓取URL内容，也就是发送一个GET请求到指定的页面，然后返回HTTP的响应。
+```python
+from urllib import request
+
+with request.urlopen('https://baidu.com') as f:
+    data = f.read()
+    print('Status:', f.status, f.reason)
+    for k, v in f.getheaders():
+        print('%s: %s' % (k, v))
+    print('Data:', data.decode('utf-8'))
+```
+- 如果要模拟浏览器发送GET请求，就需要使用`Request`对象，添加HTTP头，就可以把请求伪装成浏览器：
+```python
+req = request.Request('http://www.douban.com/')
+req.add_header('User-Agent', 'Mozilla/6.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/8.0 Mobile/10A5376e Safari/8536.25')
+with request.urlopen(req) as f:
+    print('Status:', f.status, f.reason)
+    for k, v in f.getheaders():
+        print('%s: %s' % (k, v))
+    print('Data:', f.read().decode('utf-8'))
+```
+- 如果要发送POST请求，就需要把参数`data`以bytes形式传入
+- 还有更复杂的控制，比如通过一个代理去访问网站，可以利用`ProxyHandler`来处理。
+- `urlopen`得到的对象是一个file-like对象，可以像文件一样通过`read`读取。
+
+`XML`
+- XML比JSON更复杂，不过依然还有许多地方在使用。
+- XML有两种操作方法：DOM(Document Object Model)和SAX(Simple API for XML)。DOM会把整个XML读入内存，解析为树，因此占用内存大，解析慢，优点是可以任意遍历树的节点。SAX是流模式，边读边解析，占用内存小，解析快，缺点是我们需要自己处理事件。
+- 正常情况下优先考虑SAX，因为DOM太占用内存。
+- Python使用SAX，通常我们关心的事件是`start_element`，`end_element`和`char_data`，准备好这3个函数，然后就可以解析xml了。
+```python
+from xml.parsers.expat import ParserCreate
+
+class DefaultSaxHandler(object):
+    def start_element(self, name, attrs):
+        print('sax:start_element: %s, attrs: %s' % (name, str(attrs)))
+
+    def end_element(self, name):
+        print('sax:end_element: %s' % name)
+
+    def char_data(self, text):
+        print('sax:char_data: %s' % text)
+
+xml = r'''<?xml version="1.0"?>
+<ol>
+    <li><a href="/python">Python</a></li>
+    <li><a href="/ruby">Ruby</a></li>
+</ol>
+'''
+
+handler = DefaultSaxHandler()
+parser = ParserCreate()
+parser.StartElementHandler = handler.start_element
+parser.EndElementHandler = handler.end_element
+parser.CharacterDataHandler = handler.char_data
+parser.Parse(xml)
+```
+- 除了解析字符串之外，生成字符串可以直接使用简单的字符串拼接完成。不太建议生成大段的XML，最好使用JSON。
+
+
+`HTMLParser`
+- 如果要实现一个浏览器，假设html页面已经已经爬取到了，下一步就是解析HTML。
+- HTML本质上是XML的子集，但是HTML的语法没有XML那么严格，所以不能用标准的DOM或SAX来解析HTML。
+- Python提供了`HTMLParser`来解析HTML，只需要简单几行代码。
+```python
+from html.parser import HTMLParser
+from html.entities import name2codepoint
+
+class MyHTMLParser(HTMLParser):
+
+    def handle_starttag(self, tag, attrs):
+        print('<%s>' % tag)
+
+    def handle_endtag(self, tag):
+        print('</%s>' % tag)
+
+    def handle_startendtag(self, tag, attrs):
+        print('<%s/>' % tag)
+
+    def handle_data(self, data):
+        print(data)
+
+    def handle_comment(self, data):
+        print('<!--', data, '-->')
+
+    def handle_entityref(self, name):
+        print('&%s;' % name)
+
+    def handle_charref(self, name):
+        print('&#%s;' % name)
+
+parser = MyHTMLParser()
+parser.feed('''<html>
+<head></head>
+<body>
+<!-- test html parser -->
+    <p>Some <a href=\"#\">html</a> HTML&nbsp;tutorial...<br>END</p>
+</body></html>''')
+```
+- 基本逻辑是从`HTMLParser`派生，实现对应方法即可解析。
+
+## 常用第三方模块
+
+除了内建模块，Python还有数量众多的第三方模块。所有的第三方模块都会在[PyPI - the Python Package Index](https://pypi.python.org/)上注册，只要找到对应的模块名字，即可用pip安装。
+
+`Pillow`
+- PIL：Python Imaging Library，已经是Python平台事实上的图像处理标准库了。但PIL仅支持到Python2.7，后续由一群志愿者在PIL的基础上创建了兼容的版本，名字叫Pillow，支持最新Python 3.x，又加入了许多新特性。
+- 安装：`pip install pillow`。
+
+`requests`
+
+`chardet`
+
+`psutil`
 
 ## virtualenv
 
