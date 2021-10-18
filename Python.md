@@ -1904,12 +1904,155 @@ parser.feed('''<html>
 `Pillow`
 - PIL：Python Imaging Library，已经是Python平台事实上的图像处理标准库了。但PIL仅支持到Python2.7，后续由一群志愿者在PIL的基础上创建了兼容的版本，名字叫Pillow，支持最新Python 3.x，又加入了许多新特性。
 - 安装：`pip install pillow`。
+- 下面的代码可以完成缩放和模糊的操作：
+```python
+from PIL import Image, ImageFilter
+
+# open an image
+im = Image.open('nephren.png')
+# get image size
+w, h = im.size
+print('Original image size: %sx%s' % (w, h))
+# resize to 50%
+im.thumbnail((w//2, h//2))
+print('Resize image to: %sx%s' % (w//2, h//2))
+# save scaled image
+im.save('thumbnail.png', 'png')
+
+# blur an iamge
+im = Image.open('nephren.png')
+im2 = im.filter(ImageFilter.BLUR)
+im2.save('blur.png', 'png')
+```
+- `PIL`的`ImageDraw`提供了一系列绘图方法让我们可以直接绘图。
+- 更多用法详见[文档](https://pillow.readthedocs.io/en/stable/)
 
 `requests`
+- Python内置的`urllib`可以用于访问网络资源，但是用起来很麻烦。而且缺少高级一点的功能。
+- 更好的方案是使用`requests`第三方库，处理URL资源特别方便。
+- 安装`pip install requests`
+- 发送GET请求：
+```python
+import requests
+r = requests.get('https://baidu.com')
+print(r.status_code)
+print(r.text)
+```
+- 对于带参数的URL，传入一个`dict`作为`params`参数。
+- `requests`会自动检测编码，使用`encoding`属性查看。
+- 无论响应时文本还是二进制内容，都可以使用`content`属性获取`bytes`对象。
+- 对于特定类型响应，比如JSON可以直接通过`json()`方法获取到json对象。
+- 需要传入HTTP头时，可以通过`headers`参数传入。
+- 发送POST请求，只需要把`get()`方法保存`post()`，传入`data`参数作为请求数据即可。
+- requests默认使用`application/x-www-form-urlencoded`对POST数据编码。如果要传递JSON数据，可以直接传入json参数。
+- 上传文件需要更复杂的编码格式，但是requests把它简化成files参数。读取文件时，注意务必使用'rb'即二进制模式读取，这样获取的bytes长度才是文件的长度。
+- 同样还可以`put() delete()`方法请求资源。
+- 除了获取响应内容，获取响应的其他信息也很轻松，比如响应头`r.headers['Content-Type']`。
+- requests对Cookie做了特殊处理，使得我们不必解析Cookie就可以轻松获取指定的Cookie。`r.cookies['ts']`。
+- 要在请求中传入Cookie，只需准备一个dict传入`cookies`参数。
+- 要指定超时，传入以秒为单位的`timeout`参数。
+- 更多内容详见[文档](https://docs.python-requests.org/zh_CN/latest/)。
 
 `chardet`
+- 作用：检测编码。
+- 安装：`pip install chardet`。
+- 拿到一个`bytes`检测它的编码：`chardet.detect(b'Hello, world!')`。
+- 支持编码见[文档](https://chardet.readthedocs.io/en/latest/supported-encodings.html)。
 
 `psutil`
+- 在Linux下，有许多系统命令可以让我们时刻监控系统运行的状态，如ps，top，free等等。要获取这些系统信息，Python可以通过subprocess模块调用并获取结果。但这样做显得很麻烦，尤其是要写很多解析代码。
+- 在Python中获取系统信息的另一个好办法是使用psutil这个第三方模块。顾名思义，psutil = process and system utilities，它不仅可以通过一两行代码实现系统监控，还可以跨平台使用，支持Linux／UNIX／OSX／Windows等，是系统管理员和运维小伙伴不可或缺的必备模块。
+- 使用`psutil`可以获取CPU信息、内存信息、磁盘信息、进程信息、用户信息、Windows服务等诸多有用的系统信息。
+- [文档](https://psutil.readthedocs.io/en/latest/)。
+- 示例：
+```python
+import psutil
+
+# CPU info
+print(psutil.cpu_count()) # logical cpu count
+print(psutil.cpu_count(logical=False)) # physical cpy count
+print(psutil.cpu_times())
+
+# print the usage of every cpu core, 5 times in one second
+for x in range(5):
+    print(psutil.cpu_percent(interval=0.2, percpu=True))
+
+# memory and swap memory info
+print(psutil.virtual_memory())
+print(psutil.swap_memory())
+
+# internet
+print(psutil.net_io_counters())
+print(psutil.net_if_addrs()) # port info
+print(psutil.net_if_stats()) # port status
+print(psutil.net_connections())
+
+# process
+print(psutil.pids())
+p = psutil.Process(psutil.pids()[-1])
+print(p.exe()) # executable of process
+print(p.cwd()) # working directory of process
+print(p.cmdline()) # cmd line of process
+print(p.ppid()) # parent process id
+print(p.parent()) # parent process
+print(p.children()) # children processes
+print(p.status()) # status
+print(p.username())
+print(p.create_time())
+# print(p.terminal()) # Unix only
+print(p.cpu_times())
+print(p.memory_info())
+print(p.connections()) # internet connections
+print(p.num_threads())
+print(p.threads())
+print(p.environ()) # environment variables of process
+
+# like ps command
+print(psutil.test())import psutil
+
+# CPU info
+print(psutil.cpu_count()) # logical cpu count
+print(psutil.cpu_count(logical=False)) # physical cpy count
+print(psutil.cpu_times())
+
+# print the usage of every cpu core, 5 times in one second
+for x in range(5):
+    print(psutil.cpu_percent(interval=0.2, percpu=True))
+
+# memory and swap memory info
+print(psutil.virtual_memory())
+print(psutil.swap_memory())
+
+# internet
+print(psutil.net_io_counters())
+print(psutil.net_if_addrs()) # port info
+print(psutil.net_if_stats()) # port status
+print(psutil.net_connections())
+
+# process
+print(psutil.pids())
+p = psutil.Process(psutil.pids()[-1])
+print(p.exe()) # executable of process
+print(p.cwd()) # working directory of process
+print(p.cmdline()) # cmd line of process
+print(p.ppid()) # parent process id
+print(p.parent()) # parent process
+print(p.children()) # children processes
+print(p.status()) # status
+print(p.username())
+print(p.create_time())
+# print(p.terminal()) # Unix only
+print(p.cpu_times())
+print(p.memory_info())
+print(p.connections()) # internet connections
+print(p.num_threads())
+print(p.threads())
+print(p.environ()) # environment variables of process
+
+# like ps command
+print(psutil.test())
+```
+
 
 ## virtualenv
 
