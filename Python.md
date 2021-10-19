@@ -18,7 +18,7 @@
   - [正则表达式](#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
   - [常用内建模块](#%E5%B8%B8%E7%94%A8%E5%86%85%E5%BB%BA%E6%A8%A1%E5%9D%97)
   - [常用第三方模块](#%E5%B8%B8%E7%94%A8%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97)
-  - [virtualenv](#virtualenv)
+  - [virtualenv & pipenv](#virtualenv--pipenv)
   - [图形界面](#%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2)
   - [网路编程](#%E7%BD%91%E8%B7%AF%E7%BC%96%E7%A8%8B)
   - [电子邮件](#%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6)
@@ -54,7 +54,8 @@ Python由吉多·范罗苏姆（Guido van Rossum，荷兰人）创造，第一�
 - [Python 语言参考手册](https://docs.python.org/zh-cn/3/reference/index.html) Python句法和核心语义，有一定基础可直接阅读。
 - [Python 教程](https://docs.python.org/zh-cn/3/tutorial/index.html) Python官方非正式教程，无基础可先从这开始阅读。
 - [Python 标准库](https://docs.python.org/zh-cn/3/library/index.html) Python标准库的文档，用来查阅。
-- [廖雪峰Python教程](https://www.liaoxuefeng.com/wiki/1016959663602400)（本文主要参考）
+- [廖雪峰Python教程](https://www.liaoxuefeng.com/wiki/1016959663602400)（本文主要参考，用于入门）
+- [Python最佳实践指南](https://pythonguidecn.readthedocs.io/zh/latest/index.html)，一份第三方的最佳实践指南，强烈建议阅读。
 
 ## 环境
 
@@ -2008,55 +2009,92 @@ print(p.threads())
 print(p.environ()) # environment variables of process
 
 # like ps command
-print(psutil.test())import psutil
-
-# CPU info
-print(psutil.cpu_count()) # logical cpu count
-print(psutil.cpu_count(logical=False)) # physical cpy count
-print(psutil.cpu_times())
-
-# print the usage of every cpu core, 5 times in one second
-for x in range(5):
-    print(psutil.cpu_percent(interval=0.2, percpu=True))
-
-# memory and swap memory info
-print(psutil.virtual_memory())
-print(psutil.swap_memory())
-
-# internet
-print(psutil.net_io_counters())
-print(psutil.net_if_addrs()) # port info
-print(psutil.net_if_stats()) # port status
-print(psutil.net_connections())
-
-# process
-print(psutil.pids())
-p = psutil.Process(psutil.pids()[-1])
-print(p.exe()) # executable of process
-print(p.cwd()) # working directory of process
-print(p.cmdline()) # cmd line of process
-print(p.ppid()) # parent process id
-print(p.parent()) # parent process
-print(p.children()) # children processes
-print(p.status()) # status
-print(p.username())
-print(p.create_time())
-# print(p.terminal()) # Unix only
-print(p.cpu_times())
-print(p.memory_info())
-print(p.connections()) # internet connections
-print(p.num_threads())
-print(p.threads())
-print(p.environ()) # environment variables of process
-
-# like ps command
 print(psutil.test())
 ```
 
+## virtualenv & pipenv
 
-## virtualenv
+virtualenv可以用来在一台机器上创建多个隔离的Python运行环境，比如一个应用需要某个包的一个特定版本，而另一个应用需要另一个版本，而这两个包可能又依赖另一个包的不同版本，将这两个版本放到同一个环境中势必会造成冲突，那么此时就可以使用virtualenv。
+- [官方文档](https://virtualenv.pypa.io/en/latest/)。
+- 安装：`pip install virtualenv`
+- 使用：`python -m virtualenv [options] [args]`
+- 创建一个新环境：在一个目录中`python -m virtualenv venv`，`venv`就是这个新环境的名称，并且会在目录中创建一个`venv/`目录，其中存放了Python可执行文件以及`pip`库的一份拷贝。省略名字将会把文件直接放在当前目录。
+- 使用虚拟环境前，需要先激活：
+    - Unix中：`source venv/bin/activate`
+    - Windows中执行：`.\venv\Scripts\activate.bat`
+    - 激活成功后命令行提示符前会出现`(venv)`，即表示进入虚拟环境。
+    - 直接执行`deactivate`可以停用虚拟环境（可以不用显式指明脚本路径），在虚拟环境中暂时完成了工作后离开时就可以停用它，这是会回到系统默认的Python解释器和安装的库。
+- 删除一个虚拟环境，只需要删除其目录。
+- 记得将虚拟环境的目录添加到版本控制的忽略文件中。
+- 在虚拟环境中安装第三方库将会保留在这个环境中，不会和系统默认环境发生冲突。
+- 运行原理：在执行了`activate`后，会修改相关环境变量，让Python和pip指向当前虚拟环境。
+
+另一种管理虚拟环境的工具Pipenv：
+- 结合了`pip`和`virtualenv`，侧重点是包环境管理。
+- 安装：`pip install pipenv`
+- Pipenv 管理每个项目的依赖关系。要安装软件包时，更改到项目目录，为项目安装一个包：`pipenv install package`。不加某一个具体的包的话就是安装`Pipfile`中所有包。
+- 卸载：`pipenv uninstall package`
+- 使用`pipenv`后会生成一个`Pipfile`，其中有最新安装的包文件的信息，如名称、版本等，用来在重新安装项目依赖或与他人共享项目时，你可以用 `Pipfile` 来跟踪项目依赖，这个文件就是`pipenv`用来替代`pip`的`requirements.txt`的文件。还会有一个`Pipfile.lock`包含你的系统信息，所有已安装包的依赖包及其版本信息，以及所有安装包及其依赖包的 Hash 校验信息。
+- 使用时可以通过`pipenv run python main.py`可以确保你的安装包可以用于你的脚本，就是说只会使用`Pipfile`中的依赖，如果没有在目录中用`pipenv install`安装的包将无法使用。
+- 还可以使用`pipenv shell`来生成一个新的shell，就像进入虚拟环境那样，就不用执行前都加一个`pipenv run`了。
+- 使用`pipenv run pip list`将会得到使用`pipenv run`执行时可用的包列表。
+- 其实`pipenv`也类似于`virtualenv`，只不过虚拟环境的文件不在当前目录下，而是在家目录下的`./virtualenvs`下的目录中。`pipenv --venv`可以查看其虚拟环境所在目录。
+- 更多命令：
+    - `pipenv update packge`更新第三方包。
+    - `pipenv --where` 查看项目根目录。
+    - `pipenv check` 检查第三方包的完整性。
+    - `pipenv graph` 查看依赖树。
+- `pipenv`换源：
+    - 新建系统变量`PIPENV_PYPI_MIRROR`为`https://pypi.tuna.tsinghua.edu.cn/simple`（或其他源）。对所有`pipenv`环境生效。
+    - 修改`Pipfile`中的`url`可以更改这个项目安装时的源。
+
+
+安装与生成依赖：
+- 如果你的程序和开发环境高度相关，就需要生成依赖文件`requirements.txt`。
+- 使用`pip freeze`可以得到当前环境所有的包，直接执行会得到当前安装的所有包，如果`virtualenv`或者`pipenv run`下执行，那么只会得到虚拟环境中可用的包。
+- 使用`pip freeze > requirements.txt`即可生成依赖文件。
+- 重新创建这样的环境：`pip install -r requirements.txt`。帮助确保安装、部署和开发者之间的一致性。
+- 如果没有使用虚拟环境，所有包都使用系统的Python包，那么`pip freeze`就会得到所有包，当发布项目时仅需要项目的依赖，可以使用包`pipreqs`来查找当前项目的依赖并自动生成`requirements.txt`。
+    - `pip install pipreqs`
+    - `pipreqs ./`
+
+另外还有`pyenv`可以用来管理多个版本的Python，这点Pipenv也可以做到，此处不详述`pyenv`。
+
+扩展阅读：
+- [Pipenv & 虚拟环境](https://pythonguidecn.readthedocs.io/zh/latest/dev/virtualenvs.html)，更多关于项目依赖于虚拟环境的说明。
 
 ## 图形界面
+
+Python支持多种图形界面的第三方库：Tk、wxWidgets、Qt、GTK。
+
+Tkinter：
+- Python自带的库是支持Tk的Tkinter，使用Tkinter，无需安装任何包，就可以直接使用。
+- 第一个Tkinter的GUI程序：
+```python
+from tkinter import *
+
+class Application(Frame):
+    def __init__(self, master = None):
+        Frame.__init__(self, master)
+        self.pack()
+        self.createWidgets()
+    def createWidgets(self):
+        self.helloLabel = Label(self, text='Hello, world!')
+        self.helloLabel.pack()
+        self.quitButton = Button(self, text='Quit', command=self.quit)
+        self.quitButton.pack()
+
+app = Application()
+app.master.title('hello,world')
+app.mainloop()
+```
+- 和其他语言的GUI程序差不多，派生Frame，其中创建各种Widget，实例化后启动消息循环。
+- GUI程序的主线程负责监听来自操作系统的消息，并依次处理每一条消息。如果消息处理非常耗时，就需要在新线程中处理。
+- ython内置的Tkinter可以满足基本的GUI程序的要求，如果是非常复杂的GUI程序，建议用操作系统原生支持的语言和库来编写。
+
+海龟绘图`turtle`库：
+- 简单来说就是指挥一个海龟前进转向以此来绘图的API，移植到Python上之后就是这个库，作用有限，可以用来体验GUI的乐趣。内置不需要安装。
+- [文档](https://docs.python.org/3.3/library/turtle.html)。
 
 ## 网路编程
 
