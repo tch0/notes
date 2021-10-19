@@ -1,2 +1,9 @@
+# vscode files
 .vscode/
+
+# python bytecode
 **/__pycache__/
+
+# test email infos
+Email/pop3.txt
+Email/smtp.txt
