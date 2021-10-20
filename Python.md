@@ -2098,9 +2098,249 @@ app.mainloop()
 
 ## 网路编程
 
+TCP/IP协议就不多介绍了，IPv4就是一个32位整数，一般用4个0-255的十进制用`.`分隔来表示。IPv6是128位整数，用8个4位十六进制整数`:`分隔表示。
+- TCP是可靠传输，会进行三次握手，四次挥手，UDP是不可靠传输。其他应用层的协议建立在TCP协议之上，比如浏览器的HTTP协议、邮件协议SMTP。
+- TCP协议使用一个一个的数据包传输数据，一个TCP报文除了包含要传输的数据外，还包含源IP地址和目标IP地址，源端口和目标端口。
+- 端口的作用是在机器上区分应用，Ip则用来区分机器，一个IP:端口的组合被称为一个套接字，用来唯一标识一个连接。
+
+TCP编程：
+- Socket是网络编程的一个抽象概念，用一个Socket表示打开了一个网络链接，打开一个Socket需要知道目标计算机的IP地址和端口号，再指定协议类型即可。
+- 大多数连接都是可靠的TCP连接，创建TCP连接时，发起连接的叫**客户端**，被动响应连接的叫**服务器**。
+
+客户端：
+- 创建一个基于TCP的连接：
+```python
+import socket
+
+# create a socket: AF_INET -> ipv4, SOCK_STREAM -> TCP
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('www.baidu.com', 80))
+```
+- 作为服务器，提供什么服务，使用什么端口号必须固定下来，80端口是Web服务的标准端口。其他服务都有对应的标准端口号，例如SMTP服务是25端口，FTP服务是21端口，等等。端口号小于1024的是Internet标准服务的端口，端口号大于1024的，可以任意使用。
+- 建立连接之后，可以发送请求：
+```python
+s.send(b'GET / HTTP/1.1\r\nHost: www.baidu.com\r\nConnection: close\r\n\r\n')
+```
+- TCP连接创建的是双向通道，双方都可以同时给对方发数据。但是谁先发谁后发，怎么协调，要根据具体的协议来决定。例如HTTP协议规定客户端必须先发请求给服务器，服务器收到后才发数据给客户端。
+- 接下里就可以接收数据了：
+```python
+# receive data
+buffer = []
+while True:
+    # 1 KB every time
+    d = s.recv(1024)
+    if d:
+        buffer.append(d)
+    else:
+        break
+data = b''.join(buffer)
+```
+- 数据接收完毕之后，调用`close`方法关闭Socket，一次完整的网络通信就结束了。
+```python
+s.close()
+```
+- 接收到的数据包括HTTP头和网页本身，我们只需要把HTTP头和网页分离一下，把HTTP头打印出来，网页内容保存到文件，在浏览器中打开这个`html`文件就可以看到百度的首页了。
+```python
+header, html = data.split(b'\r\n\r\n')
+print(header.decode('utf-8'))
+with open('baidu.html', 'wb') as f:
+    f.write(html)
+```
+
+服务器端：
+- 服务器编程比客户端要复杂一点。
+- 服务器进程需要绑定一个端口来监听其他客户端的连接，如果某个客户端连接过来，服务器就与该客户端建立Socket连接，随后的通信就依靠这个Socket连接。
+- 服务器可能会有大量客户端连接，由服务器地址、服务器端口、客户端地址、客户端端口唯一确定一个Socket。
+- 每个连接创建一个新线程进行处理。
+```python
+if __name__ == "__main__":
+    # create a socket: Ipv4, TCP
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # bind a port
+    s.bind(('127.0.0.1', 9999))
+
+    # listen a port, argument is max connection count
+    s.listen(5)
+    print("waiting for connection...")
+    # accept connection from client
+    while True:
+        # accept a new conection
+        sock, addr = s.accept()
+        # create a new thread to handle TCP connection
+        t = threading.Thread(target=tcplink, args=(sock, addr))
+        t.start()
+```
+- 处理逻辑：首先发送欢迎消息，然后接受客户端消息，如果是`exit`字符串就关闭连接，否则就发送消息到客户端。
+```python
+def tcplink(sock, addr):
+    print('Accept new connection from %s:%s...' % addr)
+    sock.send(b"Welcome!")
+    while True:
+        data = sock.recv(1024)
+        time.sleep(1)
+        if not data or data.decode('utf-8') == 'exit':
+            break
+        sock.send((f"hello {data.decode('utf-8')}").encode('utf-8'))
+    sock.close()
+    print("Connection from %s:%s closed." % addr)
+```
+- 在客户端，同样处理：
+```python
+# create a socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('127.0.0.1', 9999))
+
+# send requests
+print(s.recv(1024).decode('utf-8'))
+for data in [b"Alice", b"Bob", b"Mary"]:
+    s.send(data)
+    print(s.recv(1024).decode('utf-8'))
+s.send(b'exit')
+s.close()
+```
+- 执行结果：在服务器端先执行，会等待客户端来连接，执行客户端代码后连接成功服务端新建线程处理，客户端收到欢迎消息，客户端依次发送并接受消息，服务端依次接受并发送消息，直到收到`exit`关闭连接。服务端处理线程结束，主线程依然处于等待连接状态。
+
+UDP编程：
+- UDP是不可靠传输，不需要建立连接，只需要直到对方的IP地址和端口号，就可以直接发送数据包。但是能不能到达是不知道的。
+- 虽然传输不可靠，但优点是相比TCP更快。
+- 服务端：不需要监听，发送之前也不需要连接，这里比较简单，也不用多线程处理。
+```python
+import socket
+
+# create a socket: IPv4, UDP
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# bind to port
+s.bind(('127.0.0.1', 9999))
+print("Bind UDP on 9999...")
+
+# do not need listen, just receive
+while True:
+    data, addr = s.recvfrom(1024)
+    print("Received from %s:%s" % addr)
+    s.sendto(b'hello, %s' % data, addr)
+```
+- 客户端：不需要连接，直接给服务器发送数据。
+```python
+import socket
+
+# IPv4, UDP
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+for data in [b"Alice", b"Bob", b"Mary"]:
+    s.sendto(data, ('127.0.0.1', 9999))
+    print(s.recv(1024).decode('utf-8'))
+s.close()
+```
+- 服务器绑定UDP端口和TCP端口互不冲突，也就是说，UDP的9999端口与TCP的9999端口可以各自绑定。
+
 ## 电子邮件
 
+电子邮件的传递流程：
+- 写好一封邮件之后，从邮件软件（称之为MUA：Mail User Agent，邮件用户代理）发送。
+- 从MUA发出后，不是直接送达对方电脑，而是先送到MTA：Mail Transfer Agent，邮件传输代理，也就是自己用的什么邮件服务商提供的邮件就到哪儿。比如`163.com`那就先投递到网易的MTA。
+- 然后从自己的MTA对方的MTA（中间可能还会经过其他MTA），然后而对方的MTA会把邮件投递到最终目的地：MDA，Mail Delivery Agent，邮件投递代理。
+- 因为对方不一定在线，所以某个时刻在MUA上登录邮箱之后需要从MDA上把邮件取到自己的电脑上。
+- 所以大概的流程是：`发件人 -> MUA -> MTA -> MTA -> 若干个MTA -> MDA <- MUA <- 收件人`
+- 要编写程序来发送接收邮件，本质上就是：
+    - 编写MUA把邮件发到MTA。
+    - 编写MUA从MDA上收邮件。
+
+邮件协议：
+- 发邮件时，MUA和MTA使用的协议是**SMTP**：Simple Mail Transfer Protocol，MTA到另一个MTA也是SMTP。
+- 收邮件时，MUA和MDA使用的协议有两种。第一种POP：Post Office Protocol，目前版本是3，俗称**POP3**。第二种**IMAP**：Internet Message Access Protocol，目前版本是4，不但能取邮件，还可以直接操作MDA上存储的邮件，比如从收件箱移到垃圾箱等。
+- 目前大多数邮件服务商都需要手动打开SMTP发信和POP收信功能，否则只允许网页登录使用。
+
+SMTP发送邮件：
+- Python内置对SMTP的支持，可以发送纯文本邮件、HTML邮件、带附件的邮件。
+- 两个模块`smtplib`和`email`，前者构造邮件，后者发送邮件。
+```python
+from email.mime.text import MIMEText
+from email.header import Header
+from email.utils import parseaddr, formataddr
+
+def _format_addr(s):
+    name, addr = parseaddr(s)
+    return formataddr((Header(name, 'utf-8').encode(), addr))
+
+# input email and passwd
+from_addr = input('From: ')
+password = input('password: ')
+to_addr = input('To: ')
+
+# input SMTP server address
+smtp_server = input('SMTP server: ')
+
+# plain text email
+msg = MIMEText("hello, send by Python...", 'Plain', 'utf-8')
+msg['From'] = _format_addr('暗之恶魔 <%s>' % from_addr) # 发件人
+msg['To'] = _format_addr('光之使者 <%s>' % to_addr) # 收件人
+msg['Subject'] = Header("接受地狱的审判吧！", 'utf-8').encode() # 主题
+
+# send to MTA
+import smtplib
+server = smtplib.SMTP(smtp_server, 25)
+server.set_debuglevel(1) # print interactive info with the server
+server.login(from_addr, password)
+server.sendmail(from_addr, [to_addr], msg.as_string())
+server.quit()
+```
+- 发件人和收件人格式时`name <xxx@xxx.com>`，不能直接发中文，需要使用`Header`进行编码。
+- 密码并不一定就是邮箱密码，比如QQ邮箱就是其生成的一个用于第三方登录的授权码。
+- 上述代码输入信息时可以使用文件输入重定向，不必每一次都重新输入。
+- 要有发件人、收件人、主题才是一封完整的邮件，没有也可以发。
+- 如果要发送附件，可以构造一个`MIMEMultipart`，在其中添加一个`MIMEText`作为正文，在继续加上表示附加的`MIMEBase`对象即可。
+- 除了发送纯文本，也可以发送html邮件，邮件内容就是一个网页，如果要在其中嵌入图片，由于大部分邮件服务商会自动屏蔽带有外链的图片，因为不知道是否指向恶意网站。可以在HTML中通过引用`src="cid:x"`（x为图片编号）就可以把附加作为图片插入了。
+- 更多信息查看文档获取。
+
+POP3收取邮件：
+- 分两步：用`poplib`把邮件原始文本下载到本地，第二步，用`email`解析原始文本，还原为邮件对象。
+```python
+# input email
+email = input('Email: ')
+password = input('Password: ')
+pop3_server = input('POP3 server: ')
+
+# connect to POP3 server
+server = poplib.POP3(pop3_server)
+server.set_debuglevel(1)
+print(server.getwelcome().decode('utf-8'))
+
+# authentication
+server.user(email)
+server.pass_(password)
+
+# email number and space
+print('Message: %s, Size: %s', server.stat())
+
+# get numbers of all mails
+resp, mails, octets = server.list()
+print(mails)
+
+# get newest mail
+index = len(mails)
+resp, lines, octets = server.retr(index)
+
+# get raw content of mail
+msg_content = b'\r\n'.join(lines).decode('utf-8')
+# parse mail content
+msg = Parser().parsestr(msg_content)
+
+server.quit()
+```
+- 后续的解析逻辑就省略了，可查看Python分支或者[廖雪峰的教程](https://www.liaoxuefeng.com/wiki/1016959663602400/1017800447489504)获取。
+
 ## 数据库
+
+程序在运行时，数据存在于内存中，但当程序结束后，数据无论以何种形式最终都会保存到磁盘上，如何定义存储格式就成为了问题，可以是标准化的格式，也可以是自定义格式。当再次运行程序需要读入文件时，就需要将数据全部读入内存，如果数据远超内存大小，就根本无法全部读入内存。
+- 此背景下，为了便于数据的保存、读取和方便的查询，就出现了数据库（Database）这种专门用于集中存储和查询的软件。
+- 数据库诞生历史很久远，早于1950年就诞生了，经历了网状数据库，层次数据库，我们现在广泛使用的关系数据库是20世纪70年代基于关系模型的基础上诞生的。
+- 关系模型有一套复杂的数学理论。
+- 关系数据库中，基于表的一对多关系是基础。一个表中的一行记录就某一项而言可能对应于另一张表的多行记录。
+- 关系数据库有访问和处理的领域特定语言SQL。无论什么编程语言，涉及到操作数据库，基本都是通过SQL来完成，[廖雪峰教程](https://www.liaoxuefeng.com/wiki/1177760294764384)。
+- 目前使用广泛的商用闭源付费关系数据库：Oracle，微软的SQL Server，IBM的DB2等。
+- 开源数据库相对来说使用更为广泛：使用广泛的MySQL，学术气息挺重的PostgreSQL，适合桌面和移动应用的嵌入式数据库sqlite。
+- MySQL使用最多，一般作为首选，[MySQL Community Server免费下载](https://dev.mysql.com/downloads/mysql/)。
+
+
 
 ## Web开发
 
