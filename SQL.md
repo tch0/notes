@@ -1,3 +1,19 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [SQL入门](#sql%E5%85%A5%E9%97%A8)
+  - [关系数据库](#%E5%85%B3%E7%B3%BB%E6%95%B0%E6%8D%AE%E5%BA%93)
+  - [环境配置](#%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)
+  - [关系模型](#%E5%85%B3%E7%B3%BB%E6%A8%A1%E5%9E%8B)
+  - [查询数据](#%E6%9F%A5%E8%AF%A2%E6%95%B0%E6%8D%AE)
+  - [修改数据](#%E4%BF%AE%E6%94%B9%E6%95%B0%E6%8D%AE)
+  - [MySQL](#mysql)
+  - [MySQL实用SQL语句](#mysql%E5%AE%9E%E7%94%A8sql%E8%AF%AD%E5%8F%A5)
+  - [事务](#%E4%BA%8B%E5%8A%A1)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # SQL入门
 
 现代程序员离不开关系数据库，要使用关系数据库就必须掌握SQL。SQL(Structured Query Language)称之为结构化查询语言，是一门典型的DSL。
