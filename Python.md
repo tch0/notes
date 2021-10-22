@@ -2338,11 +2338,173 @@ server.quit()
 - 关系数据库有访问和处理的领域特定语言SQL。无论什么编程语言，涉及到操作数据库，基本都是通过SQL来完成，[廖雪峰教程](https://www.liaoxuefeng.com/wiki/1177760294764384)。
 - 目前使用广泛的商用闭源付费关系数据库：Oracle，微软的SQL Server，IBM的DB2等。
 - 开源数据库相对来说使用更为广泛：使用广泛的MySQL，学术气息挺重的PostgreSQL，适合桌面和移动应用的嵌入式数据库sqlite。
-- MySQL使用最多，一般作为首选，[MySQL Community Server免费下载](https://dev.mysql.com/downloads/mysql/)。
+- MySQL使用最多，一般作为首选，[MySQL Community Server免费下载](https://dev.mysql.com/downloads/mysql/)。更多MySQL与SQL语言的东西可以看[SQL.md](SQL.md)。
 
 
+使用SQLite：
+- SQLite是一种嵌入式数据库，它的数据库就是一个文件。由于SQLite本身是C写的，而且体积很小，所以，经常被集成到各种应用程序中，甚至在iOS和Android的App中都可以集成。
+- Python就内置了SQLite3，所以，在Python中使用SQLite，不需要安装任何东西，直接使用。
+- [sqlite3库文档](https://docs.python.org/zh-cn/3/library/sqlite3.html)。
+- 访问[SQLite主页](https://www.sqlite.org/index.html)查询支持的SQL方言语法与可用数据类型。
+- 首先要明确的概念：
+    - 要操作关系数据库，首先需要连接到数据库，一个数据库连接称为`Connection`。
+    - 连接到数据库后，需要打开游标，称之为`Cursor`，通过`Cursor`执行SQL语句，然后，获得执行结果。
+    - Python定义了一套操作数据库的API接口，任何数据库要连接到Python，只需要提供符合Python标准的数据库驱动即可。
+    - 由于SQLite的驱动内置在Python标准库中，所以我们可以直接来操作SQLite数据库。
+```python
+import sqlite3
+
+# connect to sqlite3 database, the database is file test.db, if not exist, will create a new file
+with sqlite3.connect('test.db') as conn:
+    # creat a cursor
+    cursor = conn.cursor()
+    # execute SQL
+    cursor.execute('drop table if exists user')
+    cursor.execute('create table user (id varchar(20) primary key, name varchar(20), score int)')
+    cursor.execute(r'insert into user (id, name, score) values ("1", "Michael", 90)')
+    cursor.execute(r'insert into user (id, name, score) values ("2", "Kim", 80)')
+    cursor.execute(r'insert into user (id, name, score) values ("3", "Bob", 65)')
+
+    print(cursor.rowcount)
+
+    # querys
+    cursor.execute('select * from user where id=? or id=?', ('1','2'))
+
+    values = cursor.fetchall()
+    print(values)
+
+    # close 
+    cursor.close() # not necessary, __del__ will close automatically
+    conn.commit()
+
+    def get_score_in(con, min, max):
+    cursor = conn.cursor()
+    cursor.execute(r'select name from user where score >= ? and score <= ?', (min, max))
+    values = cursor.fetchall()
+    cursor.close()
+    return [v[0] for v in values]
+
+    assert get_score_in(conn, 85, 100) == ['Michael']
+    assert get_score_in(conn, 70, 100) == ['Michael', 'Kim']
+    assert get_score_in(conn, 60, 100) == ['Michael', 'Kim', 'Bob']
+```
+- 使用Python的DB-API时，只要搞清楚`Connection`和`Cursor`对象，打开后一定记得关闭，就可以放心地使用。
+- 使用`Cursor`对象执行`insert update delete`语句，执行结果由`rowcount`返回影响的行数。
+- 使用`Cursor`执行`select`时，使用`fetchall`拿到结果集。结果集是一个列表，元素是元组，对应于每一行记录。
+- SQL语句带有参数时使用`?`作为占位符，第二个参数元组元素对应传入，有几个占位符就需要几个参数。而不应该使用Python自带的字符串参数，这样会有SQL注入的风险。
+- 需要确保打开的`Connection`对象能够正确关闭。可以使用`try...except..finally`或者`with`。
+
+使用MySQL：
+- 确保本地安装的MySQL配置支持utf-8。
+- `show variables like '%char%';`，其中有很多项，如果登录`mysql`的终端修改了字符页为65001，那么按道理来说应该是全都是utf-8。具体编码问题这里不细究，确保支持中文就行。
+```shell
+mysql> show variables like 'char%';
++--------------------------+---------------------------------------------------------+
+| Variable_name            | Value                                                   |
++--------------------------+---------------------------------------------------------+
+| character_set_client     | utf8mb4                                                 |
+| character_set_connection | utf8mb4                                                 |
+| character_set_database   | utf8mb4                                                 |
+| character_set_filesystem | binary                                                  |
+| character_set_results    | utf8mb4                                                 |
+| character_set_server     | utf8mb4                                                 |
+| character_set_system     | utf8mb3                                                 |
+| character_sets_dir       | C:\Program Files\MySQL\MySQL Server 8.0\share\charsets\ |
++--------------------------+---------------------------------------------------------+
+```
+- MySQL的utf-8并不是完整的utf-8，最多只支持3个字节编码，不支持4个字节编码，最新的utfmb4则是完整的utf-8。
+- 安装[MySQL官方驱动](https://www.mysql.com/products/connector/)：
+```shell
+pip install mysql-connector
+```
+- 使用：同样通过Python的DB API使用，使用`mysql.connector.connect()`获取连接之后即可使用。
+```python
+import mysql.connector
+
+conn = mysql.connector.connect(user = 'root', password = 'password', database = 'test')
+```
+- 连接时可能出现`mysql.connector.errors.NotSupportedError: Authentication plugin 'caching_sha2_password' is not supported`错误，可以[参考这里](https://www.runoob.com/note/45833):
+    - 原因就是MySQL8.0中验证插件和密码加密的方式发生了变化，由之前版本的`mysql_native_password`变更为了`caching_sha2_password`。
+    - 解决方案1是安装`mysql-connector-python`插件。
+    - 2是修改MySQL配置`my.ini`中验证方式改回以前的，并且在`connect`时添加参数`auth_plugin='mysql_native_password'`。
+    - 能解决即可，这里选择1。
+- 可以使用`fetchall fetchmany`等接口获取`cursor`执行结果，也可以直接对`cursor`进行迭代。
+
+- 也可以使用[pymysql](https://github.com/PyMySQL/PyMySQL)模块，[文档](https://pymysql.readthedocs.io/en/latest/index.html)，同样使用DB API：
+```python
+import pymysql
+conn = pymysql.connect(user = 'root', password = 'password', database = 'test')
+```
+
+使用[SQLAlchemy](https://www.sqlalchemy.org/)：
+- 安装：`pip install SQLAlchemy`
+- 前面的使用Python DB API操作结果都是返回一个`list`，每一条记录是一个`tuple`作为元素。使用元组很难看出表的结构，如果将一个记录作为一个对象表示出来，会更加直观一些。也就是传说中的ORM技术（Object-Relational Mapping，对象关系映射）。这个转换由ORM框架来做。
+- Python中最有名的ORM框架就是`SQLAlchemy`。
+- 基本使用：
+```python
+from sqlalchemy import Column, String, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql.ddl import DDLBase
+
+# create a base class
+Base = declarative_base()
+
+# define ORM class
+class User(Base):
+    # table name
+    __tablename__ = 'user'
+    # table structrue
+    di = Column(String(20), primary_key=True)
+    name = Column(String(20))
+
+# initialize database connection
+# databse+connector://user:password@host:port/database
+engine = create_engine('mysql+mysqlconnector://root:password@localhost:3306/test')
+# create DBSession object
+DDSession = sessionmaker(bind=engine)
+```
+- 上面代码完成SQLAlchemy初始化和具体表的定义，有多个表就从`Base`派生其他类。
+- `create_engine`初始化数据库连接。用以字符串表示连接信息：
+```python
+'数据库类型+数据库驱动名称://用户名:口令@机器地址:端口号/数据库名'
+```
+- 有了ORM，我们向数据库表中添加一行记录，可以视为添加一个User对象。
+- 添加记录的话，通过像会话中添加对象即可：
+```python
+# create DbSession object
+session = DBSession()
+# create new User object
+new_user = User(id = '5', name = 'Bob')
+# add to session
+session.add(new_user)
+# commit to database
+session.commit()
+session.close()
+```
+- 查询使用`session.query()`：
+```python
+session = DBSession()
+user = session.query(User).filter(User.id == 5).one()
+print('type: ', type(user))
+print('name: ', user.name)
+session.close()
+```
+- 如果还没有表的话，可以先创建表，会创建所有从`Base`派生的类对应的表：
+```python
+Base.metadata.create_all(engine)
+```
+- 可以配合另一个库[SQLAlchemy-utils](https://github.com/kvesteri/sqlalchemy-utils)使用，为SQLAlchemy提供了一些自定义数据类型和库，[文档](https://sqlalchemy-utils.readthedocs.io/en/latest/index.html)。
+- 更多操作还需要看文档研究。
+- ORM框架的作用就是把数据库表的一行记录与一个对象互相做自动转换。
+- 正确使用ORM的前提是了解关系数据库的原理。
+
+TODO：
+- 每个库的使用都不能说简单，都使用DB API的操作还还说，但SqlAlchemy要使用时需要下功夫的。这里只是最基本操作，要熟练在项目中使用都需要阅读文档踩坑。具体有实践需求时再来做这些事情。
 
 ## Web开发
+
+
 
 ## 异步IO
 
