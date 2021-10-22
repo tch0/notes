@@ -737,7 +737,7 @@ ROLLBACK;
 
 隔离级别：
 - 对于两个并发执行的事务，如果涉及到操作同一条记录的时候，可能就会发生问题。因为并发操作会带来数据的不一致性，包括脏读、不可重复读、幻读等。数据库系统提供了隔离级别来让我们有针对性地选择事务的隔离级别，避免数据不一致的问题。
-- SQL标准定义了4中隔离级别：
+- SQL标准定义了4中隔离级别，其可能产生的：
 
 Isolation Level|脏读（Dirty Read）|不可重复读（Non Repeatable Read）|幻读（Phantom Read）
 :-:|:-:|:-:|:-:|:-:
@@ -758,14 +758,14 @@ try {
 ```
 
 **Read Uncommitted**:
-- Read Uncommitted是隔离级别最低的一种事务级别。在这种隔离级别下，**一个事务会读到另一个事务更新后但未提交的数据**，如果另一个事务回滚，那么当前事务读到的数据就是脏数据，这就是脏读（Dirty Read）。
+- Read Uncommitted是隔离级别最低的一种事务级别。在这种隔离级别下，**一个事务会读到另一个事务更新后但未提交的数据**，如果另一个事务回滚，那么当前事务读到的数据就是脏数据，这就是**脏读（Dirty Read）**。
 
 **Read Committed**:
-- 在Read Committed隔离级别下，一个事务可能会遇到不可重复读（Non Repeatable Read）的问题。
+- 在Read Committed隔离级别下，一个事务可能会遇到**不可重复读（Non Repeatable Read）**的问题。
 - 不可重复读是指，在一个事务内，多次读同一数据，在这个事务还没有结束时，如果另一个事务已经开始执行并结束提交恰好修改了这个数据，那么，在第一个事务中，**两次读取的数据就可能不一致（就不可重复读）**。
 
 **Repeatable Read**:
-- 在Repeatable Read隔离级别下，一个事务可能会遇到幻读（Phantom Read）的问题。
+- 在Repeatable Read隔离级别下，一个事务可能会遇到 **幻读（Phantom Read）** 的问题。
 - 幻读是指，在一个事务中，第一次查询某条记录，发现没有，但是，当试图更新这条不存在的记录时，竟然能成功，并且，再次读取同一条记录，它就神奇地出现了。
 - 幻读就是没有读到的记录，以为不存在，但其实是可以更新成功的，并且，更新成功后，再次读取，就出现了。原因是其他事务在中途插入了这条数据，但插入后的时刻去读取结果是不存在，因为是**可重复读，但允许更新，经过更新后，就能够读取**到了。
 
@@ -778,4 +778,31 @@ try {
 
 除了靠数据库系统本身提供的隔离级别，还需要应用程序的逻辑处理脏读、不可重复读、幻读的情况。或者某些场景下可能就不需要处理，脏读、不可重复读、幻读本身可能就是符合业务逻辑的。
 
+MySQL获取修改事务隔离级别：
+
+- 查询全局和会话的事务隔离级别，MySQL8.0.3版本以前是`tx_isolation`：
+```sql
+SELECT @@global.transaction_isolation;
+SELECT @@session.transaction_isolation;
+```
+- 修改：
+```sql
+SET [SESSION | GLOBAL] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE}
+```
+- 影响范围：
+    - SESSION：表示修改的事务隔离级别将应用于当前 session（当前 cmd 窗口）内的所有事务。
+    - GLOBAL：表示修改的事务隔离级别将应用于所有 session（全局）中的所有事务，且当前已经存在的 session 不受影响。
+    - 如果省略 SESSION 和 GLOBAL，表示修改的事务隔离级别将应用于当前 session 内的下一个还未开始的事务。
+    - 任何用户都能改变会话的事务隔离级别，但是只有拥有 SUPER 权限的用户才能改变全局的事务隔离级别。
+- 也可以用`set transaction_isolation`设置当前session的事务隔离级别：
+```sql
+SET transaction_isolation='READ-COMMITTED';
+```
+- 也可以通过配置文件修改隔离级别：
+```sql
+transaction-isolation = REPEATABLE-READ
+transaction-isolation = READ-COMMITTED
+transaction-isolation = READ-UNCOMMITTED
+transaction-isolation = SERIALIZABLE
+```
 暂时只了解到CURD就行了，更多内容TODO。
