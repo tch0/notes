@@ -11,6 +11,7 @@
   - [MySQL](#mysql)
   - [MySQL实用SQL语句](#mysql%E5%AE%9E%E7%94%A8sql%E8%AF%AD%E5%8F%A5)
   - [事务](#%E4%BA%8B%E5%8A%A1)
+  - [TODO](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -518,7 +519,7 @@ mysql> SELECT class_id, gender, COUNT(*) num, AVG(score) avg_score FROM students
 ```sql
 SELECT * from classes, students;
 ```
-- 查询结果也是一张二维表，是两张表的乘积，具体来说就是将两站表记录作了一个笛卡尔积，两张表的记录的列加到一起，行直接排列组合笛卡尔积。
+- 查询结果也是一张二维表，是两张表的乘积，具体来说就是将两张表的记录做了一个笛卡尔积，两张表的记录的列叠加到一起，行直接笛卡尔积全排列。
 - 多表查询也称笛卡尔积查询。比如上述结果中会有两列`id`，分别来自两张表。要解决这个问题，可以使用投影查询设置列的别名。
 ```sql
 SELECT
@@ -542,7 +543,7 @@ SELECT
 FROM students s, classes c;
 ```
 - 上述结果中某些记录是不合理没有意义的，因为`class_id`已经代表了班级，添加`WHERE c.id = s.class_id`条件可以得到合理的查询结果。
-- 多表查询会做笛卡尔积，结果集数量可能很大，要小心使用，一般情况下不使用。
+- 多表查询会做笛卡尔积，结果集数量可能很大，要小心使用，一般情况下不使用，因为会有效率问题。
 
 连接查询：
 - 另一种类型的多表查询，连接查询对多个表进行JOIN运算，简单地说，就是先确定一个主表作为结果集，然后，把其他表的行有选择性地“连接”在主表结果集上。
@@ -558,16 +559,17 @@ ON s.class_id = c.id;
     - 确定要连接的表`INNER JOIN table2`
     - 确定连接条件，`ON <condition>`，这里使用`ON s.class_id = c.id`表示`students`表的`class_id`列与`classes`表的`id`列相同的行需要连接。
     - 加上可选的`WHERE ORDER BY`等子句。
-- `INNER JOIN`是内连接，同样还有`OUTTER JOIN`外连接。
+- `INNER JOIN`是内连接，同样还有`OUTER JOIN`外连接。
 - 外连接分三种：`RIGHT OUTER JOIN` `LEFT OUTER JOIN` `FULL OUTER JOIN`。
     - 内连接`INNER JOIN`只返回同时存在于两张表的行数据
     - 右连接`RIGHT OUTER JOIN`返回右表中都存在的行。如果某一行仅在右表存在，那么结果集就会以`NULL`填充剩下的字段。
     - 左连接`LEFT OUTER JOIN`则返回左表都存在的行。如果某一行仅在左表存在，那么结果集中同样以`NULL`填充右表中的对应列。
     - 全连接`FULL OUTER JOIN`则会将两张表中所有记录都选择出来，自动把对方不存在的列填充`NULL`。
+    - 用集合来表示的话，左表记录集合为A，右表为B，`INNER`就是AB交集，`LEFT`是AB交集与A并集，`RIHGT`是AB交集与B并集，`FULL`是AB并集。
 - `JOIN`查询依然可以使用`WHERE`条件`ORDRE BY`排序。
 - `INNER JOIN`是最常用的`JOIN`查询，`INNER JOIN`也可以直接写作`JOIN`。
 - MySQL中不能用`FULL OUTER JOIN`全连接，可以通过对左右连接的结果`UNION`取并集实现。
-- `RIGHT OUTER JOIN` `LEFT OUTER JOIN` `FULL OUTER JOIN`中的`OUTER`可以省略。
+- `RIGHT OUTER JOIN` `LEFT OUTER JOIN` `FULL OUTER JOIN`中的`OUTER`可以省略，写作`RIGHT JOIN` `LEFT JION` `FULL JION`。
 
 ## 修改数据
 
@@ -641,6 +643,7 @@ DELETE FROM <table> WHERE <condition>;
 - 对一个数据库进行操作前，需要先将其切换为当前数据库：`USE test;`
 - 列出当前数据库所有表：`SHOW TABLES;`
 - 查看表的结构：`DESC <table>;`
+    - 可以获得的信息：字段名称、数据类型、是否允许NULL、键的约束(主键外键唯一等)、默认值，额外约束（比如自增）。
 - 查看创建表的SQL语句：`SHOW CREATE TABLE <table>;`
 - 创建表：`CREATE TABLE <table>;`
 - 删除表：`DROP TABLE <table>;`
@@ -648,8 +651,12 @@ DELETE FROM <table> WHERE <condition>;
     - 新增一列：`... ADD COLUMN birth VARCHAR(10) NOT NULL;`
     - 修改某一列：`... CHANGE COLUMN birth birthday VARCHAR(20) NOT NULL;`
     - 删除列：`... DROP COLUMN birthday;`
+    - 添加约束：`... ADD CONSTRAINT <constraint_name> ...;`
+    - 删除约束：`... DROP CONSTRAINT <constraint_name>;`
+    - 添加外键约束：`... ADD CONSTRAINT <constraint_name> FOREIGN KEY (<fields>) REFERENCES <foreign_table> (<foreign_fields>);`
+    - 删除外键约束：`... DROP FOREIGN KEY <constraint_name>`
 - 退出MySQL客户端：`exit`。
-
+- 更多常用命令TODO，待实践后补充。
 
 ## MySQL实用SQL语句
 
@@ -740,7 +747,7 @@ ROLLBACK;
 - SQL标准定义了4中隔离级别，其可能产生的：
 
 Isolation Level|脏读（Dirty Read）|不可重复读（Non Repeatable Read）|幻读（Phantom Read）
-:-:|:-:|:-:|:-:|:-:
+:-:|:-:|:-:|:-:
 Read Uncommitted|Yes|Yes|Yes
 Read Committed|-|Yes|Yes
 Repeatable Read|-|-|Yes
@@ -805,4 +812,14 @@ transaction-isolation = READ-COMMITTED
 transaction-isolation = READ-UNCOMMITTED
 transaction-isolation = SERIALIZABLE
 ```
-暂时只了解到CURD就行了，更多内容TODO。
+
+## TODO
+
+- 更多SQL语法。
+- 更严谨的SQL语法描述。
+- SQL标准与数据库实现的区分。
+- 具体数据库实现相关内容，其他数据库系统内容。
+- 更多数据库系统使用与配置内容。
+- 编程语言与数据库的交互。
+- SQL编码风格。
+- 待有实践需求后补充。
