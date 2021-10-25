@@ -2644,7 +2644,7 @@ def signin_form():
 
 @app.route('/signin', methods=['POST'])
 def  signin():
-    username = request.form['username']
+    username = request.form['username'] 
     password = request.form['password']
     if username == 'admin' and password == 'password':
         return render_template('signin-ok.html', username=username)
@@ -2664,5 +2664,179 @@ if __name__ == '__main__':
 
 ## 异步IO
 
+异步IO：
+- 要解决CPU的高速和IO的低速不匹配的问题，避免CPU暂停等待IO完成，就需要使用多线程或者多进程将IO任务分配到其他线程或者进程去做，也就是异步IO。
+- 当代码要执行IO操作时，只发出IO指令，并不等待IO结果，然后执行其他代码。一段时间后当IO执行完成，再通知CPU进行处理。
+- 普通同步IO代码：
+```python
+# things before
+
+f = open('test.txt', 'r')
+text = f.read() # thread wait here
+f.close()
+print(text)
+
+# other things
+```
+- 同步IO模型代码无法实现异步IO模型。
+- 异步IO模型需要一个消息循环，消息循环中，主线程不断重复读取消息-处理消息这个循环，就像所有GUI程序做的那样。
+```python
+loop = get_event_loop()
+while True:
+    event = loop.get_event()
+    process_event(event)
+```
+- 消息模型其实早在应用在桌面应用程序中了。一个GUI程序的主线程就负责不停地读取消息并处理消息。所有的键盘、鼠标等消息都被发送到GUI程序的消息队列中，然后由GUI程序的主线程处理。
+- 在消息模型中，处理一个消息必须非常迅速，否则，主线程将无法及时处理消息队列中的其他消息，导致程序看上去停止响应。
+- 消息模型中的的异步IO：遇到IO操作时，代码只发出IO请求，不等待IO结果，直接结束本轮消息处理，进入下一轮消息处理。IO操作完成后，收到IO完成的消息，处理该消息时获得IO操作的结果。
+- 同步IO模型中，处理IO过程中主线程只能挂起，异步IO模型中，主线程继续执行，由IO线程处理IO，一个主线程可以同时处理多个IO请求，并且没有切换线程的操作。对于IO密集型应用程序，使用异步IO将大大提升系统的多任务处理能力。
+
+**协程**：
+- 又名微线程，Coroutine。
+- 提出很早，但直到最近几年才在某些语言中广泛应用。
+- 子程序又称函数，基本在所有语言中都是通过栈实现的层级调用，一个线程就是执行一个子程序。子程序调用总是一个入口，一次返回，调用顺序是明确的。
+- 协程看上去也是子程序，但执行过程中，子程序内部可中断，然后转去执行别的子程序，适当的时候在回来执行。中断执行其他子程序不是通过函数调用去执行，而是类似于CPU的中断，就像线程切换一样，但多个协程其实是一个线程在执行。
+- 协程的优势：
+    - 相对线程而言极高的执行效率，子程序切换而不是线程切换，没有线程切换的开销，由程序自身控制而不是操作系统调度。和多线程比，线程数量越多，协程性能优势就越明显，体现在子程序的切换上。
+    - 第二优势就是不需要多线程的锁机制，因为只有一个线程，不存在同时写变量冲突，在协程中控制共享资源不加锁，只需要判断状态就好了，所以执行效率比多线程高很多。
+- 协程是一个线程执行，如果要利用多核CPU，最简单的方法是通过多进程+协程实现。
+- Python中对协程的支持是通过`generator`实现的。生成器同时也是一个迭代器，可以用`for`来迭代，也可以用`next()`获取下一个`yield`出来的值。
+- Python的`yield`不但可以返回一个值，还可以用来接受调用者发出的参数，调用生成器的`send(arg)`函数发送消息。
+- 使用Python的协程实现生产者消费者模型：
+```python
+def consumer():
+    r = ''
+    while True:
+        n = yield r
+        if not n:
+            return
+        print('[CONSUMER] Consuming %s...' % n)
+        r = '200 OK'
+
+def produce(c):
+    c.send(None)
+    n = 0
+    while n < 5:
+        n = n + 1
+        print('[PRODUCER] Producing %s...' % n)
+        r = c.send(n)
+        print('[PRODUCER] Consumer return: %s' % r)
+    c.close()
+
+c = consumer()
+produce(c)
+```
+- `c.send(None)`启动生成器。最后通过`close()`关闭生成器。
+- 整个流程无锁，有一个线程执行，`produce`和`consumer`协作完成任务，所以称为“协程”，而非线程的抢占式多任务。
+- “子程序就是协程的一种特例”。
+- 对生成器调用`next()`时，`yield`语句将得到`None`。
+
+
+**asyncio**:
+- `asyncio`是Python3.4引入的标准库支持了异步IO。
+- 例：
+```python
+import asyncio
+import threading
+
+@asyncio.coroutine
+def hello(n):
+    print(f'hello,world! from {threading.currentThread()}, n = {n}')
+    r = yield from asyncio.sleep(1)
+    print(f'hello,again! from {threading.currentThread()}, n = {n}')
+
+loop = asyncio.get_event_loop()
+# execute coroutine
+tasks = [hello(1), hello(2)]
+loop.run_until_complete(asyncio.wait(tasks))
+loop.close()
+```
+- 执行结果：
+```
+hello,world! from <_MainThread(MainThread, started 7600)>, n = 2
+hello,world! from <_MainThread(MainThread, started 7600)>, n = 1
+hello,again! from <_MainThread(MainThread, started 7600)>, n = 2
+hello,again! from <_MainThread(MainThread, started 7600)>, n = 1
+```
+- `@asyncio.coroutine`把一个生成器标记为`coroutine`类型，然后将这个协程放到执行协程的事件循环中就行。就实现了异步IO。
+- `asyncio.sleep()`也是一个`coroutine`，线程不会等待`asyncio.sleep()`，而是直接中断并执行下一个消息循环，当`asyncio.sleep()`返回时，从`yield from`拿到返回值，然后接着执行下一语句。
+- 两个`coroutine`在同一线程中执行。
+- 例子：异步连接获取三个网站的响应，打印响应头：
+```python
+import asyncio
+
+@asyncio.coroutine
+def wget(host):
+    print('wget %s...' % host)
+    connect = asyncio.open_connection(host, 80) # connect is a coroutine
+    reader, writer = yield from connect
+    header = 'GET / HTTP/1.0\r\nHost: %s\r\n\r\n' % host
+    writer.write(header.encode('utf-8'))
+    yield from writer.drain()
+    while True:
+        line = yield from reader.readline()
+        if line == b'\r\n':
+            break
+        print('%s header > %s' % (host, line.decode('utf-8').rstrip()))
+    # Ignore the body, close the socket
+    writer.close()
+
+loop = asyncio.get_event_loop()
+tasks = [wget(host) for host in ['www.sina.com.cn', 'www.sohu.com', 'www.163.com']]
+loop.run_until_complete(asyncio.wait(tasks))
+loop.close()
+```
+- 执行结果中可以看到，在去连接前一个网站的过程中，协程让出了时间片，事件循环中断并执行了其他协程。
+- 多个协程可以封装成一组Task并发执行。
+- 阅读：
+    - [Async IO in Python: A Complete Walkthrough](https://realpython.com/async-io-python/)
+
+**async/await**:
+- `asyncio`提供的语法是：`@asyncio.coroutine`包装一个生成器为协程，然后在内部可以使用`yield from`调用另一个协程实现异步。当然也可以包装一个普通函数为协程。
+- Python3.5引入了新语法`async`和`await`，用以替代`@asyncio.coroutine`和`yield from`。旧语法在Python3.8版本废弃，并计划于Python3.10中移除。
+- 不要与普通的生成器混淆，`async`用来定义协程，`await`用来调用协程（不能用来调用一个普通的生成器）。
+
+**aiohttp**:
+- `asyncio`可以实现单线程并发IO操作。如果仅用在客户端，发挥的威力不大。
+- 如果把`asyncio`用在服务器端，例如Web服务器，由于HTTP连接就是IO操作，因此可以用单线程加上协程实现多用户的高并发支持。
+- `asyncio`实现了TCP、UDP、SSL等协议，`aiohttp`则是基于`asyncio`实现的HTTP框架。
+- 例子：
+```python
+'''
+async web application.
+'''
+
+import asyncio
+
+from aiohttp import web
+
+async def index(request):
+    await asyncio.sleep(0.5)
+    return web.Response(body=b'<h1>Index</h1>', content_type='text/html')
+
+async def hello(request):
+    await asyncio.sleep(0.5)
+    text = '<h1>hello, %s!</h1>' % request.match_info['name']
+    return web.Response(body=text.encode('utf-8'), content_type='text/html')
+
+async def init(loop):
+    app = web.Application(loop=loop)
+    app.router.add_route('GET', '/', index)
+    app.router.add_route('GET', '/hello/{name}', hello)
+    srv = await loop.create_server(app.make_handler(), '127.0.0.1', 8000)
+    print('Server started at http://127.0.0.1:8000...')
+    return srv
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(init(loop))
+loop.run_forever()
+```
+
 ## 总结
 
+- 动态类型代码确实太难以读代码了，虽然语法简单，但是类型会令人纠结。
+- 某些时候缺失了类型信息，补全都难以进行，也许类型标注会是一个好的手段。
+- 函数式编程支持有限，不过任何手段都只是手段而不是目的，如果达成目的有唯一的最佳方式，那使用最佳实践就好了，还降低了选择成本。
+- 各种库功能完善，细节略多，基本有了一个大概印象，具体使用则基本都是走马观花，还需要具体用到时才好深入。
+- 简单入门了网络编程、HTTP编程、异步编程、SQL编程，但具体实用还远远不够，还需要更多的理论与实践。比如HTTP、协程、WSGI等。
+- 更多高级的用法，更多细节，更多具体库的使用，待实践后深入。
