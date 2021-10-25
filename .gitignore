@@ -7,3 +7,6 @@
 # test email infos
 Email/pop3.txt
 Email/smtp.txt
+
+# sqlite3 database files
+SQL/*.db
