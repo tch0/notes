@@ -55,6 +55,7 @@ Python由吉多·范罗苏姆（Guido van Rossum，荷兰人）创造，第一�
 - [Python 教程](https://docs.python.org/zh-cn/3/tutorial/index.html) Python官方非正式教程，无基础可先从这开始阅读。
 - [Python 标准库](https://docs.python.org/zh-cn/3/library/index.html) Python标准库的文档，用来查阅。
 - [廖雪峰Python教程](https://www.liaoxuefeng.com/wiki/1016959663602400)（本文主要参考，用于入门）
+- [Python 3 教程 | 菜鸟教程](https://www.runoob.com/python3/python3-tutorial.html)
 - [Python最佳实践指南](https://pythonguidecn.readthedocs.io/zh/latest/index.html)，一份第三方的最佳实践指南，强烈建议阅读。
 
 ## 环境
@@ -2504,7 +2505,162 @@ TODO：
 
 ## Web开发
 
+Web应用：
+- 软件运行在桌面客户端上，而数据库这种服务型的软件运行在服务器端，这种Client/Server模式称为CS架构。
+- 互联网兴起后，Web应用程序因为要快速迭代修改和升级，如果使用桌面客户端就需要逐个频繁升级，因此流行起了将客户端运行在浏览器上的Browser/Server模式，称BS架构。
+- Web应用的几个阶段：
+    - 静态Web页面，静态HTML页面，修改页面内容就需要编辑HTML源文件。早期的互联网Web页面就是静态的。
+    - CGI：静态Web页面无法与用户交互，如果用户填了一个注册表单，静态Web页面就无法处理。要处理用户发送的动态数据，出现了Common Gateway Interface，简称CGI，用C/C++编写。
+    - ASP/JSP/PHP：Web应用由于修改频繁，用C/C++这种更偏底层的语言非常不适合Web开发，而脚本语言由于开发效率高，与HTML结合紧密，因此，迅速取代了CGI模式。ASP是微软推出的用VBScript脚本编程的Web开发技术，而JSP用Java来编写脚本，PHP本身则是开源的脚本语言。
+    - MVC：为了解决直接用脚本语言嵌入HTML导致的可维护性差的问题，Web应用也引入了Model-View-Controller的模式，来简化Web开发。ASP发展为ASP.Net，JSP和PHP也有一大堆MVC框架。
+- Python有很多Web框架，有很多成熟的模板技术，选择Python开发应用，开发效率高，运行速度快。
 
+HTML:
+- 超文本标记语言。
+- HTML定义了页面的内容，CSS来控制页面元素的样式，而JavaScript负责页面的交互逻辑。
+- 对于优秀的Web开发人员来说，精通HTML、CSS和JavaScript是必须的。
+- 学习网站：https://www.w3school.com.cn/
+- 当我们用Python或者其他语言开发Web应用时，我们就是要在服务器端动态创建出HTML，这样，浏览器就会向不同的用户显示出不同的Web页面。
+- 示例：
+```html
+<html>
+<head>
+  <title>Hello</title>
+  <style>
+    h1 {
+      color: #333333;
+      font-size: 48px;
+      text-shadow: 3px 3px 3px #666666;
+    }
+  </style>
+  <script>
+    function change() {
+      document.getElementsByTagName('h1')[0].style.color = '#ff0000';
+    }
+  </script>
+</head>
+<body>
+  <h1 onclick="change()">Hello, world!</h1>
+</body>
+</html>
+```
+
+WSGI接口：
+- Web应用的本质：
+    - 浏览器发送一个HTTP请求；
+    - 服务器收到请求，生成一个HTML文档；
+    - 服务器把HTML文档作为HTTP响应的Body发送给浏览器；
+    - 浏览器收到HTTP响应，从HTTP Body取出HTML文档并显示。
+- 最简单的静态Web应用就是将HTML文件保存好，用现成的HTTP服务器软件，接受用户请求，从文件中取出HTML返回。比如Apache、Nginx、Lighttpd等常见的静态服务器。
+- 而要动态生成HTML，就需要自己实现生成HTML的步骤。接受HTTP请求、解析HTTP请求、发送HTTP响应都是苦力活。正确的做法是底层代码由专门的服务器软件实现，我们用Python专注于生成HTML文档。因为我们不希望接触到TCP连接、HTTP原始请求和响应格式，所以，需要一个统一的接口，让我们专心用Python编写Web业务。
+- 这个接口就是WSGI：Web Server Gateway Interface。用来接收并响应HTTP请求。
+- 定义一个最简单的WSGI接口：
+```python
+def application(environ, start_response):
+    start_response('200 OK', [('Content-Type', 'text/html')]) # header, response code and header content
+    return [b'<h1>Hello, web!</h1>'] # body
+```
+- 我们只需要关系从参数`environ`字典中拿到HTTP请求信息，然后构造HTML，通过`start_response`发送Header，然后返回Body。底层解析HTTP请求或者构造HTTP响应头的操作不需要自己来做。
+- Python内置了一个WSGI服务器，这个模块叫`wsgiref`，它是用纯Python编写的WSGI服务器的参考实现。
+```python
+from wsgiref.simple_server import make_server
+
+# create a http server
+httpd = make_server('', 8000, application)
+print("Serving HTTP on port 8000...")
+httpd.serve_forever()
+```
+- 启动后，打开浏览器输入`http://localhost:8000/`即可访问。命令行可以看到`wsgiref`打印的日志信息。
+- 使用WSGI服务器，无论是多么复杂的Web应用程序，入口都是一个WSGI处理函数。HTTP请求的所有输入信息都可以通过`environ`获得，HTTP响应的输出都可以通过`start_response()`加上函数返回值作为Body。
+- 对于复杂的应用程序来说，光靠WSGI函数还是太底层了，需要在WSGI之上再抽象出Web框架。进一步简化Web开发。
+- Python的WSGI接口可以看这里：[PEP 333 - Python Web Server Gateway Interface v1.0 中文版](https://github.com/mainframer/PEP333-zh-CN)。
+
+Web框架：
+- 使用[Flask](https://flask.palletsprojects.com/en/2.0.x/)：`pip install flask`。
+```python
+from flask import Flask
+from flask import request
+
+app = Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    return '<h1>Home</h1>'
+
+@app.route('/signin', methods=['GET'])
+def signin_form():
+    return '''<form action="/signin" method="post">
+              <p><input name="username"></p>
+              <p><input name="password" type="password"></p>
+              <p><button type="submit">Sign In</button></p>
+              </form>'''
+
+@app.route('/signin', methods=['POST'])
+def signin():
+    # 需要从request对象读取表单内容：
+    if request.form['username']=='admin' and request.form['password']=='password':
+        return '<h3>Hello, admin!</h3>'
+    return '<h3>Bad username or password.</h3>'
+
+if __name__ == '__main__':
+    app.run()
+```
+- 处理三个请求：
+    - `GET /`
+    - `GET /signin`，登录页，显示登录表单。
+    - `POST /signin`，处理登录表单，显示登录结果。
+    - 同一个URL/signin分别有GET和POST两种请求，映射到两个处理函数中
+- Flask通过装饰器在内部自动地把URL函数关联起来。
+- 运行之后可以在`http://127.0.0.1:5000/`访问。
+- 实际应用的话，需要配合上数据库，拿到用户名和口令之后应该去数据库中查询对比来判定用户登录状态。
+- 除了Flask还有其他Web框架：
+    - [Django](https://www.djangoproject.com/)：全能型Web框架。
+    - [Web.py](https://webpy.org/)：小巧Web框架。
+    - [Bottle](http://bottlepy.org/docs/dev/)：类似于Flask。
+    - [Tornado](http://www.tornadoweb.org/)：Facebook的开源异步框架。
+- 有了Web框架，我们在编写Web应用时，注意力就从WSGI处理函数转移到URL+对应的处理函数，这样，编写Web App就更加简单了。
+- 在编写URL处理函数时，除了配置URL外，从HTTP请求拿到用户数据也是非常重要的。Web框架都提供了自己的API来实现这些功能。Flask通过request.form['name']来获取表单的内容。
+
+
+使用模板：
+- 有了Web框架就不需要在WSGI函数中编写整个网站的逻辑，但依然需要提供页面HTML，但对于一个复杂的页面来说将所有HTML以字符串方式写在源码中是不现实也不合理的。
+- 所以有了模板技术，准备一个HTML文档，其中潜入了一些变量和指令，根据传入的指令和数据，经过程序逻辑替换后得到最终的HTML，发送给用户。
+- 这就是MVC：Model-View-Controller，即模型-视图-控制器。
+- 在这里，模型就是要传递给HTML的数据，视图就是HTML模板最终输出用户看到的HTML，控制器则是Python代码中将模型数据传递给HTML的逻辑。
+- 模板中大多是留下由变量表示的空位，由框架将数据通过关键字参数或者字典传递给模板得到最终的HTML。
+- 比如Flask：
+```python
+from flask import Flask, request, render_template
+
+app = Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    return render_template('home.html')
+
+@app.route('/singin', methods=['GET'])
+def signin_form():
+    return render_template('form.html')
+
+@app.route('/signin', methods=['POST'])
+def  signin():
+    username = request.form['username']
+    password = request.form['password']
+    if username == 'admin' and password == 'password':
+        return render_template('signin-ok.html', username=username)
+    return render_template('form.html', message='Bad username or password', username=username)
+
+if __name__ == '__main__':
+    app.run()
+```
+- 和上面的例子一样，不过换成了使用模板，Flask默认的模板是Jinja2，安装Flask时会安装。
+- 模板文件需要放在`templates`目录下。
+- `Jinja2`模板中使用`{{ name }}`表示要替换的变量，很多时候，还需要循环、条件判断等指令语句，在Jinja2中，用`{% ... %}`表示指令。
+- 除了Jinja2，常见的模板还有：
+    - [Mako](https://www.makotemplates.org/)：用`<% ... %>`和`${xxx}`的一个模板；
+    - [Cheetah](http://www.cheetahtemplate.org/)：也是用`<% ... %>`和`${xxx}`的一个模板；
+    - [Django](https://www.djangoproject.com/)：Django是一站式框架，内置一个用`{% ... %}`和`{{ xxx }}`的模板。
+- 目前前后端分离，已经没有人用模板了。
 
 ## 异步IO
 
