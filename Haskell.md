@@ -1,3 +1,35 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Haskell语言入门](#haskell%E8%AF%AD%E8%A8%80%E5%85%A5%E9%97%A8)
+  - [Haskell与函数式编程](#haskell%E4%B8%8E%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B)
+  - [环境搭建](#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)
+    - [使用GHCup](#%E4%BD%BF%E7%94%A8ghcup)
+    - [安装stack](#%E5%AE%89%E8%A3%85stack)
+    - [使用stack安装GHC](#%E4%BD%BF%E7%94%A8stack%E5%AE%89%E8%A3%85ghc)
+    - [关于Cabal和stack](#%E5%85%B3%E4%BA%8Ecabal%E5%92%8Cstack)
+    - [开发环境](#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
+  - [感受一下Haskell](#%E6%84%9F%E5%8F%97%E4%B8%80%E4%B8%8Bhaskell)
+  - [函数](#%E5%87%BD%E6%95%B0)
+    - [感受函数](#%E6%84%9F%E5%8F%97%E5%87%BD%E6%95%B0)
+    - [使用List](#%E4%BD%BF%E7%94%A8list)
+    - [使用Range](#%E4%BD%BF%E7%94%A8range)
+    - [List Comprehension](#list-comprehension)
+    - [元组](#%E5%85%83%E7%BB%84)
+  - [Type & Typeclass](#type--typeclass)
+    - [类型](#%E7%B1%BB%E5%9E%8B)
+    - [类型变量](#%E7%B1%BB%E5%9E%8B%E5%8F%98%E9%87%8F)
+    - [Typeclass](#typeclass)
+  - [函数相关语法](#%E5%87%BD%E6%95%B0%E7%9B%B8%E5%85%B3%E8%AF%AD%E6%B3%95)
+    - [模式匹配(Pattern matching)](#%E6%A8%A1%E5%BC%8F%E5%8C%B9%E9%85%8Dpattern-matching)
+    - [守卫](#%E5%AE%88%E5%8D%AB)
+    - [where关键字](#where%E5%85%B3%E9%94%AE%E5%AD%97)
+    - [let关键字](#let%E5%85%B3%E9%94%AE%E5%AD%97)
+    - [case表达式](#case%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Haskell语言入门
 
 关于Haskell：
@@ -34,6 +66,9 @@
 - [Stackage首页](https://www.stackage.org/)
 - [Hackage首页](https://hackage.haskell.org/)
 
+阅读：
+- [一个很全面的Haskell笔记](https://blog.tonycrane.cc/p/b3ca5c18.html)
+
 ## Haskell与函数式编程
 
 函数式（functional languages）与命令式（imperative languages）：
@@ -65,7 +100,7 @@ Haskell语言发展：
 安装：
 - 当前时刻最新版本2021年10月29日发布的是9.2.1，[GHC首页](https://www.haskell.org/ghc/)。
 
-**使用GHCup**：
+### 使用GHCup
 - 使用[GHCup](https://www.haskell.org/ghcup/install/)，GHCup是一个帮助安装Haskell GHC工具链的工具。支持安装的工具链：
     - GHC
     - cabal-install
@@ -82,7 +117,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager
 ```
 - 倒腾了半天网络等各种原因，Linux上和Windows上都没有安装成功。好像可以换源解决，参考[这里](https://zh.z.haskell.world/guide)。
 
-**安装stack**：
+### 安装stack
 - 使用stack安装，[视频教程](https://www.youtube.com/watch?v=sRonIB8ZStw)，[一个在Windows上安装stack的教程](https://krantz-xrf.github.io/2020/09/25/windows-install-stack-ghc.html)。
 - [stack](https://github.com/commercialhaskell/stack)是一个跨平台的Haskell项目管理、环境管理工具。
 - [stack文档](https://docs.haskellstack.org/en/stable/README/)。
@@ -103,7 +138,7 @@ stack upgrade
 ```
 - [更换stack的源为清华源](https://mirrors.tuna.tsinghua.edu.cn/help/stackage/)，注意其中给出的配置文件目录为`%APPDATA%\stack\config.yaml`，但由于我们修改了`%STACK_ROOT%`，需要修改的配置文件其实在`%STACK_ROOT%\config.yaml`。
 
-**使用stack安装GHC**：
+### 使用stack安装GHC
 - 到[Stackage](https://www.stackage.org/)找到最新的LTS版本，目前是18.15，然后安装GHC，[文档](https://docs.haskellstack.org/en/stable/GUIDE/#resolvers-and-changing-your-compiler-version)。
 ```shell
 stack --resolver lts-18.15 setup
@@ -161,12 +196,12 @@ stack exec -- ghci
 - 搞了一个下午才解决环境问题。
 - 更多使用需要查看stack文档。
 
-**关于Cabal和stack**：
+### 关于Cabal和stack
 - cabal是另一个包管理和项目工具，和stack有区别有联系，cabal的包管理库是Hackage，stack是Stackage，Stackage官网介绍Stackage是Hackage的子集的分发。
 - 都可以管理包，都可以管理项目，好像还可以实现同一个项目兼容两个工具。但stack好像是为了解决cabal的某些痛点，具体还未研究那么深。暂时不安装cabal，只使用stack就行了。
 
 
-编辑器：
+### 开发环境
 - VS Code安装Haskell扩展，新建文件`hello.hs`：
 ```haskell
 main = print "hello,world"
@@ -202,7 +237,7 @@ runhaskell hello.hs
 
 更多用法尚待挖掘。
 
-## 感受一下
+## 感受一下Haskell
 
 ghci中进行表达式求值：
 ```
@@ -322,13 +357,14 @@ List列表语法：
 - **注意**：如果对无限长度列表求值，在ghci中输入无限长度的列表将会一直打印，在`{--}`注释中`>>>`后的表达式不要写无限长度列表，因为会对列表求值，求值工作由后台的Haskell Language Server来做（比如在VsCode中，点击了提示中的`Evaluate...`），此时后台的语言服务器将陷入无限循环，吃掉大量内存和CPU。需要杀掉子进程才能结束。
 - `cycle list`可以生成循环list元素的无限列表。
 - `repeat value`生成一个仅包含该值的无限列表。
-
+- `replicate n value`重复一个值n次。
 ### List Comprehension
 
 也就是列表生成式：
+- `[expression | ranges and constrait]`，`|`左侧是表达式，右侧是变量范围和约束条件。
 - `[x * 2 | x <- [1..10]]`得到`[2,4,6,8,10,12,14,16,18,20]`。
 - 表达式中可以是`if-else`语句，因为其也是一个表达式。
-- 作用就是`x`遍历`<-`后列表中所有元素，类似于做了循环，变量可以有多个`[[x, y] | x <- [1..], y <- [10..], x + y == 20]`，甚至可以加条件，就像一个数学中的集合生成式一样。
+- 作用就是`x`遍历`<-`后列表中所有元素，类似于做了循环，变量可以有多个`[[x, y] | x <- [1..], y <- [10..], x + y == 20]`，可以加条件，就像一个数学中的集合生成式一样。
 - 如果不关心从列表中取出的值，可以用`_`，`length' xs = sum [1 | _ <- xs]`。
 - 移除所有非大写字符：``removeNonUppercase st = [ c | c <- st, c `elem` ['A'..'Z']]``。
 - 列表生成式可以拆成多行，比较长的话拆成多行比较合适。
@@ -345,6 +381,8 @@ List列表语法：
 函数式编程语言的一般思路：先取一个初始集合，对其进行变形、执行过滤条件（map and reduce）得到最终结果。
 
 ## Type & Typeclass
+
+一般将其称之为**类型和类型类**。
 
 ### 类型
 
@@ -471,3 +509,131 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
     ```
 - 可见Haskell对运算符的处理是很严格的，C++模板也可以做到类似的事情，不过对于内置类型来说，因为有整型提升和隐式类型转换的存在，运算符的类型检查其实并没有严格到这种地步。
 - 其实只是一种形式，Typeclass提供的功能，在其他语言中也有提供，java的interface（当然java没有运算符重载），Python中的`__eq__ __str__`等特殊方法，C++的运算符重载和模板，异曲同工。
+
+## 函数相关语法
+
+### 模式匹配(Pattern matching)
+
+模式匹配本质上就是提供一种用来简化复杂的判断和比较的语法糖。
+
+模式匹配通过检查数据的特定结构来检查是否匹配，并从模式中提取数据。
+- 对于列表可以使用`:`运算符进行匹配，比如判断一个列表是否是递增的函数：
+```haskell
+increasing :: (Ord a) => [a] -> Bool
+increasing xs = 
+    if xs == []
+    then True
+    else if tail xs == []
+         then True
+         else if head xs <= head (tail xs)
+              then increasing (tail xs)
+              else False
+```
+- 如果使用模式匹配：
+```haskell
+increasing'' :: (Ord a) => [a] -> Bool
+increasing'' [] = True
+increasing'' [x] = True
+increasing'' (x:y:ys) = x <= y && increasing''(y:ys)
+-- simplify
+increasing''' :: Ord a => [a] -> Bool 
+increasing''' (x:y:ys) = x <= y && increasing''' (y:ys)
+increasing''' _ = True
+```
+- 模式匹配是按照定义顺序来的，匹配到就停止。【不像prolog那种需要在后续的模式中去掉前面的匹配的条件】。
+- 调用的参数没有匹配到的话会抛出运行时异常，所以匹配应该完备，必须能够匹配所有情况的输入，需要编写一个模式用以匹配剩余的情况，比如使用`_`放到最后。
+- 匹配时若不需要接受匹配结果，则可以使用`_`。
+- 列表不能使用`++`匹配，`x:xs`常用于匹配不固定长度列表，常见于递归函数中，`[x, y]`直接列出元素用于匹配固定长度列表。
+- 列表的`as`模式可以用于获取整个列表，比如`xs@(x:y:ys)`，则`xs`得到整个`x:y:ys`，而不必再将整个`x:y:ys`写一遍。
+- 元组的模式匹配仅可以匹配具体的项。如：
+```haskell
+first :: (a, b, c) -> a
+first (x, _, _) = x
+second :: (a, b, c) -> b
+second (_, y, _) = y
+third :: (a, b, c) -> c
+third (_, _, z) = z
+```
+
+### 守卫
+
+模式用来检查一个值是否可以从中取值，而守卫（Guard）则用来检查一个值的某项属性是否为真，是另一种`if`的语法糖。在多分支条件下守卫的可读性更高，并且和模式匹配可以很好的契合。
+- 对于`increasing`函数的例子，可以使用守卫：
+```haskell
+increasing' :: (Ord a) => [a] -> Bool
+increasing' xs
+    | null xs = True
+    | null (tail xs) = True
+    | head xs <= head (tail xs) = increasing' (tail xs)
+    | otherwise = False
+```
+- 可以将其看做`if - else if - else if ... else`结构，最后的`otherwise`是最后的`else`也就是万能匹配，可有可无，如果没有`otherwise`且不满足前面所有条件，则会转入下一个模式进行匹配，所以守卫和模式是完全契合起来的。
+
+### where关键字
+
+在守卫中，可能出现多个条件使用了同一个变量，计算了同一个中间值的情况，如果在每个条件中计算一次就会有重复，而重复是天生就应该被优化的。这时就可以使用`where`，用于计算重复的部分。
+```haskell
+bmiTell :: (RealFloat a) => a -> a -> String  
+bmiTell weight height  
+    | bmi <= skinny = "You're underweight, you emo, you!"  
+    | bmi <= normal = "You're supposedly normal. Pffft, I bet you're ugly!"  
+    | bmi <= fat    = "You're fat! Lose some weight, fatty!"  
+    | otherwise     = "You're a whale, congratulations!"  
+    where bmi = weight / height ^ 2  
+          skinny = 18.5  
+          normal = 25.0  
+          fat = 30.0
+```
+- `where`中可以定义多个名字和函数，每个名字对守卫都是可见的，并且仅对本函数可见，不会污染其他函数的名称空间。其中的名字都是一列垂直排开，这是语法规范。
+- `where`中也可以使用模式匹配。
+```haskell
+where bmi = weight / height ^ 2  
+      (skinny, normal, fat) = (18.5, 25.0, 30.0)
+```
+- `where`中可以定义辅助函数，其中又可以使用`where`，其中又可以定义辅助函数，可以多层嵌套。
+
+### let关键字
+
+`where` 绑定是在函数底部定义名字，对包括所有守卫在内的整个函数可见。`let`绑定则是个表达式，允许在任何位置定义局部变量，对不同的守卫不可见。正如Haskell中所有赋值结构一样，`let`绑定也可以使用模式匹配。
+- 格式为`let [binding] in [expressions]`，在`binding`中绑定的名字仅在`expressions`中可见。
+- `let`将绑定放在前面，`where`放在后面。区别在于`where`是一个语法结构，而`let`是一个表达式。所以和`if`表达式一样，可以放在任何表达式可以放的地方。`let`结构中`expressions`的值就是整个`let`表达式的值。
+- 比如用于定义局部函数：
+```haskell
+>>> [let square x = x * x in (square 1, square 2)]
+[(1,4)]
+```
+- 如果要在一行中绑定多个名字，如果要将多个名字排成一行可以用`;`隔开。
+```haskell
+>>> let a = 100; b = 20 in a + b
+120
+```
+- 但`let`绑定中也是可以使用模式匹配的，所以用元组匹配显然更好：
+```haskell
+>>> let (a, b) = (100, 20) in a + b
+120
+```
+- 可以将`let`绑定放在列表生成式中单纯用于定义名字，而没有`in`，此时其中定义的名字对其后的条件和`|`前的表达式可见。如果是用`let`表达式作为条件则可以有`in`，那么就是一个普通的`let`表达式，其中名字不会对列表生成式`|`前的表达式和后续条件可见。
+```haskell
+calcBmis :: (RealFloat a) => [(a, a)] -> [a]  
+calcBmis xs = [bmi | (w, h) <- xs, let bmi = w / h ^ 2, bmi >= 25.0]
+```
+
+### case表达式
+
+语法：
+```haskell
+case expression of pattern1 -> result1
+                   pattern2 -> result2
+                   pattern3 -> result3
+                   ...
+```
+- 函数的模式匹配就是`case`表达式的语法糖而已，
+- 比如`incresing`的模式匹配就等价于：
+```haskell
+increasing'''' :: Ord a => [a] -> Bool 
+increasing'''' xs = case xs of (x:y:ys) -> x <= y && increasing'''' (y:ys)
+                               _ -> True
+```
+- 函数参数模式匹配只能用于函数定义时，而`case`表达式可以用于任何地方。
+
+究根结底，模式匹配、守卫、case表达式都是条件判断的语法糖，为了更方便地进行分支而产生的语法，在支持函数式编程语言中的，这些都是必不可少的糖。
