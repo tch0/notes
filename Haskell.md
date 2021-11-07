@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Haskell语言入门](#haskell%E8%AF%AD%E8%A8%80%E5%85%A5%E9%97%A8)
+  - [关于Haskell](#%E5%85%B3%E4%BA%8Ehaskell)
   - [Haskell与函数式编程](#haskell%E4%B8%8E%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B)
   - [环境搭建](#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)
     - [使用GHCup](#%E4%BD%BF%E7%94%A8ghcup)
@@ -10,9 +11,13 @@
     - [使用stack安装GHC](#%E4%BD%BF%E7%94%A8stack%E5%AE%89%E8%A3%85ghc)
     - [关于Cabal和stack](#%E5%85%B3%E4%BA%8Ecabal%E5%92%8Cstack)
     - [开发环境](#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
+    - [编译与测试](#%E7%BC%96%E8%AF%91%E4%B8%8E%E6%B5%8B%E8%AF%95)
   - [感受一下Haskell](#%E6%84%9F%E5%8F%97%E4%B8%80%E4%B8%8Bhaskell)
+  - [基本要素](#%E5%9F%BA%E6%9C%AC%E8%A6%81%E7%B4%A0)
+    - [运算符](#%E8%BF%90%E7%AE%97%E7%AC%A6)
+    - [基本类型类](#%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B%E7%B1%BB)
   - [函数](#%E5%87%BD%E6%95%B0)
-    - [感受函数](#%E6%84%9F%E5%8F%97%E5%87%BD%E6%95%B0)
+    - [定义函数](#%E5%AE%9A%E4%B9%89%E5%87%BD%E6%95%B0)
     - [使用List](#%E4%BD%BF%E7%94%A8list)
     - [使用Range](#%E4%BD%BF%E7%94%A8range)
     - [List Comprehension](#list-comprehension)
@@ -27,10 +32,23 @@
     - [where关键字](#where%E5%85%B3%E9%94%AE%E5%AD%97)
     - [let关键字](#let%E5%85%B3%E9%94%AE%E5%AD%97)
     - [case表达式](#case%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+  - [递归](#%E9%80%92%E5%BD%92)
+  - [高阶函数](#%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0)
+    - [柯里化](#%E6%9F%AF%E9%87%8C%E5%8C%96)
+    - [函数作为参数](#%E5%87%BD%E6%95%B0%E4%BD%9C%E4%B8%BA%E5%8F%82%E6%95%B0)
+    - [常用高阶函数](#%E5%B8%B8%E7%94%A8%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0)
+    - [lambda](#lambda)
+    - [fold & scan](#fold--scan)
+    - [$函数调用符](#%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E7%AC%A6)
+    - [函数复合(Function Composition)](#%E5%87%BD%E6%95%B0%E5%A4%8D%E5%90%88function-composition)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Haskell语言入门
+
+提示：本文含有公式，可安装[MathJax Plugin for Github](https://github.com/orsharir/github-mathjax)浏览器插件提供公式渲染，或者Clone到本地查看。
+
+## 关于Haskell
 
 关于Haskell：
 >[Haskell](https://zh.wikipedia.org/wiki/Haskell)（发音为/ˈhæskəl/）是一种标准化的，通用的纯函数式编程语言，有惰性求值和强静态类型。它的命名源自美国逻辑学家哈斯凯尔·加里，他在数理逻辑方面上的工作使得函数式编程语言有了广泛的基础。在Haskell中，“函数是第一类对象”。作为一门函数编程语言，主要控制结构是函数。Haskell语言是1990年在编程语言Miranda的基础上标准化的，并且以λ演算为基础发展而来。这也是为什么Haskell语言以希腊字母“λ”（Lambda）作为自己的标志。Haskell具有“证明即程序、命题为类型”的特征
@@ -56,8 +74,10 @@
     - [诺丁汉大学——函数式编程范式入门课程](https://www.bilibili.com/video/BV1ti4y1P7TF?p=1)
     - 待补充。
 
-选择：
-- 选择[Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md)和[Real World Haskell](http://cnhaskell.com/index.html)先看一看再说。
+资料选择：
+- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看。
+- [Real World Haskell](http://cnhaskell.com/index.html)
+- [Haskell 2010 Report](https://www.haskell.org/definition/haskell2010.pdf) 没有什么比标准更准确，进阶的话必须要看，还没有到这一步。
 
 语言相关链接：
 - [haskell主页](https://www.haskell.org/)，[Wiki](https://wiki.haskell.org/Haskell)。
@@ -66,7 +86,8 @@
 - [Stackage首页](https://www.stackage.org/)
 - [Hackage首页](https://hackage.haskell.org/)
 
-阅读：
+
+课外阅读：
 - [一个很全面的Haskell笔记](https://blog.tonycrane.cc/p/b3ca5c18.html)
 
 ## Haskell与函数式编程
@@ -174,7 +195,7 @@ Download expectation failure: HttpExceptionRequest Request {
 - 显示无法下载7z.dll，stack安装GHC的方法是下载一个`.tar.xz`压缩包，并使用下载的`7z.exe`和`7z.dll`来解压文件，最后创建用于标记GHC安装成功的`ghc-X.X.X.installed`文件。并且后续也无法下载`msys2-20210604-x86_64.tar.xz`，原因是[镜像源中配置文件](http://mirrors.tuna.tsinghua.edu.cn/stackage/stack-setup.yaml)中链接存在问题。已经提了[Issue](https://github.com/tuna/issues/issues/1379)，不知道什么时候能解决，解决之后可能就没有这个问题了。
 - **绕过方法**：由于失败时完成了`.tar.xz`的步骤，可以直接使用`7z.exe`来解压，可以找到下载临时目录，本地是`C:\Users\user\AppData\Local\Programs\stack\x86_64-windows\`，所有下载文件都在这个目录，安装成功后会生成`.installed`文件，内容是`installed`。只需要手动下载`msys2-20210604-x86_64.tar.xz`提取到当前目录。
 ```
-echo echo installed>ghc-8.10.7.installed
+echo installed>ghc-8.10.7.installed
 ```
 - 前面的GHC同理：具体版本可能需要变更。
 ```
@@ -235,6 +256,17 @@ runhaskell hello.hs
 ```
 - 安装Haskell插件后将会自动下载对应版本的Haskell Language Server，也可以在插件设置中语言服务器的路径（只有一个全局设置，无法为项目设置）。启用插件将会自动开始Haskell Language Server子进程，将会吃掉将近1个G内存，提供补全、求值、类型推断等服务。
 
+### 编译与测试
+
+仅仅学习语法的话，如果每次测试都将结果打印出来，会非常冗余，利用VsCode插件和语言服务器提供的功能，可以在注释中进行测试：
+```haskell
+{-
+>>> 1 + 1
+2
+-}
+```
+- `{--}`注释中在`>>>`后输入需要测试的表达式，语言服务器会自动求值并将结果填写在注释中，既能保留下测试结果，又不影响主体逻辑，和在`ghci`中运行是一个道理，修改了代码刷新一下便会立即得出测试结果。这样就不需要再写很多冗余的简单测试打印代码了，也不必在每个`.hs`中都定义`main`，如果是单文件编译，和C一样不定义`main`是链接不过的。
+
 更多用法尚待挖掘。
 
 ## 感受一下Haskell
@@ -288,9 +320,45 @@ Prelude> succ (8 * 10)
 81
 ```
 
+## 基本要素
+
+事后补充，要熟悉了解有概念的东西。
+
+### 运算符
+
+基本类似于C语言，但使用`not`表示逻辑非。
+- [Haskell运算符全解](https://zhuanlan.zhihu.com/p/263797220)
+- 结合性分为左结合、右结合和不结合，优先级越大越高。
+
+优先级|左结合|不结合|右结合
+:-:|:-|:-|:-
+9|`!!`||`.`
+8|||`^` `^^` `**`
+7|`*` `/` `` `div` `` `` `mod` `` `` `rem` `` `` `quot` ``||
+6|`+` `-`||
+5|||`:` `++`
+4||`=` `/=` `<` `<=` `>` `>=` `` `elem` `` `` `notElem` ``|
+3|||`&&`
+2|||`||`
+1|`>` `>>=`||
+0|||`$` `$!` `sqe`
+
+### 基本类型类
+
+基本的Typeclass：
+- `Eq` 可判断相等性的类型
+- `Ord` 可比较大小的类型
+- `Show` 可表示为字符串的类型
+- `Read` 可从字符串转换出值的类型
+- `Enum` 连续的，也就是可枚举的类型。每个值都有后继 (successer) 和前置 (predecesor)，分别可以通过 `succ` 函数和 `pred` 函数得到。
+- `Bounded` 有上限和下限。例如：`maxBound :: Char` 或者 `maxBound :: Bool`
+- `Num` 数字
+- `Integral` 整数，包括`Int Integer`
+- `Floating` 浮点数，包括`Float Double`
+
 ## 函数
 
-### 感受函数
+### 定义函数
 
 定义一个函数：和调用类似，参数列表加上`=`号后跟函数体。
 ```haskell
@@ -423,6 +491,7 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
 ```
 - 其中的`Eq`就是一种`Typeclass`。
 - 这里有一个符号`=>`，其左边的东西叫类型约束，这段类型声明可以看做两段，`=>`后的部分是类型，前的部分约束了类型变量的可能类型。
+- 参数和返回值的类型如果是类型类（也就是约束），那么应该放在`=>`前并用类型变量指代，如果是具体类型，应该放在`=>`后。
 - 多个类型约束放在括号中，用`,`分隔，就像一个Tuple，有可能含义上真就是一个Tuple。
 - 常见Typeclass：
     - `Eq`是可判断相等性的类型。提供`== /=`函数，除函数以外所有类型都有这个Typeclass。
@@ -636,4 +705,333 @@ increasing'''' xs = case xs of (x:y:ys) -> x <= y && increasing'''' (y:ys)
 ```
 - 函数参数模式匹配只能用于函数定义时，而`case`表达式可以用于任何地方。
 
-究根结底，模式匹配、守卫、case表达式都是条件判断的语法糖，为了更方便地进行分支而产生的语法，在支持函数式编程语言中的，这些都是必不可少的糖。
+究根结底，模式匹配、守卫、case表达式都是条件判断的语法糖，为了更方便地进行分支而产生的语法，在支持函数式编程的语言中，这些都是必不可少的糖。
+
+## 递归
+
+先来一个传统艺能：
+- 斐波那契数列（指数复杂度，避免测试过大的参数）：
+```haskell
+{- fibonacci sequence
+>>> fib 10
+55
+>>> fib 10
+55
+-}
+fib :: (Integral a) => a -> Integer
+fib 0 = 0
+fib 1 = 1
+fib n = fib(n-1) + fib(n-2)
+```
+- 尾递归版本：
+```haskell
+{-
+>>> fib' 10
+55
+>>> fib' 100
+354224848179261915075
+>>> fib' 300
+222232244629420445529739893461909967206666939096499764990979600
+>>> fib' (50 :: Integer)
+12586269025
+>>> fib' (100 :: Int)
+3736710778780434371
+-}
+
+fibonacci :: Integral a => a -> Integer -> Integer -> Integer
+fibonacci 0 a b = b
+fibonacci n a b = fibonacci (n - 1) (a + b) a
+fib' :: Integral a => a -> Integer
+fib' n = fibonacci n 1 0
+```
+
+因为Haskell是纯函数式编程语言，没有循环，所以要实现循环就只能通过递归，所以递归的重要性又上了一层，不再是仅用于递归性质的数据结构或者递归的表达式求解。最普通的列表集合的操作都需要通过递归来实现，这是函数式编程的特点，从命令式编程语言转换到函数式需要重点熟悉锻炼这一点。
+- 求最大值：
+```haskell
+maximum' :: (Ord a) => [a] -> a
+maximum' [] = error "maximum a empty list"
+maximum' [x] = x
+maximum' (x:xs) = max x (maximum' xs)
+```
+- `replciate`函数：
+```haskell
+replicate' :: (Ord t, Num t) => t -> a -> [a]
+replicate' n x
+    | n <= 0 = []
+    | otherwise = x:replicate' (n-1) x
+```
+- 取列表前n个元素：
+```haskell
+take' :: (Ord a1, Num a1) => a1 -> [a2] -> [a2]
+take' n _
+    | n <= 0 = []
+take' _ [] = []
+take' n (x:xs) = x : take' (n-1) xs
+```
+- 判断元素是否在列表中：
+```haskell
+elem' :: Eq t => t -> [t] -> Bool
+elem' a [] = False 
+elem' a (x:xs)
+    | x == a = True 
+    | otherwise = a `elem'` xs
+```
+- 列表相关操作都可以通过递归实现，借助模式匹配实现起来都非常简单。
+- 快速排序：就一个字，简单得有点离谱。
+```haskell
+{- quick sort
+>>> quicksort [3, 1, 2, 4, 5, 7, 9, 100, -10]
+[-10,1,2,3,4,5,7,9,100]
+>>> quicksort "the quick brown fox jumps over the lazy dog's back"
+"         'aabbccdeeefghhijkklmnoooopqrrssttuuvwxyz"
+-}
+quicksort :: Ord a => [a] -> [a]
+quicksort [] = []
+quicksort (x:xs) = 
+    let smallerSorted = quicksort [a | a <- xs, a <= x]
+        biggerSorted = quicksort [a | a <- xs, a > x]
+    in smallerSorted ++ (x : biggerSorted)
+```
+
+递归的书写模式：
+- 处理边界条件，如空列表、没有子节点的节点、0、负值等情况，单独定义为一个或多个模式。多个参数的话则需要考虑多种情况，并注意他们的顺序。
+- 定义一般处理逻辑，从一系列元素中取出一个，处理完后，将剩余的元素交给这个函数继续处理。
+
+在命令式语言中，为了避免递归带来的栈消耗，能循环肯定是不递归的，递归常用在递归数据结构和特定问题处理中。但在纯函数式编程语言中，递归被用来替代循环。
+
+## 高阶函数
+
+高阶函数：函数可以作为参数、返回值、赋给另一个函数。
+
+### 柯里化
+
+在Haskell中，所有的多参数函数都支持柯里化，所以也可以说本质上Haskell的所有函数都只有一个参数。
+- 比如`max`函数：
+```haskell
+{- curried functions
+>>> :t max
+max :: Ord a => a -> a -> a
+>>> :t max 4
+max 4 :: (Ord a, Num a) => a -> a
+>>> :t max4
+max4 :: (Ord a, Num a) => a -> a
+>>> max4 5.0
+5.0
+>>> (max 4) 5
+5
+-}
+max4 :: (Ord a, Num a) => a -> a
+max4 = max 4
+max4' :: (Ord a, Num a) => a -> a
+max4' x = max 4 x
+```
+- `max 4`将得到一个函数，`max4 max4'`从含义是等价的，并且Haskell的lint会提示后者可以简写为前者。
+- 所以在实际上类型`a -> a -> a -> a`和`a -> (a -> (a -> a))`是等价的。
+- 当然如果要固定第二个参数，那么还是需要`max4'' x = max x 4`这样的定义方法。
+- 中缀函数也可以柯里化，并且可以可以固定第一个或者第二个参数：
+```haskell
+{- infix functions
+>>> :t divBy10
+divBy10 :: Double -> Double
+>>> divBy10 100
+10.0
+>>> divX 100
+0.1
+-}
+divBy10 :: Double -> Double
+divBy10 = (/10)
+divX :: Double -> Double
+divX = (10/)
+```
+- 前缀函数也可以按照这个逻辑转为中缀之后固定第一个或者第二个参数。
+- 对于某些一元和二元运算符使用同一个符号的情况，比如`-`用作减号和负号，`(-4)`则表示值-4，而不是接受一个参数将参数减4的函数。属于例外，为了避免冲突的选择。
+
+### 函数作为参数
+
+类型声明中将函数的类型加上括号即可。
+- 实现标准库`zipWith`函数，传入接受两个参数得到结果的函数和两个列表，得到对两个列表对应值应用函数后结果的列表，不得不说类型推导确实强大。
+```haskell
+{- function as arguments
+>>> zipWith (+) [1, 2, 3] [4, 5, 6, 7]
+[5,7,9]
+>>> zipWith' (+) [1, 2, 3] [4, 5, 6, 7]
+[5,7,9]
+-}
+zipWith' :: (t1 -> t2 -> a) -> [t1] -> [t2] -> [a]
+zipWith' _ [] _ = []
+zipWith' _ _ [] = []
+zipWith' f (x:xs) (y:ys) = f x y : zipWith' f xs ys
+```
+
+而至于函数作为返回值，其实默认就是柯里化的函数本身就已经将函数作为返回值了，也可以显式定义：
+```haskell
+f :: Num a => a -> a -> a -> a
+f x = let tmp1 y = (let tmp2 z = x * y * z in tmp2) in tmp1
+```
+- 这样和`f' x y z = x * y * z`并没有任何区别，还会显得很呆。
+
+### 常用高阶函数
+
+map（映射）/reduce（规约）是最常用的高阶函数。前者将一个列表映射到另一个列表，后者将一个列表规约为一个值。
+- `map :: (a -> b) -> [a] -> [b]` 映射一个数组到另一个数组。
+- `filter :: (a -> Bool) -> [a] -> [a]` 筛选符合条件的元素到结果数组。
+- `map filter`完全其实可以用列表推导式来代替，或者说本身就是等价的，用什么并不重要，凭个人喜好就好。
+- `takeWhile :: (a -> Bool) -> [a] -> [a]` 按顺序取元素直到条件不满足。
+- `zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]` 将两个列表的对应元素应用函数后得到新列表。
+- `flip :: (a -> b -> c) -> b -> a -> c` 接受一个二元函数，将两个参数翻转并返回新的二元函数。
+
+
+### lambda
+
+有高阶函数那肯定要有匿名函数了。Haskell用`\`来表示匿名函数，定义方法：`\args -> retval`，用的时候一般用括号将整个表达式括起来。
+```haskell
+>>> zipWith (\x y -> x + y) [1, 2] [10, 100, 1]
+[11,102]
+>>> map (\x -> x ** x) [1, 2, 3, 4]
+[1.0,4.0,27.0,256.0]
+```
+同普通函数一样可以使用模式匹配，但是无法为匿名函数设置多个模式，所以要慎用。
+
+使用匿名函数来实现`x * y * z`的柯里化会更容易理解一些，当然同样不如`f' = x * y * z`简单直观。
+```haskell
+f'' :: Num a => a -> a -> a -> a
+f'' = \x -> \y -> \z -> x * y * z
+```
+实现`flip`函数：使用匿名函数实现会更容易让人理解一些，表明其返回一个函数，但两者其实是等价的。
+```haskell
+flip' :: (t1 -> t2 -> t3) -> t2 -> t1 -> t3
+flip' f = \x y -> f y x
+flip'' :: (t1 -> t2 -> t3) -> t2 -> t1 -> t3
+flip'' f x y = f y x
+```
+
+### fold & scan
+
+折叠：
+- 折叠，就是将一个列表规约为一个值：
+```haskell
+>>> :t foldl
+foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
+>>> :t foldr
+foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
+```
+- `foldl foldr`接受一个函数，一个初值和一个可折叠对象，对初值和起始元素调用函数，然后一次对结果和下一个值调用直接结束，得到结果。`foldl`从左到右，`foldr`从右到左。并且注意传入函数的参数对应关系是不同的，`foldl`第一个参数为初值或者中间结果，第二个参数是可折叠对象元素，而`foldr`是反过来的。
+```haskell
+foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
+>>> :t foldr
+foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
+>>> foldl (-) 0 [1, 2, 3]
+-6
+>>> 0 - 1 - 2 - 3
+-6
+>>> foldr (-) 0 [1, 2, 3]
+2
+>>> 1 - (2 - (3 - 0))
+2
+```
+- `foldl1 foldr1`和`foldl foldr`类似，不过他们使用首或尾元素作为初值而不需要传入。
+- 对空列表进行折叠会抛出运行时错误。
+- 有个小区别是`foldl`能用于无限列表（但这不是会无限循环吗？），`foldr`不能。经过实测都会进入无限循环？
+
+扫描：
+- `scanl scanr`与`foldl foldr`类似，不同的是结果，`scanl scanr`的结果是一个列表，包括初始值和所有中间结果（包括最终结果）。`scanl`是从左往右添加结果，
+- `scanl1 scanr1`用首尾元素作为初始值，同理。
+```haskell
+>>> :t scanl
+scanl :: (b -> a -> b) -> b -> [a] -> [b]
+>>> :t scanr
+scanr :: (a -> b -> b) -> b -> [a] -> [b]
+>>> scanl (-) 0 [1, 2, 3, 4]
+[0,-1,-3,-6,-10]
+>>> scanr (-) 0 [1, 2, 3, 4]
+[-2,3,-1,4,0]
+>>> :t scanl1
+scanl1 :: (a -> a -> a) -> [a] -> [a]
+>>> scanl1 (-) [1, 2, 3, 4]
+[1,-1,-4,-8]
+>>> scanr1 (-) [1, 2, 3, 4]
+[-2,3,-1,4]
+```
+
+### $函数调用符
+
+`$`被称作函数调用符。
+- 定义：接受一个函数并返回这个函数，就是什么都没做，但使用`$`后，优先级被改变了。
+```haskell
+($) :: (a -> b) -> a -> b
+f $ x = f x
+```
+- 用空格调用的函数调用是左结合的`f x y z`与`((f x) y ) z`等价。
+- 而`$`是右结合的，并且是最低优先级，所以`f $ 1+ 1`表示`f (1 + 1)`。`$`是中缀函数，右结合，最低优先级，其他表达式都会得到优先计算，然后才从右向左执行使用`$`调用的函数。
+- 可以用来改变优先级，减少括号的使用。
+- `$ x`可以将数据变成函数，接受一个函数，返回值是将这个数据`x`用于传入的函数后得到的结果。
+- 虽然有点魔法的味道，但是又改优先级又改结合性，感觉用起来心智负担会很重，能不用就不用吧。
+```haskell
+{- ($) operator
+>>> :t ($)
+($) :: (a -> b) -> a -> b
+>>> fn $ 1 + 2
+9
+>>> :t ($ 1)
+($ 1) :: Num a => (a -> b) -> b
+-}
+fn :: Num a => a -> a
+fn x = x * x
+```
+
+### 函数复合(Function Composition)
+
+在数学中，复合函数的定义是$(f \circ g)(x) = f(g(x))$，即将函数$g(x)$的值作为$f(x)$的自变量，既然函数式编程中的函数的含义是数学中的函数而不是一般命令式编程中表是一个计算过程的函数。那么理所应当要支持复合函数（或者叫做函数组合）了，$f(g(x))$的含义就是先调用$g(x)$在对结果调用$f(x)$。
+- haskell中使用`.`运算符定义复合函数。
+- 定义：非常直白，中缀，接受两个函数，先调用后者，再调用前者。
+```haskell
+(.) :: (b -> c) -> (a -> b) -> a -> c
+f . g = \x -> f (g x)
+```
+- 很显然定义函数复合时`g`的返回值类型必须要和`f`的参数类型一致。
+- 使用：`.`优先级低于函数调用，需要将复合函数括起来。
+```haskell
+{- function composition
+>>> map (f' . g') [1..20] 
+[8,24,48,80,120,168,224,288,360,440,528,624,728,840,960,1088,1224,1368,1520,1680]
+>>> map h [1..20] 
+[8,24,48,80,120,168,224,288,360,440,528,624,728,840,960,1088,1224,1368,1520,1680]
+>>> map (\x -> f' (g' x)) [1..20]
+[8,24,48,80,120,168,224,288,360,440,528,624,728,840,960,1088,1224,1368,1520,1680]
+-}
+
+-- f(x) = (2*x + 1) ^ 2 - 1
+g' :: Num a => a -> a
+g' x = 2 * x + 1
+f' :: Num a => a -> a
+f' x = x ^ 2 - 1
+
+h :: Num a => a -> a
+h x = (2 * x + 1) ^ 2 - 1
+```
+- 实际使用可以用`f . g`这样用，或者直接写成匿名函数`\x -> f (g x)`也很简单和清晰，毕竟是等价的。
+- 这里的函数都只包含一个参数，如果是多个参数函数，可以使用不全调用，传入部分参数只剩下最后一个参数，便可以用于复合。
+- 比如`sum (replicate 5 (max 6.7 8.9))`可以写作`(sum . replicate 5 . max 6.7) 8.9`（看起来很怪，仅做演示）。
+- 使用函数复合配合`$`可以进一步去掉括号，也不太好说到底应不应该用，既然存在那必然有存在的理由，如果有充足的使用理由那便可以用。
+- 其中一个使用理由就是定义Point free style（Pointless style）的函数，比如：
+```haskell
+{- point free style function
+>>> map func [100..120.0]
+[-1,-1,0,1,2,1,0,-1,0,1,2,1,0,-1,0,1,2,1,0,-1,-1]
+>>> map func' [100..120.0]
+[-1,-1,0,1,2,1,0,-1,0,1,2,1,0,-1,0,1,2,1,0,-1,-1]
+-}
+func :: (RealFrac a, Integral b, Floating a) => a -> b
+func x = ceiling (negate (tan (cos (max 50 x))))
+func' :: Double -> Integer
+func' = ceiling . negate . tan . cos . max 50
+```
+- Point free style中函数定义去掉了参数，而是已知的多个简单函数组合形成一个复杂函数。
+- 思考如何写出Point free style的函数时，思考的会是函数的组合方式，而不是数据的传递方式。
+- 当然如果函数太复杂，硬要写成Point free可能会适得其反，这时候更好的方法可能是用`let`语句给中间结果绑定名字，或者再将问题分割成更小的问题再组合到一起。
+- 编码风格是个人选择，Haskell提供了灵活的语法，相信实践时代码的迭代优化过程会很有趣，但如果是项目开发为了风格统一估计也要付出更多代价。
+- 趣学指南中给了一个简单例子：确实实用又好看，而且确实清晰。
+```haskell
+oddSquareSum :: Integer  
+oddSquareSum = sum . takeWhile (<10000) . filter odd . map (^2) $ [1..]
+```
