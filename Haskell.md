@@ -41,6 +41,10 @@
     - [fold & scan](#fold--scan)
     - [$函数调用符](#%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E7%AC%A6)
     - [函数复合(Function Composition)](#%E5%87%BD%E6%95%B0%E5%A4%8D%E5%90%88function-composition)
+  - [模块](#%E6%A8%A1%E5%9D%97)
+    - [引入模块](#%E5%BC%95%E5%85%A5%E6%A8%A1%E5%9D%97)
+    - [常用库](#%E5%B8%B8%E7%94%A8%E5%BA%93)
+    - [编写自己的模块](#%E7%BC%96%E5%86%99%E8%87%AA%E5%B7%B1%E7%9A%84%E6%A8%A1%E5%9D%97)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -339,9 +343,9 @@ Prelude> succ (8 * 10)
 5|||`:` `++`
 4||`=` `/=` `<` `<=` `>` `>=` `` `elem` `` `` `notElem` ``|
 3|||`&&`
-2|||`||`
+2|||`\|\|`
 1|`>` `>>=`||
-0|||`$` `$!` `sqe`
+0|||`$` `$!` `seq`
 
 ### 基本类型类
 
@@ -844,7 +848,7 @@ divX :: Double -> Double
 divX = (10/)
 ```
 - 前缀函数也可以按照这个逻辑转为中缀之后固定第一个或者第二个参数。
-- 对于某些一元和二元运算符使用同一个符号的情况，比如`-`用作减号和负号，`(-4)`则表示值-4，而不是接受一个参数将参数减4的函数。属于例外，为了避免冲突的选择。
+- 对于某些一元和二元运算符使用同一个符号的情况，比如`-`用作减号和负号，`(-4)`则表示值-4，而不是接受一个参数将参数减4的函数。属于例外，为了避免冲突的选择，要使用减号含义则可以使用`subtract`，负号含义和`negate`等价。
 
 ### 函数作为参数
 
@@ -953,6 +957,8 @@ scanl1 :: (a -> a -> a) -> [a] -> [a]
 [-2,3,-1,4]
 ```
 
+折叠和扫描在一定程度上可以用来替代递归。
+
 ### $函数调用符
 
 `$`被称作函数调用符。
@@ -1030,8 +1036,318 @@ func' = ceiling . negate . tan . cos . max 50
 - 思考如何写出Point free style的函数时，思考的会是函数的组合方式，而不是数据的传递方式。
 - 当然如果函数太复杂，硬要写成Point free可能会适得其反，这时候更好的方法可能是用`let`语句给中间结果绑定名字，或者再将问题分割成更小的问题再组合到一起。
 - 编码风格是个人选择，Haskell提供了灵活的语法，相信实践时代码的迭代优化过程会很有趣，但如果是项目开发为了风格统一估计也要付出更多代价。
-- 趣学指南中给了一个简单例子：确实实用又好看，而且确实清晰。
+- 趣学指南中给了一个简单例子：实用、好看又清晰，`$`的使用使得所有函数经过复合之后最后再进行调用。
 ```haskell
 oddSquareSum :: Integer  
 oddSquareSum = sum . takeWhile (<10000) . filter odd . map (^2) $ [1..]
 ```
+
+## 模块
+
+Haskell中模块就是一组相关函数、类型、类型类的组合，Haskell进程本质就是从主模块中引用其他模块调用其中的函数执行操作。如果一个模块足够独立，里面的函数就可以被不同进程共用。
+
+Haskell标准库就是一组模块，每个模块都有一组功能相近或相关的函数和类型。比如处理List的、处理并发的、处理复数的等。目前谈及的所有数据结构、类型、类型类都是`Prelude`模块一部分，默认自动引入。
+
+### 引入模块
+
+引入模块的语句必须在函数定义前，一般都是至于文件顶部。引入后引入模块中所有函数都进入全局命名空间：
+```haskell
+import module1 module2 module3
+```
+如果只需要用到某一个模块的两个函数，则可以只引入这两个函数：
+```haskell
+import module1 (func1, func2)
+```
+如果想引入某个模块的全部函数和类型但除了其中某个函数可以使用`hiding`，不能和引入部分符号同时使用：
+```haskell
+import module1 hiding (func)
+```
+`Prelude`模块虽然已经自动引入，但仍可以手动只引入其中部分符号或者屏蔽其中部分符号：
+```haskell
+import Prelude hiding (max)
+```
+
+某些模块中具有同名的函数，为了避免名称冲突，可以使用`import qualified`，这样使用时必须使用名称`modulename.func`。
+```haskell
+import qualified modulename
+```
+给引入的模块定义别名，模块名必须大写字母开头，同样可以隐藏或部分引入：
+```haskell
+import qualified Data.Map as M hiding (map)
+```
+在ghci中引入模块：
+```
+:m module1 module2 module3 ...
+```
+
+深入学习可查阅[Haskell标准库](https://downloads.haskell.org/~ghc/latest/docs/html/libraries/)。
+
+检索标准库或者第三方库中的Haskell函数、类型可以上[Hoogle](https://hoogle.haskell.org/)，允许通过函数名模块名甚至近似的函数类型签名并允许指定搜索范围或者库作者来检索Stackage上的Haskell函数库。并且能够直接跳转到库文档或者页面，十分方便。
+
+### 常用库
+
+调用模块中函数类型时使用`module.func`，同样是`.`号，中间不能有空格，区分于函数复合。
+
+`Data.List`：
+- List常用操作，`map fileter`便是出自这个库，太过常用所以`Prelude`中将其导出了。
+- `intersperse :: a -> [a] -> [a]` 将一个元素穿插到一个列表的每两个元素间。
+- `intercalate :: [a] -> [[a]] -> [a]` 将一个列表插入到一个列表中的所有列表间。
+- `transpose :: [[a]] -> [[a]]` 翻转一个二维列表的行和列。如果用来存储矩阵，那就表示转置。
+- `foldl' :: Foldable t => (b -> a -> b) -> b -> t a -> b` `foldl`的严格版本，`foldl`是惰性的，不会立即求值，而是做一个”在必要时会取得所需的结果”的承诺。每过一遍累加器，这一行为就重复一次。在列表很大时，这堆承诺可能会塞满堆栈造成栈溢出，此时应改用严格版本，严格版本会直接计算出中间值并继续执行下去。
+- `foldl1' :: (a -> a -> a) -> [a] -> a` `foldl1`的严格版本。
+- `concat :: Foldable t => t [a] -> [a]` 连接一组列表。
+- `concatMap :: Foldable t => (a -> [b]) -> t a -> [b]` 与先`map`再`concat`等价。
+- `and :: Foldable t => t Bool -> Bool` 对一组元素求与。
+- `or :: Foldable t => t Bool -> Bool` 对一组元素求或。
+- `any :: Foldable t => (a -> Bool) -> t a -> Bool` 判断是否存在满足条件的元素。
+- `all :: Foldable t => (a -> Bool) -> t a -> Bool` 判断是否所有元素都满足条件。
+- `iterate :: (a -> a) -> a -> [a]` 用一个值调用一个函数，并用结果继续调用函数，产生一个无限的列表。
+- `splitAt :: Int -> [a] -> ([a], [a])` 将列表从特定位置断开，返回前后两个列表的元组。
+- `takeWhile :: (a -> Bool) -> [a] -> [a]` 取元素直到条件不满足。
+- `dropWhile :: (a -> Bool) -> [a] -> [a]` 舍弃满足条件的元素直到首个不满足的元素，得到剩余元素的列表，`takeWhile`的补集。
+- `span :: (a -> Bool) -> [a] -> ([a], [a])` 得到`takeWhile dropWhile`的列表构成的元组。
+- `break :: (a -> Bool) -> [a] -> ([a], [a])` 和`span`条件相反，直到首次满足时断开，等价于`break p`等价于`span (not . p)`。
+- `sort :: Ord a => [a] -> [a]` 排序，升序排列。
+- `group :: Eq a => [a] -> [[a]]` 归类相邻相等的元素。
+- `inits :: [a] -> [[a]] tails :: [a] -> [[a]]` 类似于`init tail`，只是会递归调用直到空，得到子列表构成的列表。
+- `isPrefixOf :: Eq a => [a] -> [a] -> Bool` 检查是否是前缀，前者是子列表，常以中缀形式使用。
+- `isSuffixOf :: Eq a => [a] -> [a] -> Bool` 检查是否是后缀。
+- `elem :: (Foldable t, Eq a) => a -> t a -> Bool`
+- `notElem :: (Foldable t, Eq a) => a -> t a -> Bool`
+- `partition :: (a -> Bool) -> [a] -> ([a], [a])` 按条件分为满足和不满足的元素构成数组的元组。搜索整个数组，区别于`span break`。
+- `find :: Foldable t => (a -> Bool) -> t a -> Maybe a` 查找首个满足的元素，结果是一个`Maybe`，其值是`Just something`或者`Nothing`（单个元素或者空值）。
+- `elemIndex :: Eq a => a -> [a] -> Maybe Int` 查找元素并返回下标，`Just index`或者`Nothing`。
+- `elemIndices :: Eq a => a -> [a] -> [Int]` 查找元素返回所有下标。
+- `findIndex :: (a -> Bool) -> [a] -> Maybe Int` 按条件查找首个满足元素下标。
+- `findIndices :: (a -> Bool) -> [a] -> [Int]` 按条件查找所有满足元素，得到所有下标。
+- `zip3 :: [a] -> [b] -> [c] -> [(a, b, c)]` `zip`的更多列表版本，同理`zip4 zip5 ... zip7`。
+- `zipWith3 :: (a -> b -> c -> d) -> [a] -> [b] -> [c] -> [d]` 同理`zipWith4 zipWith5 ...`。
+- `lines :: String -> [String]` 按行（依据字符`\n`）切分字符串。
+- `unlines :: [String] -> String` `lines`反函数，拼接多个字符串，每个字符串末尾补`\n`。
+- `nub :: Eq a => [a] -> [a]` 元素去重，nub意思是一小块一部分，用在这里感觉有点老掉牙不确切。
+- `delete :: Eq a => a -> [a] -> [a]` 删除第一次出现的元素。
+- `(\\) :: Eq a => [a] -> [a] -> [a]` `\`运算符，计算差集，从前者中减去后者，使用`\`需要转义，所以代码中都是`\\`。
+- `union :: Eq a => [a] -> [a] -> [a]` 取并集。
+- `intersect :: Eq a => [a] -> [a] -> [a]` 取交集。
+- `insert :: Ord a => a -> [a] -> [a]` 插入元素到可排序数组的首个大于等于它的元素前，如果原先是升序排列的，那么插入后仍是。
+- 对于更为常用的`length take drop splitAt !! replciate`之类函数的参数类型都是`Int`，按道理来说提供`Integral Num`会更好，但是处于历史原因修改会引起兼容性问题。所以提供了`genericLength genericTake genericDrop genericSplitAt genericIndex genericReplicate`函数提供更通用的类型。
+```haskell
+length :: Foldable t => t a -> Int
+take :: Int -> [a] -> [a]
+drop :: Int -> [a] -> [a]
+splitAt :: Int -> [a] -> ([a], [a])
+(!!) :: [a] -> Int -> a
+replicate :: Int -> a -> [a]
+genericLength :: Num i => [a] -> i -- for scene like average
+genericTake :: Integral i => i -> [a] -> [a]
+genericDrop :: Integral i => i -> [a] -> [a]
+genericSplitAt :: Integral i => i -> [a] -> ([a], [a])
+genericIndex :: Integral i => [a] -> i -> a
+genericReplicate :: Integral i => i -> a -> [a]
+```
+- `sort insert maximum minimum`都有各自更通用的版本，可以传入比较函数。
+```haskell
+sort :: Ord a => [a] -> [a]
+insert :: Ord a => a -> [a] -> [a]
+minimum :: (Foldable t, Ord a) => t a -> a
+maximum :: (Foldable t, Ord a) => t a -> a
+sortBy :: (a -> a -> Ordering) -> [a] -> [a]
+insertBy :: (a -> a -> Ordering) -> a -> [a] -> [a]
+minimumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
+maximumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
+```
+- `nub delete union intersect group`也有通用版本，就是后面加上`By`，他们可以传入一个函数用以替代`(==)`来测试相等。比如`group`等价于`groupBy (==)`。
+```haskell
+nub :: Eq a => [a] -> [a]
+delete :: Eq a => a -> [a] -> [a]
+union :: Eq a => [a] -> [a] -> [a]
+intersect :: Eq a => [a] -> [a] -> [a]
+group :: Eq a => [a] -> [[a]]
+nubBy :: (a -> a -> Bool) -> [a] -> [a]
+deleteBy :: (a -> a -> Bool) -> a -> [a] -> [a]
+unionBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+intersectBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
+```
+- `Data.Function`模块提供了`on`函数，可以方便地定义这种比较函数：
+```haskell
+on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
+f `on` g = \x y -> f (g x) (g y)
+```
+- `on`就相当于对两个自变量的函数做一个复合：$(f\circ g)(x, y) = f(g(x), g(y))$。比如``compare `on` length``用于按照数组长度比较，``(==) `on` (>0)``用于按照是否同为整数判等，非常地灵活。
+```haskell
+>>> groupBy ((==) `on` (>0)) [-1, -2, 0, 1, 22, 10, -100]
+[[-1,-2,0],[1,22,10],[-100]]
+>>> sortBy (compare `on` length) $ reverse [[1..x] | x <- [0..5]]
+[[],[1],[1,2],[1,2,3],[1,2,3,4],[1,2,3,4,5]]
+```
+- 通常与`By`结尾函数打交道，如果判断相等性，常用``(==) `on` something``，若判断大小，常用``compare `on` something``。
+
+`Data.Char`：
+- 一组用于处理字符的函数，字符串本质是函数，所以在处理字符串的`filter map`时会比较常用到。
+- 类型都是`Char -> Bool`。
+- `isControl` 判断一个字符是否是控制字符。
+- `isSpace` 判断一个字符是否是空格字符，包括空格，tab，换行符等.
+- `isLower` 判断一个字符是否为小写.
+- `isUper` 判断一个字符是否为大写。
+- `isAlpha` 判断一个字符是否为字母.
+- `isAlphaNum` 判断一个字符是否为字母或数字.
+- `isPrint` 判断一个字符是否是可打印的.
+- `isDigit` 判断一个字符是否为数字.
+- `isOctDigit` 判断一个字符是否为八进制数字.
+- `isHexDigit` 判断一个字符是否为十六进制数字.
+- `isLetter` 判断一个字符是否为字母.
+- `isMark` 判断是否为 unicode 注音字符，你如果是法国人就会经常用到的.
+- `isNumber` 判断一个字符是否为数字.
+- `isPunctuation` 判断一个字符是否为标点符号.
+- `isSymbol` 判断一个字符是否为货币符号.
+- `isSeperater` 判断一个字符是否为 unicode 空格或分隔符.
+- `isAscii` 判断一个字符是否在 unicode 字母表的前 128 位。
+- `isLatin1` 判断一个字符是否在 unicode 字母表的前 256 位.
+- `isAsciiUpper` 判断一个字符是否为大写的 ascii 字符.
+- `isAsciiLower` 判断一个字符是否为小写的 ascii 字符.
+- `GeneralCategory` 是一个类型类，同时是一个枚举用来表示字符的分类，共有31个分类。
+```haskell
+>>> map generalCategory "\r\nab\t A?[%#@!"
+[Control,Control,LowercaseLetter,LowercaseLetter,Control,Space,UppercaseLetter,OtherPunctuation,OpenPunctuation,OtherPunctuation,OtherPunctuation,OtherPunctuation,OtherPunctuation]
+>>> [(minBound :: GeneralCategory) .. (maxBound :: GeneralCategory)]
+[UppercaseLetter,LowercaseLetter,TitlecaseLetter,ModifierLetter,OtherLetter,NonSpacingMark,SpacingCombiningMark,EnclosingMark,DecimalNumber,LetterNumber,OtherNumber,ConnectorPunctuation,DashPunctuation,OpenPunctuation,ClosePunctuation,InitialQuote,FinalQuote,OtherPunctuation,MathSymbol,CurrencySymbol,ModifierSymbol,OtherSymbol,Space,LineSeparator,ParagraphSeparator,Control,Format,Surrogate,PrivateUse,NotAssigned]
+```
+- `toUpper` 将一个字符转为大写字母，若该字符不是小写字母，就按原值返回。
+- `toLower` 将一个字符转为小写字母，若该字符不是大写字母，就按原值返回。
+- `toTitle` 将一个字符转为 title-case，对大多数字元而言，title-case 就是大写。
+- `digitToInt` 将一个字符转为 Int 值，而这一字符必须得在 '1'..'9','a'..'f'或'A'..'F' 的范围之内。
+- `ord :: Char -> Int` 字符转Unicode码点。
+- `chr :: Int -> Char` Unicode码点转字符。
+- 一个原始的加密算法，仅仅偏移字符串：
+```haskell
+encode :: Int -> String -> String
+encode shift = map (chr . (+shift) . ord)
+
+decode :: Int -> String -> String
+decode shift = encode (-shift)
+```
+
+`Data.Map`：
+- 关联列表或者叫字典，元素是键值对，没有特定顺序。如果要实现类似功能，可以使用键值二元组的List。
+- 其中有部分和`Data.List`中重名的函数，注意`import qualified Data.Map as M`。
+- `Data.Map.fromList :: Ord k => [(k, a)] -> Map k a` 从列表创建字典，对关键字去重。
+```haskell
+>>> :t M.fromList
+M.fromList :: Ord k => [(k, a)] -> Map k a
+>>> M.fromList [(1,'a'), (1, 'z'), (2, 'B')]
+fromList [(1,'z'),(2,'B')]
+```
+- 对于普通列表，只需要元素能够判等，而对于字典，需要可排序，实现使用平衡树。处理键值对时，如果键属于`Ord`类型类，就应该尽量用`Data.Map`。
+- `Data.Map.empty :: Map k a` 创建空字典。
+- `Data.Map.insert :: Ord k => k -> a -> Map k a -> Map k a` 插入元素。
+- 利用`empty insert`创建自己的`fromList`，（类型推导不是万能的，需要自己明确类型）。
+```haskell
+fromList' :: Ord k => [(k, a)] -> M.Map k a
+fromList' = foldr (\(k, v) acc -> M.insert k v acc) M.empty
+
+fromList'' :: Ord k => [(k, a)] -> M.Map k a
+fromList'' = foldl (\acc (k, v) -> M.insert k v acc) M.empty
+```
+- `Data.Map.null :: Map k a -> Bool` 判空。
+- `Data.Map.size :: Map k a -> Int` 大小。
+- `Data.Map.singleton :: k -> a -> Map k a` 构建单元素字典。
+- `Data.Map.lookup :: Ord k => k -> Map k a -> Maybe a` 查找键对应值。
+- `Data.Map.member :: Ord k => k -> Map k a -> Bool` 判断键是否存在。
+- `Data.Map.map :: (a -> b) -> Map k a -> Map k b` 字典版本`map`。
+- `Data.Map.filter :: (a -> Bool) -> Map k a -> Map k a` 字典版本的`filter`。
+- `Data.Map.toList :: Map k a -> [(k, a)]` 字典到列表。
+- `Data.Map.keys :: Map k a -> [k]` 键列表，等价于`map fst . Data.Map.toList`。
+- `Data.Map.elems :: Map k a -> [a]` 值列表，等价于`map snd . Data.Map.toList`。
+- `Data.Map.fromListWith :: Ord k => (a -> a -> a) -> [(k, a)] -> Map k a` 和`fromList`很像，但不会直接忽略重复键，而是交给一个函数处理重复键的值。可以组合多个值、选最大值、累加到一起等，由传入函数决定。
+```haskell
+>>> M.fromListWith (\v1 v2 -> v1 ++ ", " ++ v2) [(1, "hello"), (1, "world")]
+fromList [(1,"world, hello")]
+>>> M.fromListWith (+) [(1, 2), (1, 3)]
+fromList [(1,5)]
+```
+- `Data.Map.insertWith :: Ord k => (a -> a -> a) -> k -> a -> Map k a -> Map k a` 插入元素，重复键交给传入函数处理。
+- 更多函数查看[文档](https://downloads.haskell.org/~ghc/latest/docs/html/libraries/containers-0.6.5.1/Data-Map.html)。
+
+`Data.Set`：
+- `import qualified Data.Set as Set`。
+- 常用函数：
+```haskell
+Data.Set.fromList :: Ord a => [a] -> Set a
+Data.Set.difference :: Ord a => Set a -> Set a -> Set a
+Data.Set.null :: Set a -> Bool
+Data.Set.size :: Set a -> Int
+Data.Set.member :: Ord a => a -> Set a -> Bool
+Data.Set.empty :: Set a
+Data.Set.singleton :: a -> Set a
+Data.Set.insert :: Ord a => a -> Set a -> Set a
+Data.Set.delete :: Ord a => a -> Set a -> Set a
+Data.Set.map :: Ord b => (a -> b) -> Set a -> Set b
+Data.Set.filter :: (a -> Bool) -> Set a -> Set a
+```
+- 其中`difference`是求差集：
+```haskell
+>>> Set.difference (Set.fromList [1, 2, 3]) $ Set.fromList [2, 100]
+fromList [1,3]
+```
+- 集合的一个常见用途时，列表转集合再转列表去重，要求元素是`Ord`，比`nub`更快，但不保留列表中元素的顺序。
+```haskell
+setNub :: Ord a => [a] -> [a]
+setNub = Set.toList . Set.fromList
+```
+
+### 编写自己的模块
+
+单个文件：
+```haskell
+module Geometry
+( sphereVolume
+, sphereArea
+, cubeVolume
+, cubeArea
+, cuboidVolume
+, cuboidArea
+) where
+
+
+sphereVolume :: Floating a => a -> a
+sphereVolume radius = (4.0 / 3.0) * pi * (radius ^ 3)
+
+sphereArea :: Floating a => a -> a
+sphereArea radius = 4 * pi * (radius ^ 2)
+
+cubeVolume :: Floating a => a -> a
+cubeVolume side = cuboidVolume side side side
+
+cubeArea :: Floating a => a -> a
+cubeArea side = cuboidArea side side side
+
+cuboidVolume :: Floating a => a -> a -> a -> a
+cuboidVolume a b c  = a * b * c
+
+cuboidArea :: Floating a => a -> a -> a -> a
+cuboidArea a b c = (rectangleArea a b + rectangleArea b c + rectangleArea a c) * 2
+
+rectangleArea :: Floating a => a -> a -> a
+rectangleArea a b = a * b
+```
+- 要导出的函数放到`()`中，
+- 便可以在同级目录下的`.hs`中进行导入。
+
+多个文件：
+- 新建目录`Geometry`，并在其中添加文件`Sphere.hs`：
+```haskell
+module Geometry.Sphere 
+( volume
+, area
+) where
+
+volume :: Floating a => a -> a
+volume radius = (4.0 / 3.0) * pi * (radius ^ 3)
+
+area :: Floating a => a -> a
+area radius = 4 * pi * (radius ^ 2)
+```
+- 在`Geometry`同级目录下的`.hs`文件中可以引入。
+
+更多细节待挖掘。
