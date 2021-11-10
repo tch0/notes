@@ -45,6 +45,16 @@
     - [引入模块](#%E5%BC%95%E5%85%A5%E6%A8%A1%E5%9D%97)
     - [常用库](#%E5%B8%B8%E7%94%A8%E5%BA%93)
     - [编写自己的模块](#%E7%BC%96%E5%86%99%E8%87%AA%E5%B7%B1%E7%9A%84%E6%A8%A1%E5%9D%97)
+  - [定义类型和类型类](#%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B%E5%92%8C%E7%B1%BB%E5%9E%8B%E7%B1%BB)
+    - [定义新类型](#%E5%AE%9A%E4%B9%89%E6%96%B0%E7%B1%BB%E5%9E%8B)
+    - [Record Syntax](#record-syntax)
+    - [类型参数](#%E7%B1%BB%E5%9E%8B%E5%8F%82%E6%95%B0)
+    - [派生标准类型类](#%E6%B4%BE%E7%94%9F%E6%A0%87%E5%87%86%E7%B1%BB%E5%9E%8B%E7%B1%BB)
+    - [类型别名](#%E7%B1%BB%E5%9E%8B%E5%88%AB%E5%90%8D)
+    - [递归定义数据结构](#%E9%80%92%E5%BD%92%E5%AE%9A%E4%B9%89%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84)
+    - [自定义类型类](#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B%E7%B1%BB)
+    - [Functor/函子](#functor%E5%87%BD%E5%AD%90)
+    - [Kind](#kind)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -63,7 +73,8 @@
 - Haskell非常注重理论，范畴论是支持函数式编程的理论基础之一，作为一门数学分支理论，学习Haskell将会深入范畴论的内容，也就是说不可避免地需要了解很多数学概念和定理，将会时刻与抽象作伴。
 - 不要期待几天几个月就学懂并深入Haskell，这将会是一条艰涩的道路。
 - 不要期待通过一本书或者一门课程就学到Haskell的全部，从不同的教程和书籍不同的视角思考是必要的。
-- 相教传统的命令式编程而言，需要换一种方式来思考，否则永远学不会Haskell。
+- 相教传统的命令式编程而言，需要换一种方式来思考，否则永远学不好Haskell。
+- 入门至少要了解一定的范畴论概念，理解函子、应用函子、单子等概念。
 - 学习不害怕没有基础，没有老师，怕的是没有热情。
 
 学习一门新的语言，收集资料是必不可少的：
@@ -79,7 +90,7 @@
     - 待补充。
 
 资料选择：
-- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看。
+- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看，本文的主要参考，翻译感觉有不少小问题，不是很影响阅读，但影响术语的统一和理解，比如实现说的是实作，类型说的是型别，不知道是不是台湾人翻译的。
 - [Real World Haskell](http://cnhaskell.com/index.html)
 - [Haskell 2010 Report](https://www.haskell.org/definition/haskell2010.pdf) 没有什么比标准更准确，进阶的话必须要看，还没有到这一步。
 
@@ -93,6 +104,7 @@
 
 课外阅读：
 - [一个很全面的Haskell笔记](https://blog.tonycrane.cc/p/b3ca5c18.html)
+- [School of Haskell](https://www.schoolofhaskell.com/)，一个学习Haskell的网站。
 
 ## Haskell与函数式编程
 
@@ -236,7 +248,7 @@ main = print "hello,world"
 ghc hello.hs
 hello
 ```
-- 打开控制台：
+- REPL：
 ```shell
 ghci
 ```
@@ -249,6 +261,12 @@ Ok, one module loaded.
 "hello,world"
 ```
 - 正常工作流程大概会是创建修改`hs`文件，ghci中重新加载，执行。
+- GHCI常用命令：
+    - `:l :load` 加载
+    - `:r :reload` 重载
+    - `:t :type` 类型，针对函数
+    - `:i :info` 信息，针对函数、类型、类型类等。
+    - `:k :kind` 得知一个类型的Kind。
 
 - 更改GHCI的提示符：
 ```shell
@@ -486,26 +504,26 @@ fst :: (a, b) -> a
 
 ### Typeclass
 
-Typeclass定义类型的行为，如果某一个类型属于某一个Typeclass，那么它必然实现了该Typeclass描述的方法。就类似于其他语言中纯虚类或者接口（类）的作用。
+- Typeclass称之为类型类，定义类型的行为，如果某一个类型属于某一个类型类，那么它必然实现了该类型类描述的方法。就类似于其他语言中纯虚类或者接口类的作用。
 ```
 Prelude> :t (==)
 (==) :: Eq a => a -> a -> Bool
 Prelude> :t elem
 elem :: (Foldable t, Eq a) => a -> t a -> Bool
 ```
-- 其中的`Eq`就是一种`Typeclass`。
-- 这里有一个符号`=>`，其左边的东西叫类型约束，这段类型声明可以看做两段，`=>`后的部分是类型，前的部分约束了类型变量的可能类型。
-- 参数和返回值的类型如果是类型类（也就是约束），那么应该放在`=>`前并用类型变量指代，如果是具体类型，应该放在`=>`后。
-- 多个类型约束放在括号中，用`,`分隔，就像一个Tuple，有可能含义上真就是一个Tuple。
-- 常见Typeclass：
-    - `Eq`是可判断相等性的类型。提供`== /=`函数，除函数以外所有类型都有这个Typeclass。
-    - `Ord`是可比较大小的类型，提供`< > <= >=`之类用于比较大小的函数。
-    - `compare`函数用于两个同类`Ord`的比较，类型是`Ord a => a -> a -> Ordering`，结果是以下三个类型之一：`GT LT EQ`。
+- 其中的`Eq`就是一种类型类。
+- 这里有一个符号`=>`，其左边的东西叫**类型约束**（Type constraints ），一个类型声明可以看做两段，`=>`右边的部分是类型，左边的部分约束了类型变量必须属于的类型类。
+- 参数和返回值的类型如果属于某一个或几个类型类（也就是只对类型进行约束，不限定具体类型），那么必须放在`=>`前并用类型变量指代，如果是具体类型，必须放在`=>`后。
+- 多个类型约束放在括号中，可以用多个类型类约束同一个类型变量，表示一个类型必须同时属于多个类型类。
+- 常见类型类：
+    - `Eq`是可判断相等性的类型类，提供`== /=`函数，除函数以外所有类型都实现了这个类型类。
+    - `Ord`是可比较大小的类型类，提供`< > <= >=`之类用于比较大小的函数。
+    - `compare`函数用于两个同类`Ord`的比较，类型是`Ord a => a -> a -> Ordering`，结果是以下三个值之一：`LT EQ GT`，并具有大小关系`LT < EQ < GT`。
     ```
     Prelude> 5 `compare` 3
     GT
     ```
-    - `Show`是成员可用字符串表示的类型。常用函数是`show`，将类型转换为`[Char]/String`。
+    - `Show`是成员可用字符串表示的类型类。常用函数是`show`，将类型转换为`[Char]/String`。
     ```
     >>> :t show
     show :: Show a => a -> String
@@ -516,7 +534,7 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
     >>> show "hello"
     "\"hello\""
     ```
-    - `Read`是`Show`相反的类型，`read`将一个字符串转换为`Read`的成员类型。作用可能就类似于在代码中这样写差不多。
+    - `Read`是`Show`相反的类型类，`read`将一个字符串转换为`Read`的实例类型。作用可能就类似于在代码中这样写差不多。
     ```
     >>> :t read
     read :: Read a => String -> a
@@ -525,14 +543,14 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
     >>> read "1"
     Prelude.read: no parse
     ```
-    - 单纯的`read`返回一个`Read`，无法区分具体类型，可以在调用时后面加上`::`类型注释，以明确类型。
+    - 单纯的`read`返回一个`Read a`，无法区分具体类型，可以在调用时后面加上`::`类型注释，以明确类型。
     ```
     >>> read "1.0" :: Double
     1.0
     >>> read "(1.0, \"hello\", 10)" :: (Double, [Char], Int)
     (1.0,"hello",10)
     ```
-    - `Enum`的类型成员都是可枚举类型，`Enum`的类型可以用于`Range`中。每个值都有后继（successer）和前置（predecesor），可分别通过`suc`和`pred`得到。包含类型有：`() Bool Char Ordering Int Integer Float Double`。
+    - `Enum`的类型类的实例都是可枚举类型，属于`Enum`类型类的类型可以用于`Range`中。每个值都有后继（successer）和前置（predecesor），可分别通过`suc`和`pred`得到。包含类型有：`() Bool Char Ordering Int Integer Float Double`。
     ```
     >>> succ LT
     EQ
@@ -545,7 +563,7 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
     >>> succ 1.3
     2.3
     ```
-    - `Bounded`类型都有一个上限和下限。`minBound maxBound`类型是`Bounded a => a`，无参数，得到一个，得到一个`Bounded`类型的下限和上限。
+    - `Bounded`类型类都有一个上限和下限。`minBound maxBound`的返回类型是`Bounded a => a`，无参数，得到一个`Bounded`类型的下限和上限。
     ```
     >>> :t minBound
     minBound :: Bounded a => a
@@ -569,7 +587,7 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
     >>> (5 :: Int) * 6.0
     No instance for (Fractional Int) arising from the literal ‘6.0’
     ```
-    - `Integral`是表示整数的Typeclass，包含`Int Integer`。
+    - `Integral`是表示整数的类型类，包含`Int Integer`。
     - `Floating`表浮点数，包含`Float Double`。
     - `fromIntegral`函数处理数字时很有用，类型是`(Integral a, Num b) => a -> b`从整数提取出一个更通用的`Num`。比如当`length [1, 2] * 5`的`*`类型是`Int -> Int`没有问题，但`length [1, 2] * 5.0`则会类型不匹配。
     ```
@@ -580,8 +598,8 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
     >>> fromIntegral (length [1, 2, 3]) * 5.0
     15.0
     ```
-- 可见Haskell对运算符的处理是很严格的，C++模板也可以做到类似的事情，不过对于内置类型来说，因为有整型提升和隐式类型转换的存在，运算符的类型检查其实并没有严格到这种地步。
-- 其实只是一种形式，Typeclass提供的功能，在其他语言中也有提供，java的interface（当然java没有运算符重载），Python中的`__eq__ __str__`等特殊方法，C++的运算符重载和模板，异曲同工。
+- 可见Haskell对类型匹配的处理是很严格的，C++模板也可以做到类似的事情，不过对于内置类型来说，因为有整型提升和隐式类型转换的存在，运算符的类型检查其实并没有严格到这种地步。
+- 其实只是一种形式，类型类提供的功能，在其他语言中也有提供，java的interface，Python中的`__eq__ __str__`等特殊方法，C++的继承，都异曲同工。
 
 ## 函数相关语法
 
@@ -1331,8 +1349,8 @@ cuboidArea a b c = (rectangleArea a b + rectangleArea b c + rectangleArea a c) *
 rectangleArea :: Floating a => a -> a -> a
 rectangleArea a b = a * b
 ```
-- 要导出的函数放到`()`中，
-- 便可以在同级目录下的`.hs`中进行导入。
+- 要导出的函数放到`()`中，没有导出的是模块内部函数。
+- 便可以在同级目录下的`.hs`中进行导入，使用由导入的模块导出的函数。
 
 多个文件：
 - 新建目录`Geometry`，并在其中添加文件`Sphere.hs`：
@@ -1351,3 +1369,473 @@ area radius = 4 * pi * (radius ^ 2)
 - 在`Geometry`同级目录下的`.hs`文件中可以引入。
 
 更多细节待挖掘。
+
+
+## 定义类型和类型类
+
+### 定义新类型
+
+使用`data`关键字，标准库中`Bool`类型的定义：
+```haskell
+data Bool = False | True
+```
+语法：
+```haskell
+data NameOfType = ValueConstructor1 TypesOfParams1 | ... deriving (Typeclass1, Typeclass2, ...)
+```
+- `=`右侧称之为**值构造器**（Value Constructor），其中明确了类型所有可能的值，`|`读作或，类型和值构造器中的m名称都必须首字母大写。
+- 值构造器也是函数，可以有参数，按照参数调用某个值构造器就会返回一个类型实例，和普通函数的区别就是首字母是否大写。
+- 类型名称可以和某个值构造器相同，在一个类型只有一个值构造器时很常见。
+- 使用`deriving`从其他类型类派生。
+- 例子：
+```haskell
+data Shape = Circle Float Float Float | Rectangle Float Float Float Float deriving (Show)
+```
+- 则调用`Circle f1 f2 f3`或者`Rectangle f1 f2 f3 f4`会得到一个新的`Shape`，`Circle Rectangle`不是类型，只是一个函数，他们的返回类型都是`Shape`。对于`Bool`，`True False`没有参数，所以不需要传入参数`True False`就是`Bool`的不同取值。
+- 需要一个类型能够在控制台输出为字符串，则需要派生自`Show`类型类。
+- 导出类型和构造器：在要导出的类型后加`()`，其中加入要导出的值构造器，使用`(..)`可以导出全部值构造器。
+```haskell
+module Shapes
+( Shape(Circle, Rectangle)
+) where
+```
+- 值构造器也只是函数，如果不导出，只是拒绝外部使用这些值构造器而已，仍然可以提供其他函数用于构造类型，比如`Data.Map.fromList`这种，返回一个`Data.Map`。
+- 类型的值构造器可以用于模式匹配，还可以嵌套匹配。
+
+### Record Syntax
+
+仅仅使用上面的值构造器的话，每个类型的成员都没有名字，如果要获取就必须通过模式匹配定义类似这样的函数：
+```haskell
+{-
+>>> kim = Person "kim" "Possible" 20 160 "Call me later!"
+>>> firstName kim
+>>> lastName kim
+>>> age kim
+>>> height kim
+"kim"
+"Possible"
+20
+160.0
+-}
+data Person = Person String String Int Float String deriving (Show)
+firstName :: Person -> String
+firstName (Person firstname _ _ _ _) = firstname
+lastName :: Person -> String
+lastName (Person _ lastname _ _ _ ) = lastname
+age :: Person -> Int
+age (Person _ _ age _ _ ) = age
+height :: Person -> Float
+height (Person _ _ _ height _) = height
+phoneNumber :: Person -> String
+phoneNumber (Person _ _ _ _ number) = number
+```
+有用，但非常无趣，所以有了Record 语法：
+```haskell
+{- Record Syntax
+>>> kim = Person' "kim" "Possible" 20 160 "Call me later!"
+>>> firstName' kim
+>>> lastName' kim
+>>> age' kim
+>>> height' kim
+"kim"
+"Possible"
+20
+160.0
+>>> :t firstName'
+firstName' :: Person' -> String
+>>> kim
+Person' {firstName' = "kim", lastName' = "Possible", age' = 20, height' = 160.0, phoneNumber' = "Call me later!"}
+-}
+
+data Person' = Person' {
+    firstName' :: String,
+    lastName' :: String,
+    age' :: Int,
+    height' :: Float,
+    phoneNumber' :: String
+} deriving(Show)
+```
+- 加了`{}`，写出了项名字，跟上类型标记，用`,`分隔。通过Record语法就会自动生成这些函数，不能再定义同名函数。
+- Record语法调用`show`得到字符串是不同的，信息会更详细。
+- 如果是定义简单类型，可能不需要Recrod语法，如果要定义复杂类型，一个类型有多个项且不易区分，则应该使用Record语法，在其他语言中一般对象的项都要给名称。
+
+### 类型参数
+
+在类型后加上类型参数可以实现泛型的功能，比如`Map k a`，键和值的类型是类型的一部分。是对应于C++模板、java泛型之类的语法。比如`Maybe`：
+```haskell
+data Maybe a = Nothing | Just a
+```
+- 有了类型参数`a`后，`Maybe`就不再是类型，`Maybe a`整体才是一个类型，`Maybe`则称为**类型构造器**：传入类型参数就可以得到类型，`Nothing`和`Just`是它的值构造器。
+- 前面接触到的列表类型`[Char]`其实就是列表的类型构造器，支持给了`[]`语法糖支持。
+- `Nothing :: Maybe a`是类型是多态的，`[] :: [a]`空列表也是多态的，可以被用于任何类型参数的`Maybe`或列表运算上。
+- 类型参数一般用在不关心一个项具体的值的地方，比如`Map k a`只需要`k`属于`Ord`类型类就行，不关心键和值的具体类型和具体值，如果不是像容器这样的通用数据结构，一般不会使用类型参数。同模板和泛型一样，要能够有多个类型能够提取出公共的逻辑才比较适合使用类形参数，如果定义的方法都是针对某一种数据类型的，那么无法定义类型参数，定义类型参数也没有意义。
+- 函数定义时类型参数可以加约束，但Haskell中有一个比较严格的**约定**，在`data`声明的类型参数中不要添加类型约束。
+    - 注意是编程约定而不是语法规定（要启用这个语法需要启用在文件前添加`{-# LANGUAGE DatatypeContexts #-}`，并且目前已经废弃但未移除，新代码中不应该再使用，并提供了[ExistentialQuantification](https://wiki.haskell.org/Existential_type)作为替代），如果在类型中添加了类型参数，所有使用到该类型的地方都必须添加约束。为了避免函数声明中出现过多无所谓的类型约束，约定为不使用。那么类型又需要约束该怎么办呢？答案就是只在需要关心该约束的函数中添加约束（最典型的就是值构造器或者类似作用的函数），比如`Data.Map.fromList :: Ord k => [(k, a)] -> Map k a`，构造时添加了约束，那么得到的`Map`就一定是满足约束的。像`Data.Map.toList :: Map k a -> [(k, a)]`这种方法就完全不需要关心约束。
+    - 又比如构造可以不加约束，但某些方法只有在某种约束下才能工作，那么就只需要那一部分方法添加约束，调用这些方法时编译器自然会检查类型参数是否满足了约束，不满足则会直接报错。
+    - 甚至可以为不同约束的类型参数编写多组不同约束不同名称的方法，使用时根据构造时传入的类型参数选择使用哪一组，而通用的不关心约束的方法又可以用于所有类型，非常灵活，编译器的类型检查可以保证了通过了编译就不会发生类型不匹配之类的错误。
+- **注意**：区分类型构造器和值构造器，类型声明中，左边是类型构造器，右边是值构造器，前者得到类型，后者得到类型实例。
+
+### 派生标准类型类
+
+当从`Eq Ord Enum Bounded Show Read`这几个常见类型类派生时，只需要加上`deriving`关键字，Haskell就会自动为这些类型加上这些行为。
+- 声明了`deriving(Eq)`时，就可以使用`== /=`来判断实例是否相等。判断依据是先判断其值构造器是否一致，再用`==`检查其中的所有数据是否一致（数据的类型必须都是`Eq`的实例）。
+- 属于`Ord`的类型比较时会先判断值构造器是否一致（按照顺序后面比前面的大），再判断他们的参数，并且参数类型需要都是`Ord`的实例。函数不是`Ord`的实例，所以`Just (*2) < Just (*3)`这种比较会报错。
+```haskell
+{- Ord typeclass
+>>> Nothing < Just (-100)
+True
+>>> Just 2 < Just 3
+True
+>>> Just 100 `compare` Just 50
+GT
+-}
+```
+- `Read Show`同样，只要成员都实现了`Read Show`就可以直接使用，`read`时需要添加类型注释注明想要得到的类型，否则Haskell不知道该如何转换。如果将`read`结果直接参与计算，那么也可以不注明类型。
+```haskell
+{- derived type behaviors
+>>> kim = Person {name = "Kim", age = 18}
+>>> mygirl = Person "Kim" 18
+>>> kim == mygirl
+True
+>>> show kim
+"Person {name = \"Kim\", age = 18}"
+>>> mygirl
+Person {name = "Kim", age = 18}
+>>> read "Person {name = \"Kim\", age = 18}" :: Person
+Person {name = "Kim", age = 18}
+>>> kim > read "Person {name = \"catholly\", age = 15}"
+False
+-}
+data Person = Person {
+    name :: String,
+    age :: Int
+} deriving(Eq, Ord, Read, Show)
+```
+- 如果所有值构造器都没有参数，每个值构造器都有前置和后继，可以让其成为`Enum`的成员，并且可以使用Range。如果每个东西都有可能的最大值和最小值，可以成为`Bouned`类型类的成员。
+```haskell
+{- Enum
+>>> Monday < Sunday
+True
+>>> [minBound .. maxBound] :: [Day]
+[Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday]
+>>> map succ [Monday .. Saturday]
+[Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday]
+>>> map pred [Tuesday .. Sunday]
+[Monday,Tuesday,Wednesday,Thursday,Friday,Saturday]
+>>> succ Sunday
+succ{Day}: tried to take `succ' of last tag in enumeration
+>>> pred Monday
+pred{Day}: tried to take `pred' of first tag in enumeration
+>>> [Tuesday .. Sunday] == map succ [Monday .. Saturday]
+True
+-}
+data Day = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday deriving(Eq, Ord, Show, Read, Enum, Bounded)
+```
+- 注意不能对最后一个枚举项求后继，不能对第一个枚举项求前置。
+
+### 类型别名
+
+类型别名不创建新类型，仅提供一个类型别名，使用`type`关键字，可以用在所有地方，类型声明、类型注释、类型别名声明中。
+```haskell
+type String = [Char]
+```
+使用类型别名可以让类型声明更易读，类型别名也可以有类型参数：
+```haskell
+type AssocList k v = [(k, v)]
+```
+此时别名`AssocList`是一个类型构造器，加上两个类型参数之后才是类型。
+
+类型构造器也可以不全调用，得到新的类型构造器，但是下面的代码后者在本地并没有通过编译（`? The type synonym ‘AssocList’ should have 2 arguments, but has been given 1`），疑问尚存！类型构造器和值构造器或普通函数肯定是有区别的。
+```haskell
+type IntMap v = AssocList Int v
+type IntMap' = AssocList Int
+```
+
+一个很有用的类型是[`Either`](https://hackage.haskell.org/package/base-4.14.3.0/docs/Data-Either.html)，定义大概就像：
+```haskell
+data Either a b = Left a | Right b deriving (Eq, Ord, Read, Show)
+```
+功能和`Maybe`类似，不过`Maybe`只提供一种值的封装，另一个选项是表示不存在含义的`Nothing`。但`Either`可以表示将可能是两种类型的值封装起来。可以提供左右两种值`Left Right`的模式匹配。常用于需要关心失败原因的场合，用`Maybe`只有`Nothing`无法传递失败原因等信息，就可以使用`Either`，约定`Left`表示错误，`Right`表示成功即可。
+
+### 递归定义数据结构
+
+就像递归定义函数一样，在类的值构造器中递归调用自己，就可以递归地定义数据类型：
+- 比如类似于内置的列表自定义一个列表数据类型：
+```Haskell
+{- simulate a list, define data recursively
+>>> Empty
+Empty
+>>> 5 `Cons` Empty
+Cons 5 Empty
+>>> 3 `Cons` (4 `Cons` (5 `Cons` Empty))
+Cons 3 (Cons 4 (Cons 5 Empty))
+-}
+data MyList a = Empty | Cons a (MyList a) deriving(Eq, Ord, Show, Read)
+```
+- `Empty`对应于`[]`，`:`对应于`Cons`，`1:2:[]`对应于`Cons 1 (Cons 2 Empty)`，而`[1, 2]`仅仅是Haskell提供的`1:2:[]`语法糖。这也解释了为什么`:`可以用于列表的模式匹配，而且只能从左边开始匹配，因为模式匹配就是用值构造器来做的，递归定义所以只能从左边的最外层开始匹配。
+- Haskell还提供自定义运算符（也即是中缀函数）的方法：
+```Haskell
+{- use self define operator
+>>> let a = 1 :-: 2 :-: 3 :-: Empty'
+>>> a
+1 :-: (2 :-: (3 :-: Empty'))
+>>> :t (1 :-: Empty')
+(1 :-: Empty') :: Num a => MyList' a
+>>> let b = 10 :-: 100 :-: Empty'
+>>> a .++ b
+1 :-: (2 :-: (3 :-: (10 :-: (100 :-: Empty'))))
+-}
+infixr 5 :-:
+data MyList' a = Empty' | a :-: (MyList' a) deriving(Eq, Ord, Show, Read)
+infixr 5 .++
+(.++) :: MyList' a -> MyList' a -> MyList' a
+Empty' .++ xs = xs
+(x :-: xs) .++ ys = x :-: (xs .++ ys)
+```
+- 使用`infixr 5 :-:`定义了中缀运算符`:-:`，优先级是5，右结合（所以`1 :-: 2 :-: Empty`从右往左计算，可以不用加括号）。
+- 这是新的语法结构。左结合是`infixl`，右结合是`infixr`，也可以没有结合性`infix`。
+- 定义`.++`类似于列表的`++`，用到了模式匹配和递归定义。可以看到其实并没有魔法，都是有迹可循的。
+- 更多自定义运算符的优先级结合性、前缀的函数使用`` ` ` ``转为中缀运算符的优先级和结合性问题仍需探究。
+
+例子，二叉搜索树：
+```haskell
+{- example: binary search tree
+>>> treeInsert 3 EmptyTree
+Node 3 EmptyTree EmptyTree
+>>> let t = listToTree [0, 3, 5, 6, 7, 1, 2, 4, 4, 4]
+>>> t
+Node 4 (Node 2 (Node 1 (Node 0 EmptyTree EmptyTree) EmptyTree) (Node 3 EmptyTree EmptyTree)) (Node 7 (Node 6 (Node 5 EmptyTree EmptyTree) EmptyTree) EmptyTree)
+>>> treeElem 5 t
+>>> treeElem 10 t
+True
+False
+-}
+
+data Tree a = EmptyTree | Node a (Tree a) (Tree a) deriving(Show, Read, Eq)
+
+singleton :: a -> Tree a
+singleton x = Node x EmptyTree EmptyTree
+treeInsert :: Ord a => a -> Tree a -> Tree a
+treeInsert x EmptyTree = singleton x
+treeInsert x (Node a left right)
+    | x == a = Node x left right -- de-duplicate, another option is to insert to right 
+    | x < a = Node a (treeInsert x left) right
+    | x > a = Node a left (treeInsert x right)
+    | otherwise = singleton x -- can be removed
+
+listToTree :: (Ord a) => [a] -> Tree a
+listToTree = foldr treeInsert EmptyTree
+
+treeElem :: Ord a => a -> Tree a -> Bool
+treeElem x EmptyTree = False
+treeElem x (Node a left right)
+    | x == a = True
+    | x < a = treeElem x left
+    | x > a = treeElem x right
+    | otherwise = False -- can be removed
+```
+- 守卫的条件其实已经完备了，`otherwise`可以去掉，只不过会警告所以加上了。
+- 递归的思想在任何语言里都是一样的。
+
+### 自定义类型类
+
+自定义类型类：
+- 回顾一下类型类：
+    - 类型类以函数的形式定义了一些行为，一个类型如果被定义为该类型类的实例，便可以使用这些函数。
+    - 类型类与命令式编程中的类没有任何关系，更加类似于接口类、纯虚类、抽象类等概念，不能直接使用类型类来定义一个实例，而需要从其派生出类型实例。
+- 看一看`Eq`的定义：
+```Haskell
+class Eq a where
+    (==) :: a -> a -> Bool
+    (/=) :: a -> a -> Bool
+    x == y = not (x /= y)
+    x /= y = not (x == y)
+```
+- `a`是一个类型变量，代表我们定义的任何`Eq`实例类型。并且声明了类型类提供的函数，并不一定需要有函数的定义，不过必须写出函数的类型声明。
+- `Eq`提供的函数是`== /=`，并且是以相互递归的形式定义的。查看`==`的类型，会发现是`(==) :: Eq a => a -> a -> Bool`，`a`所属类型类`Eq`被添加到了约束中。
+- 如果定义一个类型：
+```haskell
+data TrafficLight = Red | Yellow | Green
+```
+- 此时调用`Red == Red`会报错`No instance for (Eq TrafficLight) arising from a use of ‘==’`。
+- 除了`deriving(Eq)`显式从`Eq`派生，还可以通过`instance`使其成为`Eq`的实例：
+```haskell
+{- define our own typeclasses
+>>> Red == Red
+True
+>>> Red /= Green
+True
+-}
+
+data TrafficLight = Red | Yellow | Green
+instance Eq TrafficLight where
+    Red == Red = True
+    Green == Green = True
+    Yellow == Yellow = True
+    _ == _ = False
+```
+- 此时再调用`== /=`便可以成功，并且由于`Eq`中递归定义了`== /=`，只需要在具体的类型实例中定义其中一者覆盖类型类中定义，便可以使用两者。
+
+总结：
+- 使用`class`关键字定义类型类，其中声明类型类提供的函数，可以提供缺省定义也可以不提供，其中的类型参数表示类型类的实例。类型实例实现方法时可以提供定义以覆盖类型类中的定义。
+- 使用`instance`关键字定义某个类型类的实例，此时将类型参数替换为具体的实例，提供需要的函数定义用来覆盖类型中的定义。
+- `deriving`关键字对于标准类型类会提供默认的实现，比如`Eq Show`等，如果需要改变这种默认行为，则需要针对该类型类定义类型实例。
+```haskell
+{-
+>>> show Red
+"Red light"
+-}
+instance Show TrafficLight where
+    show Red = "Red light"
+    show Yellow = "Yellow light"
+    show Green = "Green light"
+```
+- 也可以把类型类定义为其他类型类的子类，比如`Num`同时也是`Eq`，定义类型类时加上类型约束即可。
+```haskell
+class (Eq a) => Num a where
+    ...
+```
+- `instance`声明中，实际的类型类实例必须是具体的类型，如果是有类型参数的`data`，必须需要加上其类型参数（具体的类型或者通用的参数名），而不能仅仅只使用其类型构造器（类型构造器并不表示一个或一类类型）。
+```haskell
+instance Eq (Maybe m) where
+    Just x == Just y = x == y
+    Nothing == Nothing = True
+    _ == _ = False
+```
+- 大部分情况下，在`class`定义中的类型约束都是宣告一个类型类成为另一个类型类的子类。而在`instance`定义中的类型约束则表达对于类型的限制。比如，要求`Maybe`的内容物（`Just a`中的`a`）也是属于`Eq`。
+- 查看一个类型类有哪些实例，可以在ghci中使用命令`:i/:info YourTypeClass`。
+
+实例：
+- 定义`YesNo`类型类，提供非`Bool`类型的`True False`判断：
+```Haskell
+{- YesNo typeclass
+>>> yesnoIf [] "Yes" "No"
+"No"
+>>> yesnoIf [2, 3, 4] "Not Empty" "Empty"
+"Not Empty"
+>>> yesnoIf True True False
+True
+>>> yesno Nothing
+False
+>>> :t Nothing
+Nothing :: Maybe a
+>>> yesno (Just 1)
+True
+-}
+
+class YesNo a where
+    yesno :: a -> Bool
+
+instance YesNo Int where
+    yesno 0 = False
+    yesno _ = True
+instance YesNo Bool where
+    yesno a = a
+instance YesNo [a] where
+    yesno [] = False
+    yesno _ = True
+instance YesNo (Maybe m) where
+    yesno Nothing = False
+    yesno _ = True
+
+yesnoIf :: YesNo a => a -> p -> p -> p
+yesnoIf yesnoVal yesResult noResult = if yesno yesnoVal then yesResult else noResult
+```
+- 再从`YesNo`派生新类型类`EmptyOrNot`，仅针对数组或者`Maybe`类型，演示一下`class isntance`声明中的类型约束、使用类型类默认实现等情况。
+```haskell
+{- Empty or not type class
+>>> empty (Just [])
+True
+>>> empty (Just [1, 2, 3])
+False
+>>> empty (Just (Just (Just [1, 2, 3])))
+False
+>>> empty []
+True
+-}
+
+class YesNo a => EmptyOrNot a where
+    empty :: a -> Bool
+    empty = not . yesno
+
+instance EmptyOrNot [a] -- use implementation of YesNo, equals to (not . yesno)
+instance (EmptyOrNot m) => EmptyOrNot (Maybe m) where
+    empty Nothing = False
+    empty (Just m) = empty m
+```
+- 值得注意的细节是，每个实例类型都需要对多个类型类依次声明，而不能一次性在一次`instance`声明中同时实现`empty`和`yesno`方法。
+
+### Functor/函子
+
+`Functor`是一个类型类，也称作**函子**，定义：
+```haskell
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+```
+- `Functor`比较特殊的地方在于类型参数`f`，前面遇到的类型参数一般都是一个类型，而这里的`f`并不是具体类型，而是**接受一个类型参数的类型构造器**。
+- `fmap`函数接受一个函数，这个函数从一个类型映射到另一个类型，还接受一个装有原始类型的`Functor` `f a`，返回映射后另一个类型的`Functor` `f b`。或者不全调用，传入一个类型`a`到`b`的映射（函数），得到对应`Functor`函子`f a`到`f b`的映射（函数）。
+- 对于列表类型来说，`map`其实就是列表类型的`fmap`。
+```haskell
+map :: (a -> b) -> [a] -> [b]
+```
+- 如何将列表定义成函子，注意类型参数传入的类型构造器`[]`而不是具体类型`[a]`。
+```haskell
+instance Functor [] where
+    fmap = map
+```
+- `Maybe`作为函子的定义：
+```haskell
+instance Functor Maybe where
+    fmap f (Just x) = Just (f x)
+    fmap f Nothing = Nothing
+```
+- 对于`Nothing`，还是`Nothing`，对于`Just x`，则是取出元素映射之后再放回`Just`。就像列表一样，只是列表可以保存多个元素，`Just`只保存一个。
+- 简单来说，将函子看做容器（盒子），`fmap`就是将盒子中数据取出来做运算之后得到结果再装进同样的盒子，结果类型并不需要和源类型一致。容器中存储的数据类型需要是单一的数据类型（实现函子的类型的类型构造器只有一个类型参数）。`fmap`需要在具体类型中进行实现。
+- 当然如果是多个数据类型那么可以固定之后只剩一个，比如对于`Map k v`可以将`Map k`变为函子。
+- 对于`data Either a b = Left a | Right b`一般用`Left`表示错误，`Right`表数据，那么可以将`a`固定不变（错误信息没有改变类型和`fmap`的必要），将`Either a`变为函子。
+- 函子的定义应该遵守一些规则，这样他们的一些性质才能够得到保证。比如如果使用`(\a a)`函数来`fmap`应该期望得到与参数相同的结果。
+
+### Kind
+
+类型构造器：
+- 类型构造器可以接受类型作为类型参数，来构造出一个具体的类型，这样的行为会让我们想到函数，接受参数并返回并一个值。
+- ghci中使用`:k :kind`命令可以查看一个类型的Kind。
+```haskell
+import Data.Map
+{- Kind
+>>> :k Int
+Int :: *
+>>> :k []
+[] :: * -> *
+>>> :k Maybe
+Maybe :: * -> *
+>>> :kind Maybe
+Maybe :: * -> *
+>>> :k Maybe Int
+Maybe Int :: *
+>>> :k Map
+Map :: * -> * -> *
+>>> :k Map Int
+Map Int :: * -> *
+>>> :k Map Int String
+Map Int String :: *
+>>> :k Num
+Num :: * -> Constraint
+>>> :k Either
+Either :: * -> * -> *
+-}
+```
+- 比如`Maybe`的Kind是`* -> *`表示接受一个类型参数并返回一个具体类型。
+- 对一个类型使用`:k`就像对一个值使用`:t`那样。
+- 类型构造器也是柯里化的，可以一部分应用参数，得到新构造器，比如`Map Int`。
+- 类型本身也是有类型系统的，比如一个类型构造器的类型参数也可以被限定为是一个接受类型参数的类型构造器（就像函数接受函数作为参数那样）：
+```haskell
+{-
+>>> :k Frank
+Frank :: * -> (* -> *) -> *
+-}
+data Frank a b = Frank {frankField :: b a} deriving (Show)
+```
+- 函数与类型构造器虽然有相似，但是它们是两个完全不同的东西，不要混淆。
+- 一般来说写实用的Haskell程序时不会需要用到Kind，也不需要去推敲，但需要知道有这些概念。
+
