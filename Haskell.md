@@ -14,6 +14,7 @@
     - [编译与测试](#%E7%BC%96%E8%AF%91%E4%B8%8E%E6%B5%8B%E8%AF%95)
   - [感受一下Haskell](#%E6%84%9F%E5%8F%97%E4%B8%80%E4%B8%8Bhaskell)
   - [基本要素](#%E5%9F%BA%E6%9C%AC%E8%A6%81%E7%B4%A0)
+    - [基本内容](#%E5%9F%BA%E6%9C%AC%E5%86%85%E5%AE%B9)
     - [运算符](#%E8%BF%90%E7%AE%97%E7%AC%A6)
     - [基本类型类](#%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B%E7%B1%BB)
   - [函数](#%E5%87%BD%E6%95%B0)
@@ -55,6 +56,12 @@
     - [自定义类型类](#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B%E7%B1%BB)
     - [Functor/函子](#functor%E5%87%BD%E5%AD%90)
     - [Kind](#kind)
+  - [输入与输出](#%E8%BE%93%E5%85%A5%E4%B8%8E%E8%BE%93%E5%87%BA)
+    - [IO动作](#io%E5%8A%A8%E4%BD%9C)
+    - [输入与输出函数](#%E8%BE%93%E5%85%A5%E4%B8%8E%E8%BE%93%E5%87%BA%E5%87%BD%E6%95%B0)
+    - [文件与字符流](#%E6%96%87%E4%BB%B6%E4%B8%8E%E5%AD%97%E7%AC%A6%E6%B5%81)
+    - [命令行参数](#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0)
+    - [随机数](#%E9%9A%8F%E6%9C%BA%E6%95%B0)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -65,7 +72,7 @@
 ## 关于Haskell
 
 关于Haskell：
->[Haskell](https://zh.wikipedia.org/wiki/Haskell)（发音为/ˈhæskəl/）是一种标准化的，通用的纯函数式编程语言，有惰性求值和强静态类型。它的命名源自美国逻辑学家哈斯凯尔·加里，他在数理逻辑方面上的工作使得函数式编程语言有了广泛的基础。在Haskell中，“函数是第一类对象”。作为一门函数编程语言，主要控制结构是函数。Haskell语言是1990年在编程语言Miranda的基础上标准化的，并且以λ演算为基础发展而来。这也是为什么Haskell语言以希腊字母“λ”（Lambda）作为自己的标志。Haskell具有“证明即程序、命题为类型”的特征
+>[Haskell](https://zh.wikipedia.org/wiki/Haskell)（发音为/ˈhæskəl/）是一种标准化的，通用的纯函数式编程语言，有惰性求值和强静态类型。它的命名源自美国逻辑学家哈斯凯尔·加里，他在数理逻辑方面上的工作使得函数式编程语言有了广泛的基础。在Haskell中，“函数是第一类对象”。作为一门函数编程语言，主要控制结构是函数。Haskell语言是1990年在编程语言Miranda的基础上标准化的，并且以λ演算为基础发展而来。这也是为什么Haskell语言以希腊字母“λ”（Lambda）作为自己的标志。Haskell具有“证明即程序、命题为类型”的特征。
 
 首先需要明确的是：
 - Haskell是一门纯函数式编程语言，学习曲线非常陡峭，收获同样会很丰富。
@@ -90,7 +97,7 @@
     - 待补充。
 
 资料选择：
-- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看，本文的主要参考，翻译感觉有不少小问题，不是很影响阅读，但影响术语的统一和理解，比如实现说的是实作，类型说的是型别，不知道是不是台湾人翻译的。
+- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看，本文的主要参考，台湾人翻译的某些名词会有一些差异，比如实现称为实作、类型称为型别、参数称为引数、随机数称为乱数等，需要留意，不是很影响阅读。
 - [Real World Haskell](http://cnhaskell.com/index.html)
 - [Haskell 2010 Report](https://www.haskell.org/definition/haskell2010.pdf) 没有什么比标准更准确，进阶的话必须要看，还没有到这一步。
 
@@ -111,7 +118,7 @@
 函数式（functional languages）与命令式（imperative languages）：
 - 不同于命令式编程语言，程序是描述要怎么做，要做什么，函数式编程需要通过函数描述出问题**是什么**，比如「阶乘就是只从1到某个数的乘积」，而命令式编程语言则会用程序描述出阶乘的计算过程：定义结果的初值为1，然后从1一直累乘到某个数的计算过程。
 - 在函数式编程语言中，变量一旦指定就不可以更改了，在命令式编程语言中，变量表示状态，如果状态不可变，那么能做的事情将非常有限。而函数式编程语言中，变量的含义更接近数学中的变量，`x=5`表示`x`就是`5`，而不是`x`处于`5`这个状态。
-- 所以在纯粹的函数式编程语言中，函数唯一能做的事情就是利用引数计算结果，不会产生副作用（side effect），副作用的含义是改变非函数内部的状态，这在命令式编程中是非常常见的。在函数式编程语言中，若以同样的参数调用一个函数两次，结果必定相同，也就是说函数都是**可重入**的。在命令式编程语言中，则需要函数实现时进行非常严格的限定才能做到。没有副作用的函数实现对于并发非常有用，因为没有副作用，并行执行的正确性就能够得到保证。
+- 所以在纯粹的函数式编程语言中，函数唯一能做的事情就是利用参数计算结果，不会产生副作用（side effect），副作用的含义是改变非函数内部的状态，这在命令式编程中是非常常见的。在函数式编程语言中，若以同样的参数调用一个函数两次，结果必定相同，也就是说函数都是**可重入**的。在命令式编程语言中，则需要函数实现时进行非常严格的限定才能做到。没有副作用的函数实现对于并发非常有用，因为没有副作用，并行执行的正确性就能够得到保证。
 
 Haskell的特点：
 - Haskell是惰性的，如非特殊说明，函数真正需要结果以前不会被求值，加上引用透明，可以把程序看做数据的一系列变形。也就是说惰性语言中的计算只是一组初始数据和变换公式。
@@ -345,6 +352,14 @@ Prelude> succ (8 * 10)
 ## 基本要素
 
 事后补充，要熟悉了解有概念的东西。
+
+### 基本内容
+
+- 单行注释：`--`
+- 多行注释：`{- -}`
+- 在文件头对GHC声明一些编译参数：`{-# #-}`
+
+
 
 ### 运算符
 
@@ -1005,7 +1020,7 @@ fn x = x * x
 
 ### 函数复合(Function Composition)
 
-在数学中，复合函数的定义是$(f \circ g)(x) = f(g(x))$，即将函数$g(x)$的值作为$f(x)$的自变量，既然函数式编程中的函数的含义是数学中的函数而不是一般命令式编程中表是一个计算过程的函数。那么理所应当要支持复合函数（或者叫做函数组合）了，$f(g(x))$的含义就是先调用$g(x)$在对结果调用$f(x)$。
+在数学中，复合函数的定义是$(f \circ g)(x) = f(g(x))$，即将函数$g(x)$的值作为$f(x)$的自变量，既然函数式编程中的函数的含义是数学中的函数而不是一般命令式编程中表是一个计算过程的函数。那么理所应当要支持复合函数（或者叫做函数组合）了，$f(g(x))$的含义就是先调用$g(x)$再对结果调用$f(x)$。
 - haskell中使用`.`运算符定义复合函数。
 - 定义：非常直白，中缀，接受两个函数，先调用后者，再调用前者。
 ```haskell
@@ -1827,8 +1842,8 @@ Either :: * -> * -> *
 ```
 - 比如`Maybe`的Kind是`* -> *`表示接受一个类型参数并返回一个具体类型。
 - 对一个类型使用`:k`就像对一个值使用`:t`那样。
-- 类型构造器也是柯里化的，可以一部分应用参数，得到新构造器，比如`Map Int`。
-- 类型本身也是有类型系统的，比如一个类型构造器的类型参数也可以被限定为是一个接受类型参数的类型构造器（就像函数接受函数作为参数那样）：
+- 类型构造器也是柯里化的，可以部分应用参数，得到新构造器，比如`Map Int`。
+- 类型本身也是有类型系统的，比如一个类型构造器的类型参数也可以被限定为是接受一个类型参数的类型构造器（就像函数接受函数作为参数那样）：
 ```haskell
 {-
 >>> :k Frank
@@ -1839,3 +1854,360 @@ data Frank a b = Frank {frankField :: b a} deriving (Show)
 - 函数与类型构造器虽然有相似，但是它们是两个完全不同的东西，不要混淆。
 - 一般来说写实用的Haskell程序时不会需要用到Kind，也不需要去推敲，但需要知道有这些概念。
 
+## 输入与输出
+
+函数的副作用：
+- Haskell是纯函数式语言，命令式语言中给电脑一串指令，在函数式编程中都是以定义东西的方式进行的。Haskell中的函数不能改变状态，比如改变变量内容，当一个函数会改变状态，称之为有副作用。没有副作用的函数在任何时候任何情况下以相同参数进行两次调用，结果都必定是相同的。
+- 无副作用的函数即是优点也是限制，也很好理解，但是如果要进行输入输出，就必须要改变输入输出设备的状态。所以也需要存在有副作用的函数。
+- Haskell在设计上对有副作用的函数做了区分，将程序分为纯粹和非纯粹两部分，输入输出由非纯粹的部分来处理，纯粹的部分依然具有函数式编程的优点，比如惰性求值、容错、模块性。
+
+### IO动作
+
+前面讨论的内容都是无副作用的，都是应该如何编写函数，计算结果，没有讨论过如何输出结果与组织程序，从输出开始：
+
+```haskell
+main = putStrLn "hello, world"
+```
+保存为`helloworld.hs`，编译`ghc helloworld.hs`，得到`helloworld.hi helloworld.i helloworld(.exe)`。可执行文件达到10MB，这得链了多少东西进去。
+
+看一下`putStrLn`的类型声明：
+```
+Prelude> :t putStrLn
+putStrLn :: String -> IO ()
+Prelude> :t putStrLn "hello" 
+putStrLn "hello" :: IO ()
+```
+`putStrLn`接受一个字符串并返回一个IO动作，这个IO动作的类型参数是`()`（即空的元组，或者是unit类型）。
+
+所谓IO动作：
+- 一个IO动作（I/O Action）是一个会造成副作用的动作，常常是读取输入或者输出到屏幕，同时会返回一些值。在标准输出打印字符串没有具体的值返回，用一个`()`代表。
+- 一个IO动作会在我们把它绑定到 `main` 这个名字并且执行程序的时候触发。
+- 整个程序限制到只能有一个IO动作看起来是很大的限制，所有有了`do`表示法将所有IO动作绑成一个。
+
+`do`表示法：
+```haskell
+main :: IO ()
+main = do
+    putStrLn "hello, input your name:"
+    name <- getLine 
+    putStrLn ("Hey ! " ++ name ++ " Yo ! what's up !")
+```
+- `do`后接了一串指令，就像命令式程序一样，每一步都是一个IO动作，将所有IO动作绑到一起变成了一个大的IO动作，类型同样是`IO something`由最后一个IO动作决定。
+- `main`的类型永远是`main :: IO somehting`，按照惯例，我们通常不会将`main`的类型在程序中写出来。
+- 在`do`块中使用`let`表达式可以没有`in`部分，含义就是变量或者函数的绑定。
+
+使用IO动作：
+- 输入：`getLine :: IO String`。
+- IO就像一个盒子，打开盒子拿到其中的字符串的方法就是`<-`。
+- `getLine`是不纯粹的有副作用的，执行两次不能保证拿到同样的结果。
+- 一段程序如果依赖着IO数据，那么这段程序也会被视为IO代码。这并不代表不能在纯粹的代码中使用IO动作返回的数据，只需要将其绑定到一个名字便可以短暂使用它。
+- 同理如果要处理一些非纯粹的数据，应该到非纯粹的环境中做，最好把IO的部分缩减到最小的比例。
+- 像`putStrLn :: String -> IO ()`也可以取出其中的值，`foo <- putStrLn "hello"`只不过取出来的也是`()`，没必要。
+- 总之，要取出一个IO动作的值，就需要在另一个IO动作中将他用`<-`绑定给一个名字。换句话说，IO动作中才能执行`<-`，还不能是作为最后一个表达式。
+- IO动作只有绑定给`main`或是在另一个用`do`串起来的IO动作时才会执行。可以用`do`串接IO动作之后再用`do`来串接这些串接起来的IO动作。最外层的IO动作绑定到`main`时才会触发执行。就类似于程序入口`main`函数。
+- GHCI中也可以执行IO动作。
+
+`return`：
+```haskell
+main :: IO ()
+main = do
+    line <- getLine
+    if null line
+        then return ()
+        else do
+            putStrLn $ reverseWords line
+            main
+
+reverseWords :: String -> String
+reverseWords = unwords . map reverse . words
+```
+- 这个程序按行接受输入，将输入中的每个单词反转之后合并为新行输出，直到空行则停止。
+- `do`块可以使用`return :: Monad m => a -> m a`，`IO`同时也是一个`Monad`。`return`这里与命令式语言中的单纯函数返回的逻辑完全不同，Haskell中`return`的含义是利用一个纯粹的值制造出一个IO对象，因为`main`的返回值类型是`IO ()`。
+- 一般的命令式语言中，`return`都代表中断函数执行，从此处返回。而Haskell中`return`并不会导致函数返回，`return`同样只是做一个函数调用通过一个值得到一个IO对象而已。整个`do`就是一个表达式，它的值是其中最后一个`IO`动作的值，不存在说在一个表达式中返回这样的操作。
+```haskell
+main = do
+    return ()
+    return "HAHAHA"
+    line <- getLine
+    return "BLAH BLAH BLAH"
+    return 4
+    putStrLn line
+```
+- 像这样的逻辑，`return`将值装到IO对象中，其实就相当于什么都没做，最后返回还是`putStrLn line`的结果。甚至可以用`a <- return "hell"`这样来在从IO对象中取出数据。
+- 需要`return`的原因：需要一个什么都不做的IO动作，或者不希望`do`块这个IO动作的结果值是其中最后一个IO动作的值时就就希望的结果，就用`return`装在IO中后放到`do`块的最后面。
+- 无论如何`return`要起作用都应该放在最后一个表达值中或者直接作为最后一个表达式。
+
+### 输入与输出函数
+
+常用输出函数：
+- `putStr :: String -> IO ()` 不换行输出。
+- `putStrLn :: String -> IO ()` 换行输出。
+- `putChar :: Char -> IO ()` 输出字符。
+- `print :: Show a => a -> IO ()` 输出`Show`实例，基本上就是`putStrLn . show`。
+
+输入函数：
+- `getChar :: IO Char` 读取字符。
+- `getLine :: IO String` 读取行。
+- `getContents :: IO String` 读取内容知道EOF（End of file）。
+
+固定结构和模式：
+- `when :: Applicative f => Bool -> f () -> f ()`在模块`Control.Monad`中，其作用就是将`if condition then (do some I/O action) else return ()`这样的模式封装为`when condition (do some I/O action)`，如果你写出了前面的结构，hlint会提示可以改写为后者：
+```haskell
+import Control.Monad
+main :: IO ()
+main = do
+    c <- getChar
+    when (c /= ' ') $ do
+        putChar c
+        main
+```
+- `sequence :: (Traversable t, Monad m) => t (m a) -> m (t a)`可以接受一串IO动作，回传一个会依次执行他们的IO动作，运算的结果是包在一个IO动作中的一连串IO动作结果，用在`IO`中比较典型是使用是`t`是列表，`m`是`IO`。常见用法类似于`sequence (map print [1, 2, 3])`这样。例：接受三行输入并输出：
+```haskell
+testSequence :: IO ()
+testSequence = do
+    rs <- sequence [getLine, getLine, getLine]
+    print rs
+```
+- 对于一个列表`map`传一个返回IO动作的函数，然后再`sequence`这个动作太常用了，以至于函数库中有`mapM mapM_`来简化了这个操作，前者保留结果，后者丢弃结果。当我们对结果不关心时，后者会用得多一些。
+```haskell
+mapM :: (Traversable t, Monad m) => (a -> m b) -> t a -> m (t b)
+mapM_ :: (Foldable t, Monad m) => (a -> m b) -> t a -> m ()
+
+testMapM :: IO [()]
+testMapM = do
+    mapM print [1, 2, 3]
+
+testMapM_ :: IO ()
+testMapM_ = do
+    mapM_ print [1, 2, 3]
+```
+- `Control.Monad`中的`forM :: (Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)`函数和`mapM`作用一致，只是参数顺序不一样。
+```haskell
+forM :: (Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)
+forM_ :: (Foldable t, Monad m) => t a -> (a -> m b) -> m ()
+
+testForM :: IO [()]
+testForM = do
+    colors <- forM [1,2,3,4] (\a -> do
+        putStrLn $ "Which color do you associate with the number " ++ show a ++ "?"
+        getLine)
+    putStrLn "The colors that you associate with 1, 2, 3 and 4 are: "
+    mapM putStrLn colors
+```
+- `Control.Monad.forever :: Applicative f => f a -> f b`接受一个IO动作并返回永远做这件事（直到EOF）的IO动作：
+```haskell
+testForever :: IO ()
+testForever = forever $ do
+    l <- getLine
+    putStrLn $ map Data.Char.toUpper l
+```
+
+总结：
+- 输入输出函数仍是函数，要将其看做进行输入输出操作并返回IO action的函数，而不是输出内容到屏幕。
+- `do`仅仅是语法糖，封装多个IO动作为一个。
+- 区分`return`。
+
+### 文件与字符流
+
+**惰性I/O**：
+- 输入函数`getContents`同样是懒惰I/O（Lazy I/O）的，直到需要用到内容时才去读取，而不是像命令式一样立马读取输入。
+```haskell
+import Control.Monad
+import Data.Char
+testContents :: IO ()
+testContents = do
+    contents <- getContents
+    putStr $ map toUpper contents
+
+main :: IO ()
+main = testContents
+```
+- 如果我们使用文件和管道去操作它，新建`test.txt`：
+```
+Nephren Ruq Insania
+Catholly Nota Seniorious
+Lilia Asplay
+```
+- 编译执行：`cat test.txt | ./IOFunction`
+```shell
+$ cat test.txt | ./IOFunctions
+NEPHREN RUQ INSANIA
+CATHOLLY NOTA SENIORIOUS
+LILIA ASPLAY
+```
+- 而如果从标准输入按行输入，那么会发现内容会按行（行缓冲）逐渐输入到`contents`，直到输入EOF结束，这就是懒惰I/O，而不是表示`contents`是一个在内存中存储了具体字符串的中间变量。
+```shell
+$ ./IOFunctions
+asdf
+ASDF
+asdf
+ASDF
+Catholly Nota Seniorious
+CATHOLLY NOTA SENIORIOUS
+```
+- 由于懒惰IO的存在，没有输入在真正被用到之前被读入。
+
+**`interact`**：
+- 从输入取字符串，执行一些转换后输出这种模式太常见了，于是有一个函数专门做这个事情：`interact :: (String -> String) -> IO ()`，传入一个转换函数，对所有输入构成的字符串执行转换，直到EOF。
+- 比如上面的函数，再加上一个只输出长度小于10的行：
+```haskell
+main :: IO ()
+main = interact $ map toUpper . unlines . filter ((<10) . length) . lines
+```
+- 使用场景主要是用管道读取整个文件做一些处理输出，或者按行处理输入直接输出的场景。
+- 在Windows上测试时发现这样对管道不工作，按道理管道不应该和标准输入有区别，尚不知道具体原因！
+
+
+文件操作：
+- 读写文件与标准输入输出并没有什么不同，标准输入输出就是读取名为`stdin stdout`的特殊文件IO。
+- 打开文件：
+```haskell
+import System.IO
+
+main :: IO ()
+main = do
+    handle <- openFile "test.txt" ReadMode
+    contents <- hGetContents handle
+    putStr contents
+    hClose handle
+```
+- 相关函数和类型，打开后使用句柄操作，读取结束后关闭，读写模式有读、写、追加写、读写。和其他语言大同小异。
+```haskell
+openFile :: FilePath -> IOMode -> IO Handle
+hGetContents :: Handle -> IO String
+hClose :: Handle -> IO ()
+data IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
+```
+- 可将`stdin stdout`作为句柄文件文件IO的函数上，`hGetContents stdin`与`getContents`含义相同。
+- 文件打开后需要关闭，可以使用`withFile`函数来管理文件的关闭，离开后自动关闭，而不用显式调用`hClose`。接受文件、读写模式和一个句柄到要执行的IO操作的函数（通常都会传入一个lambda），`withFile`打开文件后将句柄传给函数执行其中的操作，并在执行结束后关闭。
+```haskell
+withFile :: FilePath -> IOMode -> (Handle -> IO r) -> IO r
+
+testWithFile :: IO ()
+testWithFile = do
+    withFile "test.txt" ReadMode (\handle -> do
+        contents <- hGetContents handle
+        putStr contents)
+```
+- 实现一个`withFile`：
+```haskell
+withFile' :: FilePath -> IOMode -> (Handle -> IO b) -> IO b
+withFile' path mode f = do
+    handle <- openFile path mode
+    result <- f handle
+    hClose handle
+    return result
+```
+- 常见输入输出函数的文件版本：
+```haskell
+hGetLine :: Handle -> IO String
+hGetChar :: Handle -> IO Char
+hPutChar :: Handle -> Char -> IO ()
+hPutStr :: Handle -> String -> IO ()
+hPutStrLn :: Handle -> String -> IO ()
+hPrint :: Show a => Handle -> a -> IO ()
+```
+- 除了这些常见IO操作，读取文件并处理字符串内容的操作实在太常见了，于是有三个函数用来简化工作，用于读文件内容、写内容到文件、添加内容到文件。
+```haskell
+readFile :: FilePath -> IO String
+writeFile :: FilePath -> String -> IO ()
+appendFile :: FilePath -> String -> IO ()
+```
+- `getContents hGetContents`都是懒惰IO，不会一次将文件读到内存中，其实就是一个有缓冲的流。文本文件默认是行缓冲，也就是一次读进来的内容是一行，二进制文件默认是块缓冲（Block-Buffering），一个块一个块（Chunk）的读取。可以用`hSetBuffering`控制缓冲的行为。`hSetBuffering hFlush`会返回一个会设置缓冲和刷新缓冲的IO动作。
+```haskell
+hSetBuffering :: Handle -> BufferMode -> IO ()
+hGetBuffering :: Handle -> IO BufferMode
+hFlush :: Handle -> IO ()
+data BufferMode = NoBuffering | LineBuffering | BlockBuffering (Maybe Int)
+```
+- 其他函数：
+```haskell
+System.Directory.renameFile :: FilePath -> FilePath -> IO ()
+System.Directory.removeFile :: FilePath -> IO ()
+System.Directory.getCurrentDirectory :: IO FilePath
+System.IO.openTempFile :: FilePath -> String -> IO (FilePath, Handle) -- open a temporary file
+```
+- 使用`openTempFile`打开临时文件时，可以传入文件名`"temp"`这样会生成一个`temp`加上随机字符串的文件名，可以防止覆写已有的文件。
+
+### 命令行参数
+
+编写运行在终端中的函数时，命令行参数是必不可少的，利用Haskell的标准库可以有效地处理命令行参数。
+
+`System.Environment`中提供了获取程序名称和命令行参数的函数：
+```haskell
+getArgs :: IO [String]
+getProgName :: IO String
+```
+- 比如编译得到的目标文件是`test`，那么执行`test hello world`那么`getArgs`得到`IO ["hello", "world"]`而`getProgName`得到`IO "test"`。
+- 一个例子，处理文本文件，通过命令行参数输入，可以查看增加和删除待办事项，错误处理待完善：
+```haskell
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+import System.Environment
+import System.Directory
+import System.IO
+import Data.List
+
+{- command arguments
+>>> :t getArgs
+>>> :t getProgName
+getArgs :: IO [String]
+getProgName :: IO String
+-}
+
+-- a to do list processing example
+dispatch :: [([Char], [String] -> IO ())]
+dispatch = [("add", add)
+           , ("view", view)
+           , ("remove", remove)
+           ]
+
+-- look up command and execute
+main :: IO ()
+main = do
+    (command:args) <- getArgs
+    let (Just action) = lookup command dispatch
+    action args
+
+-- prog add file item, add item to end of to-do list
+add :: [String] -> IO ()
+add [fileName, todoItem] = do
+    appendFile fileName (todoItem ++ "\n")
+    view [fileName]
+
+-- prog view file, view to-do list file
+view :: [String] -> IO ()
+view [fileName] = do
+    contents <- readFile fileName
+    let todoTasks = lines contents
+        numberedTasks = zipWith (\n line -> show n ++ " - " ++ line) [0..] todoTasks
+    putStr $ unlines numberedTasks
+
+-- prog remove file number, to remove line of to do list
+remove :: [String] -> IO ()
+remove [fileName, numberOfString] = do
+    handle <- openFile fileName ReadMode
+    (tempName, tempHandle) <- openTempFile "." "temp"
+    contents <- hGetContents handle
+    let number = read numberOfString
+        todoTasks = lines contents
+        newTodoItems = delete (todoTasks !! number) todoTasks
+    hPutStr tempHandle $ unlines newTodoItems
+    hClose handle
+    hClose tempHandle
+    removeFile fileName
+    renameFile tempName fileName
+    view [fileName]
+```
+
+### 随机数
+
+首先要明确的是要产生（伪）随机数，那么每次调用就应该拿到不一样的数字，但是Haskell是纯函数式语言，纯粹的引用透明（referential transparency）的函数是没有副作用的，特定输入就会得到特定输出。所以随机数发生的部分一定是有副作用的。
+
+其他编程语言是怎么产生随机数的呢？可能会拿到电脑的一些信息，比如时间、鼠标信息、甚至CPU中的微小扰动等，根据这些信息算出一个看起来随机的值，或者更简单的类似于线性同余这种具有特定周期的伪随机数。在Haskell中，我们需要的随机函数应该是接受具有随机性的值，根据信息经过计算后得到一个值，也就是函数本身没有副作用，只是传入参数发生了变化。
+
+`System.Random`模块中提供了这样的函数。
+
+首先需要安装`System.Random`模块：
+```shell
+stack install random
+```
