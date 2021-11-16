@@ -12,6 +12,8 @@
     - [关于Cabal和stack](#%E5%85%B3%E4%BA%8Ecabal%E5%92%8Cstack)
     - [开发环境](#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
     - [编译与测试](#%E7%BC%96%E8%AF%91%E4%B8%8E%E6%B5%8B%E8%AF%95)
+  - [Stack使用指南](#stack%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97)
+    - [组织项目](#%E7%BB%84%E7%BB%87%E9%A1%B9%E7%9B%AE)
   - [感受一下Haskell](#%E6%84%9F%E5%8F%97%E4%B8%80%E4%B8%8Bhaskell)
   - [基本要素](#%E5%9F%BA%E6%9C%AC%E8%A6%81%E7%B4%A0)
     - [基本内容](#%E5%9F%BA%E6%9C%AC%E5%86%85%E5%AE%B9)
@@ -143,8 +145,10 @@ Haskell语言发展：
 
 安装：
 - 当前时刻最新版本2021年10月29日发布的是9.2.1，[GHC首页](https://www.haskell.org/ghc/)。
+- 一般不直接安装GHC，而是通过cabal或者Stack安装GHC，这样可以管理项目并且管理第三方库从Hackage或者Stackage的安装。只安装GHC的话不是很方便。
 
-### 使用GHCup
+### 使用GHCup安装
+
 - 使用[GHCup](https://www.haskell.org/ghcup/install/)，GHCup是一个帮助安装Haskell GHC工具链的工具。支持安装的工具链：
     - GHC
     - cabal-install
@@ -159,72 +163,71 @@ curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;Invoke-Command -ScriptBlock ([ScriptBlock]::Create((Invoke-WebRequest https://www.haskell.org/ghcup/sh/bootstrap-haskell.ps1 -UseBasicParsing))) -ArgumentList $true
 ```
-- 倒腾了半天网络等各种原因，Linux上和Windows上都没有安装成功。好像可以换源解决，参考[这里](https://zh.z.haskell.world/guide)。
+- 因为网络原因，Linux上和Windows上都没有安装成功。
+- 好像可以换源解决，参考[这里](https://zh.z.haskell.world/guide01)，尝试结果是换源之后仅GHCup是从镜像下载，stack和GHC还是从Github上下载，啊这。
+- GHCup只是一个安装工具，不是一定需要，转为直接安装stack。
 
 ### 安装stack
-- 使用stack安装，[视频教程](https://www.youtube.com/watch?v=sRonIB8ZStw)，[一个在Windows上安装stack的教程](https://krantz-xrf.github.io/2020/09/25/windows-install-stack-ghc.html)。
+
+特性与文档：
+- [一个视频教程](https://www.youtube.com/watch?v=sRonIB8ZStw)。
 - [stack](https://github.com/commercialhaskell/stack)是一个跨平台的Haskell项目管理、环境管理工具。
 - [stack文档](https://docs.haskellstack.org/en/stable/README/)。
 - 特性：
     - 安装GHC到一个独立位置。
-    - 安装项目需要的包。
+    - 为项目安装需要的包。
     - 构建、测试项目。
     - 为项目做Benchmark。
-- 安装：
-- Linux：
-```shell
-curl -sSL https://get.haskellstack.org/ | sh
-```
+
+Windows环境：
 - Windows中：下载[Windows 64-bit Installer.](https://get.haskellstack.org/stable/windows-x86_64-installer.exe)。默认会添加用户path环境变量，并设置了用户环境变量`STACK_ROOT=C:\sr`表示使用stack安装程序的位置。由于Windows下默认由260字节的路径长度限制，且stack管理的文件通常具有较深的目录层次，所以这里的目录名很短，也可以设置为其他盘或者其他路径。
 - 升级stack：
 ```shell
 stack upgrade
 ```
+
+换源：
 - [更换stack的源为清华源](https://mirrors.tuna.tsinghua.edu.cn/help/stackage/)，注意其中给出的配置文件目录为`%APPDATA%\stack\config.yaml`，但由于我们修改了`%STACK_ROOT%`，需要修改的配置文件其实在`%STACK_ROOT%\config.yaml`。
+- 清华的源存在一定问题，有一些东西没有镜像过来，配置也有问题，安装GHC时会有问题。提了[Issue](https://github.com/tuna/issues/issues/1379)，不过一直没解决。
+- 建议[更换为中科大的源](https://mirrors.ustc.edu.cn/help/stackage.html)，则没有这个问题。
+- 注意配置文件位置
+    - windows中在`%STACK_ROOT%\config.yaml`。
+    - Linux中在`~/.stack/config.yaml`。
+
+Linux环境：
+- 途径一：官网安装方法，网络原因失败。
+```shell
+curl -sSL https://get.haskellstack.org/ | sh
+wget -qO- https://get.haskellstack.org/ | sh
+```
+- 途径二：包管理器，版本有点低。不过可以安装，可以安装之后再换源然后更新，注意不同版本的`config.yaml`文件配置方式存在差异，参见镜像的配置指导。尝试过，但低版本的Stack更新还是从Github，这。
+```shell
+sudo apt install haskell-stack
+```
+- 途径三：由于网络原因是在难搞，可以使用代理，或者直接从下载压缩包解压，从中科大源找到最新版本stack的压缩包。
+```shell
+wget https://mirrors.ustc.edu.cn/stackage/stack/stack-2.7.3-linux-x86_64-static.tar.gz
+```
+- 解压后将单个二进制拷贝到`/usr/bin/stack`，创建`~/.stack/`就OK了，`stack`安装之后就只有这两个东西，卸载的话直接把二进制和`.stack/`目录删掉就足够了。
+```shell
+tar -zxvf stack-2.7.3-linux-x86_64-static.tar.gz
+cd stack-2.7.3-linux-x86_64-static/
+sudo cp stack /usr/bin/stack
+```
 
 ### 使用stack安装GHC
-- 到[Stackage](https://www.stackage.org/)找到最新的LTS版本，目前是18.15，然后安装GHC，[文档](https://docs.haskellstack.org/en/stable/GUIDE/#resolvers-and-changing-your-compiler-version)。
+
+- 到[Stackage](https://www.stackage.org/)找到最新的LTS版本，当前是18.17，然后安装GHC，[文档](https://docs.haskellstack.org/en/stable/GUIDE/#resolvers-and-changing-your-compiler-version)。
+- 安装指定LTS版本的GHC，直接`--resolver lts`则安装最新的LTS版本。
 ```shell
-stack --resolver lts-18.15 setup
+stack --resolver lts-18.17 setup
 ```
-- 如果要安装最新的Nigthly版本，直接`--resolver lts`则使用最新的LTS版本。
+- 也可以安装最新的Nigthly版本，好像是每天发布，一般来说没有必要安装最新版本，安装最新的长期支持版是最好的。
 ```shell
 stack --resolver nigthly setup
 ```
-- 故障排除：
-```
-C:\Users\tch>stack --resolver lts-18.15 setup
-Warning: http://mirrors.tuna.tsinghua.edu.cn/stackage/stack-setup.yaml: Unrecognized field in GHCDownloadInfo: version
-Preparing to install GHC to an isolated location.
-This will not interfere with any system-level installation.
-Already downloaded.
-Preparing to download 7z.dll ...
-Download expectation failure: HttpExceptionRequest Request {
-  host                 = "github.com"
-  port                 = 443
-  secure               = True
-  requestHeaders       = [("User-Agent","The Haskell Stack")]
-  path                 = "/fpco/minghc/blob/master/bin/7z.dll"
-  queryString          = "?raw=true"
-  method               = "GET"
-  proxy                = Nothing
-  rawBody              = False
-  redirectCount        = 10
-  responseTimeout      = ResponseTimeoutDefault
-  requestVersion       = HTTP/1.1
-}
- (InternalException Network.Socket.recvBuf: invalid argument (Invalid argument))
-```
-- 显示无法下载7z.dll，stack安装GHC的方法是下载一个`.tar.xz`压缩包，并使用下载的`7z.exe`和`7z.dll`来解压文件，最后创建用于标记GHC安装成功的`ghc-X.X.X.installed`文件。并且后续也无法下载`msys2-20210604-x86_64.tar.xz`，原因是[镜像源中配置文件](http://mirrors.tuna.tsinghua.edu.cn/stackage/stack-setup.yaml)中链接存在问题。已经提了[Issue](https://github.com/tuna/issues/issues/1379)，不知道什么时候能解决，解决之后可能就没有这个问题了。
-- **绕过方法**：由于失败时完成了`.tar.xz`的步骤，可以直接使用`7z.exe`来解压，可以找到下载临时目录，本地是`C:\Users\user\AppData\Local\Programs\stack\x86_64-windows\`，所有下载文件都在这个目录，安装成功后会生成`.installed`文件，内容是`installed`。只需要手动下载`msys2-20210604-x86_64.tar.xz`提取到当前目录。
-```
-echo installed>ghc-8.10.7.installed
-```
-- 前面的GHC同理：具体版本可能需要变更。
-```
-echo installed>msys2-20210604.installed
-```
-- 下载路径就是最终的安装路径。
+- 清华源存在问题，解决途径可以参考[这里](https://krantz-xrf.github.io/2020/09/25/windows-install-stack-ghc.html)，使用[中科大的源](https://mirrors.ustc.edu.cn/help/stackage.html)则没有这个问题。
+- GHC的安装路径在`stack path`中的`ghc-paths`中。
 - GHC版本：
 ```shell
 stack exec -- ghc --version
@@ -234,32 +237,31 @@ stack exec -- ghc --version
 stack exec -- ghci
 ```
 - 离开交互式环境：`:q`。
-- 如果希望直接`ghci ghc`命令启动编译器，可以将其路径添加到path。
-- 到这里GHC就安装成功了，和我们手动从GHC的网站上下载解压配置其实是一样的，不过下载用stack来管理了。
-- stack可以管理多个版本的GHC，为了避免冲突，使用命令行来选择版本：`stack --compiler ghc-8.8.4 exec ghci`。
-- 搞了一个下午才解决环境问题。
-- 更多使用需要查看stack文档。
+- 如果希望直接`ghci ghc`命令启动编译器或者交互环境，可以将其路径添加到path变量。不过这样是不能使用stack安装的包的，所以仅在非常有限的范围内测试时可以这样做，更建议使用通过stack启动。
+- 到这里GHC就安装成功了，和我们手动从GHC的网站上下载解压配置其实是一样的，不过是用stack来管理了。
+- stack可以管理多个版本的GHC，为了避免冲突，可以使用命令行来选择版本：`stack --compiler ghc-8.8.4 exec ghci`。
 
 ### 关于Cabal和stack
 - cabal是另一个包管理和项目工具，和stack有区别有联系，cabal的包管理库是Hackage，stack是Stackage，Stackage官网介绍Stackage是Hackage的子集的分发。
-- 都可以管理包，都可以管理项目，好像还可以实现同一个项目兼容两个工具。但stack好像是为了解决cabal的某些痛点，具体还未研究那么深。暂时不安装cabal，只使用stack就行了。
+- 都可以管理包，都可以管理项目，使用Stack还可以实现同一个项目兼容两个工具。但stack好像是为了解决cabal的某些痛点，具体还未研究那么深。暂时未安装cabal，仅使用Stack。
 
+### GHC基本使用
 
-### 开发环境
-- VS Code安装Haskell扩展，新建文件`hello.hs`：
+编译器使用：
+- 新建文件`hello.hs`
 ```haskell
 main = print "hello,world"
 ```
 - 编译执行：
 ```shell
 ghc hello.hs
-hello
+./hello
 ```
-- REPL：
+- 交互式执行环境
 ```shell
 ghci
 ```
-- 加载`hello.hs`文件。
+- GHCI中加载加载`hello.hs`文件。
 ```
 Prelude> :l hello.hs
 [1 of 1] Compiling Main             ( hello.hs, interpreted )
@@ -267,7 +269,7 @@ Ok, one module loaded.
 *Main> main
 "hello,world"
 ```
-- 正常工作流程大概会是创建修改`hs`文件，ghci中重新加载，执行。
+- 学习中的正常工作流程可以是创建修改`hs`文件，ghci中重新加载，执行特定函数。
 - GHCI常用命令：
     - `:l :load` 加载
     - `:r :reload` 重载
@@ -283,11 +285,11 @@ Ok, one module loaded.
 ```shell
 runhaskell hello.hs
 ```
+
+VsCode环境配置：
+- 安装Haskell扩展。
 - 安装Haskell插件后将会自动下载对应版本的Haskell Language Server，也可以在插件设置中语言服务器的路径（只有一个全局设置，无法为项目设置）。启用插件将会自动开始Haskell Language Server子进程，将会吃掉将近1个G内存，提供补全、求值、类型推断等服务。
-
-### 编译与测试
-
-仅仅学习语法的话，如果每次测试都将结果打印出来，会非常冗余，利用VsCode插件和语言服务器提供的功能，可以在注释中进行测试：
+- 仅仅学习语法的话，如果每次测试都将结果打印出来，会非常冗余，利用VsCode插件和语言服务器提供的功能，可以在注释中进行测试：
 ```haskell
 {-
 >>> 1 + 1
@@ -295,8 +297,54 @@ runhaskell hello.hs
 -}
 ```
 - `{--}`注释中在`>>>`后输入需要测试的表达式，语言服务器会自动求值并将结果填写在注释中，既能保留下测试结果，又不影响主体逻辑，和在`ghci`中运行是一个道理，修改了代码刷新一下便会立即得出测试结果。这样就不需要再写很多冗余的简单测试打印代码了，也不必在每个`.hs`中都定义`main`，如果是单文件编译，和C一样不定义`main`是链接不过的。
+- `>>>`测试中不支持标准输入输出，[更多详细信息查看文档](https://github.com/haskell/haskell-language-server/blob/master/plugins/hls-eval-plugin/README.md)。
 
-更多用法尚待挖掘。
+## Stack使用指南
+
+前期可以使用单文件GHC命令行编译加上GHCI交互环境已经够用了，后面必然需要了解如何组织项目，使用stack管理项目和环境。
+
+### 开始使用
+
+[Stack快速入门](https://docs.haskellstack.org/en/stable/README/#quick-start-guide)：
+
+```shell
+stack new my-project
+cd my-project
+stack setup
+stack build
+stack exec my-project-exe
+```
+- `stack new`新建项目。
+- `stack setup`下载编译器（如果有必要）到一个独立的位置（默认在`~/.stack`），不会干扰系统中已有的安装，`stack path`查看路径。
+- `stack build`构建项目。
+- `stack exec my-project-exe`执行构建完成的项目，`-exe`加在项目名称后，这是默认的最终生成的可执行文件名称。
+- 使用`stack install <package-name>`安装一个包。
+- `stack new`创建的项目目录结构：
+```haskell
+.
+├── app
+│   └── Main.hs
+├── ChangeLog.md
+├── LICENSE
+├── my-project.cabal
+├── package.yaml
+├── README.md
+├── Setup.hs
+├── src
+│   └── Lib.hs
+├── stack.yaml
+└── test
+    └── Spec.hs
+
+    3 directories, 10 files
+```
+- `stack build`会生成`.stack-work/`目录，依赖和生成文件都会被放在这里，默认会添加到`.gitignore`。
+- 管理库：编辑`src/`目录。
+- `app/`目录中应该仅包含只与可执行文件相关的内容是最完美的。
+- 添加依赖：编辑`package.yaml`的`dependencies`域。
+- 再次运行`stack build`，`stack`会自动更新`my-project.cabal`，如果想的话，也可以手动编辑`.cabal`然后`stack`为你自动更新`package.yaml`。这两个文件是`stack`和`cabal`的项目文件，`stack`同时提供支持。
+- 如果遇到依赖的包不在当前LTS版本中时，可以尝试在`stack.yaml`中的`extra-deps`域中添加新版本。
+
 
 ## 感受一下Haskell
 
@@ -616,6 +664,18 @@ elem :: (Foldable t, Eq a) => a -> t a -> Bool
 - 可见Haskell对类型匹配的处理是很严格的，C++模板也可以做到类似的事情，不过对于内置类型来说，因为有整型提升和隐式类型转换的存在，运算符的类型检查其实并没有严格到这种地步。
 - 其实只是一种形式，类型类提供的功能，在其他语言中也有提供，java的interface，Python中的`__eq__ __str__`等特殊方法，C++的继承，都异曲同工。
 
+多态函数：
+- 多态函数在调用时会隐式地给传入类型参数给类型变量（可以类比C++模板函数调用时给的可以省略的模板类型参数），可以是具体类型那么类型参数就被确定，也可以是类型类那么就添加到约束中。如果类型变量本身就有约束，可以传入约束中类型类本身、子类型类、实现了这个类型类的类型实例。这是由Haskell的类型推导做到的，不用显示传入。
+```haskell
+>>> :t fromIntegral
+fromIntegral :: (Integral a, Num b) => a -> b
+>>> :t sqrt
+sqrt :: Floating a => a -> a
+>>> :t sqrt . fromIntegral
+sqrt . fromIntegral :: (Floating c, Integral a) => a -> c
+```
+- 记住**类型类是约束而不是一种具体的类型**。
+
 ## 函数相关语法
 
 ### 模式匹配(Pattern matching)
@@ -646,7 +706,7 @@ increasing''' :: Ord a => [a] -> Bool
 increasing''' (x:y:ys) = x <= y && increasing''' (y:ys)
 increasing''' _ = True
 ```
-- 模式匹配是按照定义顺序来的，匹配到就停止。【不像prolog那种需要在后续的模式中去掉前面的匹配的条件】。
+- 模式匹配是按照定义顺序来的，匹配到就停止。【不像prolog会同时尝试匹配所有模式，不同模式的条件需要互斥】。
 - 调用的参数没有匹配到的话会抛出运行时异常，所以匹配应该完备，必须能够匹配所有情况的输入，需要编写一个模式用以匹配剩余的情况，比如使用`_`放到最后。
 - 匹配时若不需要接受匹配结果，则可以使用`_`。
 - 列表不能使用`++`匹配，`x:xs`常用于匹配不固定长度列表，常见于递归函数中，`[x, y]`直接列出元素用于匹配固定长度列表。
@@ -690,7 +750,7 @@ bmiTell weight height
           normal = 25.0  
           fat = 30.0
 ```
-- `where`中可以定义多个名字和函数，每个名字对守卫都是可见的，并且仅对本函数可见，不会污染其他函数的名称空间。其中的名字都是一列垂直排开，这是语法规范。
+- `where`中可以定义多个名字和函数，每个名字对守卫都是可见的，并且仅对本函数可见，不会污染全局和其他函数的名称空间。其中的名字都是一列垂直排开，这是语法规范。
 - `where`中也可以使用模式匹配。
 ```haskell
 where bmi = weight / height ^ 2  
@@ -738,11 +798,11 @@ case expression of pattern1 -> result1
 ```haskell
 increasing'''' :: Ord a => [a] -> Bool 
 increasing'''' xs = case xs of (x:y:ys) -> x <= y && increasing'''' (y:ys)
-                               _ -> True
+                               _        -> True
 ```
 - 函数参数模式匹配只能用于函数定义时，而`case`表达式可以用于任何地方。
 
-究根结底，模式匹配、守卫、case表达式都是条件判断的语法糖，为了更方便地进行分支而产生的语法，在支持函数式编程的语言中，这些都是必不可少的糖。
+究根结底，模式匹配、守卫、case表达式都是条件判断的语法糖，为了更方便地进行分支而产生的语法，在支持函数式编程的语言中，这些都是必不可少的糖，使用多层的`if-else`嵌套会显得很冗余。
 
 ## 递归
 
@@ -838,11 +898,11 @@ quicksort (x:xs) =
 
 ## 高阶函数
 
-高阶函数：函数可以作为参数、返回值、赋给另一个函数。
+高阶函数：函数可以作为参数、返回值、赋给另一个变量。
 
 ### 柯里化
 
-在Haskell中，所有的多参数函数都支持柯里化，所以也可以说本质上Haskell的所有函数都只有一个参数。
+在Haskell中，所有的多参数函数都支持柯里化，所以也可以说本质上Haskell的所有函数都只有一个参数，多参数的调用就是多个一参数函数的调用。
 - 比如`max`函数：
 ```haskell
 {- curried functions
@@ -862,8 +922,8 @@ max4 = max 4
 max4' :: (Ord a, Num a) => a -> a
 max4' x = max 4 x
 ```
-- `max 4`将得到一个函数，`max4 max4'`从含义是等价的，并且Haskell的lint会提示后者可以简写为前者。
-- 所以在实际上类型`a -> a -> a -> a`和`a -> (a -> (a -> a))`是等价的。
+- `max 4`将得到一个函数，`max4 max4'`从含义是等价的，并且Haskell的hlint会提示后者可以简写为前者。
+- 所以在实际上类型`a -> a -> a -> a`和`a -> (a -> (a -> a))`是等价的，从语法上来说这源于运算符`->`是右结合的。
 - 当然如果要固定第二个参数，那么还是需要`max4'' x = max x 4`这样的定义方法。
 - 中缀函数也可以柯里化，并且可以可以固定第一个或者第二个参数：
 ```haskell
@@ -920,16 +980,16 @@ map（映射）/reduce（规约）是最常用的高阶函数。前者将一个�
 
 ### lambda
 
-有高阶函数那肯定要有匿名函数了。Haskell用`\`来表示匿名函数，定义方法：`\args -> retval`，用的时候一般用括号将整个表达式括起来。
+有高阶函数那肯定要有匿名函数了。Haskell用`\`来表示匿名函数，定义方法：`\args -> retval`，用的时候一般用括号将整个匿名函数括起来。
 ```haskell
 >>> zipWith (\x y -> x + y) [1, 2] [10, 100, 1]
 [11,102]
 >>> map (\x -> x ** x) [1, 2, 3, 4]
 [1.0,4.0,27.0,256.0]
 ```
-同普通函数一样可以使用模式匹配，但是无法为匿名函数设置多个模式，所以要慎用。
+同普通函数一样可以使用模式匹配，但是无法为匿名函数设置多个模式，所以在匿名函数中要慎用模式匹配。
 
-使用匿名函数来实现`x * y * z`的柯里化会更容易理解一些，当然同样不如`f' = x * y * z`简单直观。
+使用匿名函数来实现`x * y * z`的柯里化会更容易理解一些，当然熟悉了默认柯里化之后，用`\x y z -> x * y * z`更简单直观。
 ```haskell
 f'' :: Num a => a -> a -> a -> a
 f'' = \x -> \y -> \z -> x * y * z
@@ -952,11 +1012,8 @@ foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
 >>> :t foldr
 foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
 ```
-- `foldl foldr`接受一个函数，一个初值和一个可折叠对象，对初值和起始元素调用函数，然后一次对结果和下一个值调用直接结束，得到结果。`foldl`从左到右，`foldr`从右到左。并且注意传入函数的参数对应关系是不同的，`foldl`第一个参数为初值或者中间结果，第二个参数是可折叠对象元素，而`foldr`是反过来的。
+- `foldl foldr`接受一个函数，一个初值和一个可折叠对象，对初值和起始元素调用函数，然后一次对结果和下一个值调用直接结束，得到结果。`foldl`从左到右，`foldr`从右到左。并且注意传入函数的参数对应关系是不同的，`foldl`第一个参数为初值或者中间结果，第二个参数是可折叠对象元素，而`foldr`是反过来的。当中间结果和可折叠对象元素类型不同时需要特别注意。
 ```haskell
-foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
->>> :t foldr
-foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
 >>> foldl (-) 0 [1, 2, 3]
 -6
 >>> 0 - 1 - 2 - 3
@@ -966,12 +1023,12 @@ foldr :: Foldable t => (a -> b -> b) -> b -> t a -> b
 >>> 1 - (2 - (3 - 0))
 2
 ```
-- `foldl1 foldr1`和`foldl foldr`类似，不过他们使用首或尾元素作为初值而不需要传入。
-- 对空列表进行折叠会抛出运行时错误。
-- 有个小区别是`foldl`能用于无限列表（但这不是会无限循环吗？），`foldr`不能。经过实测都会进入无限循环？
+- `foldl1 foldr1`和`foldl foldr`类似，不过他们使用首或尾元素作为初值而不需要再传入初值。
+- 对空列表进行折叠会抛出运行时异常。
+- 有个小区别是`foldl`能用于无限列表（但这不是会无限循环吗？），`foldr`不能。经过实测都会进入无限循环？这一条是存在疑问的，应该避免将`fold`用于无限列表。
 
 扫描：
-- `scanl scanr`与`foldl foldr`类似，不同的是结果，`scanl scanr`的结果是一个列表，包括初始值和所有中间结果（包括最终结果）。`scanl`是从左往右添加结果，
+- `scanl scanr`与`foldl foldr`类似，不同的是结果，`scanl scanr`的结果是一个列表，包括初始值和所有中间结果与最终结果。`scanl`是从左往右添加结果，`scanr`则是从右向左。
 - `scanl1 scanr1`用首尾元素作为初始值，同理。
 ```haskell
 >>> :t scanl
@@ -990,21 +1047,21 @@ scanl1 :: (a -> a -> a) -> [a] -> [a]
 [-2,3,-1,4]
 ```
 
-折叠和扫描在一定程度上可以用来替代递归。
+折叠和扫描在一定程度上可以用来替代递归在列表上的使用。
 
 ### $函数调用符
 
-`$`被称作函数调用符。
-- 定义：接受一个函数并返回这个函数，就是什么都没做，但使用`$`后，优先级被改变了。
+`$`被称作函数调用符：
+- 定义：接受一个函数和一个参数并返回使用这个函数调用参数的结果，不改变具体逻辑，但使用`$`后，函数调用的优先级被改变了。
 ```haskell
 ($) :: (a -> b) -> a -> b
 f $ x = f x
 ```
-- 用空格调用的函数调用是左结合的`f x y z`与`((f x) y ) z`等价。
-- 而`$`是右结合的，并且是最低优先级，所以`f $ 1+ 1`表示`f (1 + 1)`。`$`是中缀函数，右结合，最低优先级，其他表达式都会得到优先计算，然后才从右向左执行使用`$`调用的函数。
-- 可以用来改变优先级，减少括号的使用。
+- 用空格调用的函数调用是左结合的`f x y z`与`((f x) y) z`等价。
+- `$`是中缀函数，右结合，最低优先级，其他表达式都会得到优先计算，然后才从右向左执行使用`$`调用的函数。
+- `f $ 1 + 1`表示`f (1 + 1)`，作用是降低了函数调用的优先级，减少括号的使用。
+- 因为是右结合，并且`$`只接受一个函数参数，所以`f x y z`不能写作`f $ x $ y $ z`（应该在当`x y z`是表达式或者函数调用时才用`$`，不然是没有必要的），因为右结合含义就变成了`f $ (x $ (y $ z))`，这明显不是想要的语义。多个参数可以使用括号指定结合性`((f $ x) $ y) $ z`但这样本质上并没有减少括号，所以对于多参数的函数，还不如`f (x) (y) (z)`，当然最后一个参数永远是可以用的`f (x) (y) $ z`。
 - `$ x`可以将数据变成函数，接受一个函数，返回值是将这个数据`x`用于传入的函数后得到的结果。
-- 虽然有点魔法的味道，但是又改优先级又改结合性，感觉用起来心智负担会很重，能不用就不用吧。
 ```haskell
 {- ($) operator
 >>> :t ($)
@@ -1017,18 +1074,20 @@ f $ x = f x
 fn :: Num a => a -> a
 fn x = x * x
 ```
+- 虽然有点魔法的味道，又改优先级又改结合性，但在一定程度上使用可以减少括号，让程序更清晰易读。
+- 注意适度，不要滥用，请在充分理解之后再使用。
 
 ### 函数复合(Function Composition)
 
-在数学中，复合函数的定义是$(f \circ g)(x) = f(g(x))$，即将函数$g(x)$的值作为$f(x)$的自变量，既然函数式编程中的函数的含义是数学中的函数而不是一般命令式编程中表是一个计算过程的函数。那么理所应当要支持复合函数（或者叫做函数组合）了，$f(g(x))$的含义就是先调用$g(x)$再对结果调用$f(x)$。
-- haskell中使用`.`运算符定义复合函数。
-- 定义：非常直白，中缀，接受两个函数，先调用后者，再调用前者。
+或者叫做函数组合。在数学中，复合函数的定义是$(f \circ g)(x) = f(g(x))$，即将函数$g(x)$的值作为$f(x)$的自变量，既然函数式编程中的函数的含义是数学中的函数而不是一般命令式编程中表是一个计算过程的函数。那么理所应当要支持复合函数（或者叫做函数组合）了，$f(g(x))$的含义就是先调用$g(x)$再对结果调用$f(x)$。
+- Haskell中使用`.`运算符定义复合函数。
+- 定义：非常直白，中缀，接受两个单参数的函数，先调用后者，再调用前者。
 ```haskell
 (.) :: (b -> c) -> (a -> b) -> a -> c
 f . g = \x -> f (g x)
 ```
-- 很显然定义函数复合时`g`的返回值类型必须要和`f`的参数类型一致。
-- 使用：`.`优先级低于函数调用，需要将复合函数括起来。
+- 很显然定义函数复合时内层函数`g`的返回值类型必须要和外层函数`f`的参数类型一致。
+- `.`优先级低于函数调用，需要将复合函数括起来，配合`$`可以不用括号`f . g $ (expression)`。
 ```haskell
 {- function composition
 >>> map (f' . g') [1..20] 
@@ -1050,8 +1109,8 @@ h x = (2 * x + 1) ^ 2 - 1
 ```
 - 实际使用可以用`f . g`这样用，或者直接写成匿名函数`\x -> f (g x)`也很简单和清晰，毕竟是等价的。
 - 这里的函数都只包含一个参数，如果是多个参数函数，可以使用不全调用，传入部分参数只剩下最后一个参数，便可以用于复合。
-- 比如`sum (replicate 5 (max 6.7 8.9))`可以写作`(sum . replicate 5 . max 6.7) 8.9`（看起来很怪，仅做演示）。
-- 使用函数复合配合`$`可以进一步去掉括号，也不太好说到底应不应该用，既然存在那必然有存在的理由，如果有充足的使用理由那便可以用。
+- 比如`sum (replicate 5 (max 6.7 8.9))`可以写作`(sum . replicate 5 . max 6.7) 8.9`（看起来很怪，这样组合意义不明，仅做演示）。
+- 使用函数复合配合`$`可以进一步去掉括号，刚开始可能会有点晦涩，但充分理解之后用起来非常舒服。
 - 其中一个使用理由就是定义Point free style（Pointless style）的函数，比如：
 ```haskell
 {- point free style function
@@ -1074,6 +1133,7 @@ func' = ceiling . negate . tan . cos . max 50
 oddSquareSum :: Integer  
 oddSquareSum = sum . takeWhile (<10000) . filter odd . map (^2) $ [1..]
 ```
+- 阅读经过复合的函数时应该从里到外去理解。
 
 ## 模块
 
@@ -1126,7 +1186,7 @@ import qualified Data.Map as M hiding (map)
 - `intersperse :: a -> [a] -> [a]` 将一个元素穿插到一个列表的每两个元素间。
 - `intercalate :: [a] -> [[a]] -> [a]` 将一个列表插入到一个列表中的所有列表间。
 - `transpose :: [[a]] -> [[a]]` 翻转一个二维列表的行和列。如果用来存储矩阵，那就表示转置。
-- `foldl' :: Foldable t => (b -> a -> b) -> b -> t a -> b` `foldl`的严格版本，`foldl`是惰性的，不会立即求值，而是做一个”在必要时会取得所需的结果”的承诺。每过一遍累加器，这一行为就重复一次。在列表很大时，这堆承诺可能会塞满堆栈造成栈溢出，此时应改用严格版本，严格版本会直接计算出中间值并继续执行下去。
+- `foldl' :: Foldable t => (b -> a -> b) -> b -> t a -> b` `foldl`的严格（restrict）版本，`foldl`是惰性（lazy）的，不会立即求值，而是做一个”在必要时会取得所需的结果”的承诺。每过一遍累加器，这一行为就重复一次。在列表很大时，这堆承诺可能会塞满堆栈造成栈溢出，此时应改用严格版本，严格版本会直接计算出中间值并继续执行下去。
 - `foldl1' :: (a -> a -> a) -> [a] -> a` `foldl1`的严格版本。
 - `concat :: Foldable t => t [a] -> [a]` 连接一组列表。
 - `concatMap :: Foldable t => (a -> [b]) -> t a -> [b]` 与先`map`再`concat`等价。
@@ -1207,7 +1267,7 @@ groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
 f `on` g = \x y -> f (g x) (g y)
 ```
-- `on`就相当于对两个自变量的函数做一个复合：$(f\circ g)(x, y) = f(g(x), g(y))$。比如``compare `on` length``用于按照数组长度比较，``(==) `on` (>0)``用于按照是否同为整数判等，非常地灵活。
+- `on`就相当于对两个自变量的函数做一个复合：$(f\circ g)(x, y) = f(g(x), g(y))$。比如``compare `on` length``用于按照数组长度比较，``(==) `on` (>0)``用于按照是否同为正数判等，非常地灵活。
 ```haskell
 >>> groupBy ((==) `on` (>0)) [-1, -2, 0, 1, 22, 10, -100]
 [[-1,-2,0],[1,22,10],[-100]]
@@ -1481,14 +1541,14 @@ data Person' = Person' {
 data Maybe a = Nothing | Just a
 ```
 - 有了类型参数`a`后，`Maybe`就不再是类型，`Maybe a`整体才是一个类型，`Maybe`则称为**类型构造器**：传入类型参数就可以得到类型，`Nothing`和`Just`是它的值构造器。
-- 前面接触到的列表类型`[Char]`其实就是列表的类型构造器，支持给了`[]`语法糖支持。
+- 前面接触到的列表类型，`[]`其实就是列表的类型构造器，只是提供了语法糖。
 - `Nothing :: Maybe a`是类型是多态的，`[] :: [a]`空列表也是多态的，可以被用于任何类型参数的`Maybe`或列表运算上。
 - 类型参数一般用在不关心一个项具体的值的地方，比如`Map k a`只需要`k`属于`Ord`类型类就行，不关心键和值的具体类型和具体值，如果不是像容器这样的通用数据结构，一般不会使用类型参数。同模板和泛型一样，要能够有多个类型能够提取出公共的逻辑才比较适合使用类形参数，如果定义的方法都是针对某一种数据类型的，那么无法定义类型参数，定义类型参数也没有意义。
 - 函数定义时类型参数可以加约束，但Haskell中有一个比较严格的**约定**，在`data`声明的类型参数中不要添加类型约束。
     - 注意是编程约定而不是语法规定（要启用这个语法需要启用在文件前添加`{-# LANGUAGE DatatypeContexts #-}`，并且目前已经废弃但未移除，新代码中不应该再使用，并提供了[ExistentialQuantification](https://wiki.haskell.org/Existential_type)作为替代），如果在类型中添加了类型参数，所有使用到该类型的地方都必须添加约束。为了避免函数声明中出现过多无所谓的类型约束，约定为不使用。那么类型又需要约束该怎么办呢？答案就是只在需要关心该约束的函数中添加约束（最典型的就是值构造器或者类似作用的函数），比如`Data.Map.fromList :: Ord k => [(k, a)] -> Map k a`，构造时添加了约束，那么得到的`Map`就一定是满足约束的。像`Data.Map.toList :: Map k a -> [(k, a)]`这种方法就完全不需要关心约束。
     - 又比如构造可以不加约束，但某些方法只有在某种约束下才能工作，那么就只需要那一部分方法添加约束，调用这些方法时编译器自然会检查类型参数是否满足了约束，不满足则会直接报错。
     - 甚至可以为不同约束的类型参数编写多组不同约束不同名称的方法，使用时根据构造时传入的类型参数选择使用哪一组，而通用的不关心约束的方法又可以用于所有类型，非常灵活，编译器的类型检查可以保证了通过了编译就不会发生类型不匹配之类的错误。
-- **注意**：区分类型构造器和值构造器，类型声明中，左边是类型构造器，右边是值构造器，前者得到类型，后者得到类型实例。
+- **注意**：区分类型构造器和值构造器，类型声明中，左边是类型构造器，右边是值构造器，前者得到类型，后者得到该类型实例。
 
 ### 派生标准类型类
 
@@ -1560,7 +1620,7 @@ type AssocList k v = [(k, v)]
 ```
 此时别名`AssocList`是一个类型构造器，加上两个类型参数之后才是类型。
 
-类型构造器也可以不全调用，得到新的类型构造器，但是下面的代码后者在本地并没有通过编译（`? The type synonym ‘AssocList’ should have 2 arguments, but has been given 1`），疑问尚存！类型构造器和值构造器或普通函数肯定是有区别的。
+类型构造器也可以不全调用，得到新的类型构造器，但是下面的代码后者在本地并没有通过编译（`? The type synonym ‘AssocList’ should have 2 arguments, but has been given 1`），疑问尚存！类型构造器和值构造器或普通函数不是一个概念，只是有类似之处，不要混为一谈。
 ```haskell
 type IntMap v = AssocList Int v
 type IntMap' = AssocList Int
@@ -1587,7 +1647,7 @@ Cons 3 (Cons 4 (Cons 5 Empty))
 -}
 data MyList a = Empty | Cons a (MyList a) deriving(Eq, Ord, Show, Read)
 ```
-- `Empty`对应于`[]`，`:`对应于`Cons`，`1:2:[]`对应于`Cons 1 (Cons 2 Empty)`，而`[1, 2]`仅仅是Haskell提供的`1:2:[]`语法糖。这也解释了为什么`:`可以用于列表的模式匹配，而且只能从左边开始匹配，因为模式匹配就是用值构造器来做的，递归定义所以只能从左边的最外层开始匹配。
+- `Empty`对应于`[]`，`:`对应于`Cons`，`1:2:[]`对应于`Cons 1 (Cons 2 Empty)`，而`[1, 2]`仅仅是Haskell对`1:2:[]`提供的语法糖。这也解释了为什么`:`可以用于列表的模式匹配，而且只能从左边开始匹配，因为模式匹配就是用值构造器来做的，递归定义所以只能从左边的最外层开始匹配。
 - Haskell还提供自定义运算符（也即是中缀函数）的方法：
 ```Haskell
 {- use self define operator
@@ -1609,7 +1669,7 @@ Empty' .++ xs = xs
 ```
 - 使用`infixr 5 :-:`定义了中缀运算符`:-:`，优先级是5，右结合（所以`1 :-: 2 :-: Empty`从右往左计算，可以不用加括号）。
 - 这是新的语法结构。左结合是`infixl`，右结合是`infixr`，也可以没有结合性`infix`。
-- 定义`.++`类似于列表的`++`，用到了模式匹配和递归定义。可以看到其实并没有魔法，都是有迹可循的。
+- 定义`.++`类似于列表的`++`，用到了模式匹配和递归定义。可以看到其实并没有任何魔法，都是有迹可循的。
 - 更多自定义运算符的优先级结合性、前缀的函数使用`` ` ` ``转为中缀运算符的优先级和结合性问题仍需探究。
 
 例子，二叉搜索树：
@@ -1657,7 +1717,7 @@ treeElem x (Node a left right)
 自定义类型类：
 - 回顾一下类型类：
     - 类型类以函数的形式定义了一些行为，一个类型如果被定义为该类型类的实例，便可以使用这些函数。
-    - 类型类与命令式编程中的类没有任何关系，更加类似于接口类、纯虚类、抽象类等概念，不能直接使用类型类来定义一个实例，而需要从其派生出类型实例。
+    - 类型类与命令式编程中的类没有任何关系，更加类似于接口类、纯虚类、抽象类等概念，不能直接使用类型类来声明一个实例，而需要从其派生出具体的类型实例。
 - 看一看`Eq`的定义：
 ```Haskell
 class Eq a where
@@ -1673,7 +1733,7 @@ class Eq a where
 data TrafficLight = Red | Yellow | Green
 ```
 - 此时调用`Red == Red`会报错`No instance for (Eq TrafficLight) arising from a use of ‘==’`。
-- 除了`deriving(Eq)`显式从`Eq`派生，还可以通过`instance`使其成为`Eq`的实例：
+- 除了`deriving(Eq)`显式从`Eq`派生，还可以通过`instance`使其成为`Eq`的实例，此时就要自行提供`==`的实现。如果不提供`==`实现，那么会报警告，并调用`Eq`的默认实现相互递归直到栈溢出，一切都是合乎逻辑的。
 ```haskell
 {- define our own typeclasses
 >>> Red == Red
@@ -1692,8 +1752,8 @@ instance Eq TrafficLight where
 - 此时再调用`== /=`便可以成功，并且由于`Eq`中递归定义了`== /=`，只需要在具体的类型实例中定义其中一者覆盖类型类中定义，便可以使用两者。
 
 总结：
-- 使用`class`关键字定义类型类，其中声明类型类提供的函数，可以提供缺省定义也可以不提供，其中的类型参数表示类型类的实例。类型实例实现方法时可以提供定义以覆盖类型类中的定义。
-- 使用`instance`关键字定义某个类型类的实例，此时将类型参数替换为具体的实例，提供需要的函数定义用来覆盖类型中的定义。
+- 使用`class`关键字定义类型类，其中声明类型类提供的函数，可以提供缺省定义也可以不提供，其中的类型参数表示类型类的实例。
+- 使用`instance`关键字定义某个类型类的实例，此时将类型参数替换为具体的实例，提供需要的函数定义用来覆盖类型类中的定义。
 - `deriving`关键字对于标准类型类会提供默认的实现，比如`Eq Show`等，如果需要改变这种默认行为，则需要针对该类型类定义类型实例。
 ```haskell
 {-
@@ -1778,7 +1838,7 @@ instance (EmptyOrNot m) => EmptyOrNot (Maybe m) where
     empty Nothing = False
     empty (Just m) = empty m
 ```
-- 值得注意的细节是，每个实例类型都需要对多个类型类依次声明，而不能一次性在一次`instance`声明中同时实现`empty`和`yesno`方法。
+- 值得注意的细节是，每个实例类型都需要对多个类型类依次声明，而不能一次性在一次`instance`声明中同时实现`empty`和`yesno`方法，尽管类型类是具有派生关系的。
 
 ### Functor/函子
 
@@ -1808,7 +1868,7 @@ instance Functor Maybe where
 - 简单来说，将函子看做容器（盒子），`fmap`就是将盒子中数据取出来做运算之后得到结果再装进同样的盒子，结果类型并不需要和源类型一致。容器中存储的数据类型需要是单一的数据类型（实现函子的类型的类型构造器只有一个类型参数）。`fmap`需要在具体类型中进行实现。
 - 当然如果是多个数据类型那么可以固定之后只剩一个，比如对于`Map k v`可以将`Map k`变为函子。
 - 对于`data Either a b = Left a | Right b`一般用`Left`表示错误，`Right`表数据，那么可以将`a`固定不变（错误信息没有改变类型和`fmap`的必要），将`Either a`变为函子。
-- 函子的定义应该遵守一些规则，这样他们的一些性质才能够得到保证。比如如果使用`(\a a)`函数来`fmap`应该期望得到与参数相同的结果。
+- 函子的定义应该遵守一些规则，这样他们的一些性质才能够得到保证。比如使用`(\a -> a)`函数来调用`fmap`那么应该期望得到与参数相同的结果。
 
 ### Kind
 
@@ -1841,7 +1901,8 @@ Either :: * -> * -> *
 -}
 ```
 - 比如`Maybe`的Kind是`* -> *`表示接受一个类型参数并返回一个具体类型。
-- 对一个类型使用`:k`就像对一个值使用`:t`那样。
+- 而`-> Contraint`则表示这是一个约束或者类型类。
+- 对一个类型使用`:k`就类似于对一个值使用`:t`。
 - 类型构造器也是柯里化的，可以部分应用参数，得到新构造器，比如`Map Int`。
 - 类型本身也是有类型系统的，比如一个类型构造器的类型参数也可以被限定为是接受一个类型参数的类型构造器（就像函数接受函数作为参数那样）：
 ```haskell
@@ -1852,7 +1913,8 @@ Frank :: * -> (* -> *) -> *
 data Frank a b = Frank {frankField :: b a} deriving (Show)
 ```
 - 函数与类型构造器虽然有相似，但是它们是两个完全不同的东西，不要混淆。
-- 一般来说写实用的Haskell程序时不会需要用到Kind，也不需要去推敲，但需要知道有这些概念。
+- 一般来说写实用的Haskell程序时不会需要用到Kind，也不太需要去推敲，但需要知道有这些概念。
+- 最后来一个比较绕的问题：类型类可以有类型参数吗？经过试验大概是不可以。
 
 ## 输入与输出
 
@@ -1934,7 +1996,7 @@ main = do
     putStrLn line
 ```
 - 像这样的逻辑，`return`将值装到IO对象中，其实就相当于什么都没做，最后返回还是`putStrLn line`的结果。甚至可以用`a <- return "hell"`这样来在从IO对象中取出数据。
-- 需要`return`的原因：需要一个什么都不做的IO动作，或者不希望`do`块这个IO动作的结果值是其中最后一个IO动作的值时就就希望的结果，就用`return`装在IO中后放到`do`块的最后面。
+- 需要`return`的原因：需要一个什么都不做的IO动作，或者不希望`do`块这个IO动作的结果值是其中最后一个IO动作的值时，就用`return`装在IO中后放到`do`块的最后面。
 - 无论如何`return`要起作用都应该放在最后一个表达值中或者直接作为最后一个表达式。
 
 ### 输入与输出函数
@@ -1948,7 +2010,7 @@ main = do
 输入函数：
 - `getChar :: IO Char` 读取字符。
 - `getLine :: IO String` 读取行。
-- `getContents :: IO String` 读取内容知道EOF（End of file）。
+- `getContents :: IO String` 读取内容直到EOF（End of file）。
 
 固定结构和模式：
 - `when :: Applicative f => Bool -> f () -> f ()`在模块`Control.Monad`中，其作用就是将`if condition then (do some I/O action) else return ()`这样的模式封装为`when condition (do some I/O action)`，如果你写出了前面的结构，hlint会提示可以改写为后者：
@@ -2005,7 +2067,7 @@ testForever = forever $ do
 总结：
 - 输入输出函数仍是函数，要将其看做进行输入输出操作并返回IO action的函数，而不是输出内容到屏幕。
 - `do`仅仅是语法糖，封装多个IO动作为一个。
-- 区分`return`。
+- `return`仅做包装，与命令式程序中的函数返回区分开来。
 
 ### 文件与字符流
 
@@ -2055,7 +2117,7 @@ main :: IO ()
 main = interact $ map toUpper . unlines . filter ((<10) . length) . lines
 ```
 - 使用场景主要是用管道读取整个文件做一些处理输出，或者按行处理输入直接输出的场景。
-- 在Windows上测试时发现这样对管道不工作，按道理管道不应该和标准输入有区别，尚不知道具体原因！
+- 在Windows上测试时发现这样对标准输入工作但对管道不工作（而`getContents`是工作的），按道理管道不应该和标准输入有区别，尚不知道具体原因！
 
 
 文件操作：
@@ -2205,9 +2267,22 @@ remove [fileName, numberOfString] = do
 
 其他编程语言是怎么产生随机数的呢？可能会拿到电脑的一些信息，比如时间、鼠标信息、甚至CPU中的微小扰动等，根据这些信息算出一个看起来随机的值，或者更简单的类似于线性同余这种具有特定周期的伪随机数。在Haskell中，我们需要的随机函数应该是接受具有随机性的值，根据信息经过计算后得到一个值，也就是函数本身没有副作用，只是传入参数发生了变化。
 
-`System.Random`模块中提供了这样的函数。
+`System.Random`模块中提供了这样的函数：`System.Random.random :: (Random a, RandomGen g) => g -> (a, g)`。
 
-首先需要安装`System.Random`模块：
+再谈开发环境：
+- 首先需要安装`System.Random`模块：
 ```shell
 stack install random
 ```
+- 安装之后在stack项目中就可以使用`System.Random`模块了，但通过`ghc ghci`则不行（因为是从stack安装路径中找到目录添加环境变量的），此时要执行`stack exec runhaskell/ghc/ghci`才能确保可以看到使用stack安装的模块。前面没有使用安装的模块，直接执行`ghc/ghci`毕竟是一种快捷的执行方式，仅能使用Haskell内置的库。
+- 要更好地使用stack，应该从stack执行GHC。
+- 另外VsCode的Hakell插件仅提供了对Haskell语言的支持，没有对Stack工具的支持，导致没有什么契合度。还需要再研究一下怎么配置Stack项目管理和包管理下的VsCode开发环境。
+- Haskell Language Server是支持Stack项目配置的，[相关文档](https://haskell-language-server.readthedocs.io/en/latest/configuration.html#configuring-your-project-build)。为了支持Stack项目配置，Haskell Language Server需要知道你的项目是怎么配置的（比如传递给GHC的参数、项目源码位置等等），[hie-bios](https://github.com/haskell/hie-bios)这个项目就是做这个事情的，它用一个`hie.yaml`文件来告诉Haskell Language Server这些信息。又有一个项目[implicit-hie](https://github.com/Avi-D-coder/implicit-hie)用来生成这个`hie.yaml`。
+- 粗略的使用指南：
+```shell
+cd my-project
+stack install implicit-hie
+gen-hie > hie.yaml
+```
+- 尚未成功，明天搞。
+- `stack path`需要改。
