@@ -6,14 +6,22 @@
   - [关于Haskell](#%E5%85%B3%E4%BA%8Ehaskell)
   - [Haskell与函数式编程](#haskell%E4%B8%8E%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B)
   - [环境搭建](#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)
-    - [使用GHCup](#%E4%BD%BF%E7%94%A8ghcup)
+    - [使用GHCup安装](#%E4%BD%BF%E7%94%A8ghcup%E5%AE%89%E8%A3%85)
     - [安装stack](#%E5%AE%89%E8%A3%85stack)
     - [使用stack安装GHC](#%E4%BD%BF%E7%94%A8stack%E5%AE%89%E8%A3%85ghc)
     - [关于Cabal和stack](#%E5%85%B3%E4%BA%8Ecabal%E5%92%8Cstack)
-    - [开发环境](#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
-    - [编译与测试](#%E7%BC%96%E8%AF%91%E4%B8%8E%E6%B5%8B%E8%AF%95)
+    - [GHC基本使用](#ghc%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8)
   - [Stack使用指南](#stack%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97)
-    - [组织项目](#%E7%BB%84%E7%BB%87%E9%A1%B9%E7%9B%AE)
+    - [关于Stack](#%E5%85%B3%E4%BA%8Estack)
+    - [开始使用](#%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8)
+    - [基本命令](#%E5%9F%BA%E6%9C%AC%E5%91%BD%E4%BB%A4)
+    - [项目配置](#%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE)
+    - [运行现有的项目](#%E8%BF%90%E8%A1%8C%E7%8E%B0%E6%9C%89%E7%9A%84%E9%A1%B9%E7%9B%AE)
+    - [编译选项](#%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9)
+    - [路径](#%E8%B7%AF%E5%BE%84)
+    - [exec](#exec)
+    - [ghci](#ghci)
+    - [脚本](#%E8%84%9A%E6%9C%AC)
   - [感受一下Haskell](#%E6%84%9F%E5%8F%97%E4%B8%80%E4%B8%8Bhaskell)
   - [基本要素](#%E5%9F%BA%E6%9C%AC%E8%A6%81%E7%B4%A0)
     - [基本内容](#%E5%9F%BA%E6%9C%AC%E5%86%85%E5%AE%B9)
@@ -104,11 +112,13 @@
 - [Haskell 2010 Report](https://www.haskell.org/definition/haskell2010.pdf) 没有什么比标准更准确，进阶的话必须要看，还没有到这一步。
 
 语言相关链接：
-- [haskell主页](https://www.haskell.org/)，[Wiki](https://wiki.haskell.org/Haskell)。
-- [GHC文档](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/index.html)。
-- [stack文档](https://docs.haskellstack.org/en/stable/README/)。
+- [haskell主页](https://www.haskell.org/)，[Wiki](https://wiki.haskell.org/Haskell)
+- [GHC文档](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/index.html)
+- [stack文档](https://docs.haskellstack.org/en/stable/README/)
+- [Cabal文档](https://cabal.readthedocs.io/en/3.6/)
 - [Stackage首页](https://www.stackage.org/)
 - [Hackage首页](https://hackage.haskell.org/)
+- [Hoogle API Search](https://hoogle.haskell.org/)
 
 
 课外阅读：
@@ -242,6 +252,7 @@ stack exec -- ghci
 - stack可以管理多个版本的GHC，为了避免冲突，可以使用命令行来选择版本：`stack --compiler ghc-8.8.4 exec ghci`。
 
 ### 关于Cabal和stack
+
 - cabal是另一个包管理和项目工具，和stack有区别有联系，cabal的包管理库是Hackage，stack是Stackage，Stackage官网介绍Stackage是Hackage的子集的分发。
 - 都可以管理包，都可以管理项目，使用Stack还可以实现同一个项目兼容两个工具。但stack好像是为了解决cabal的某些痛点，具体还未研究那么深。暂时未安装cabal，仅使用Stack。
 
@@ -301,12 +312,30 @@ VsCode环境配置：
 
 ## Stack使用指南
 
-前期可以使用单文件GHC命令行编译加上GHCI交互环境已经够用了，后面必然需要了解如何组织项目，使用stack管理项目和环境。
+前期可以使用单文件GHC命令行编译加上GHCI交互环境已经够用了，后面必然需要了解如何组织项目，使用stack管理项目和环境。这节内容基本都翻译自Stack文档。
+
+### 关于Stack
+
+文档：
+- [Stack快速入门](https://docs.haskellstack.org/en/stable/README/#quick-start-guide)。
+- [Stack User Guide](https://docs.haskellstack.org/en/stable/GUIDE/)。
+
+Stack功能：
+- 管理GHC工具链（Windows中还包括MSYS）。
+- 构建和注册库。
+- 可以说stack管理所有做Haskell开发需要的东西。
+
+Stack的设计：
+- 设计哲学是可重用的构建，也就是说今天和明天运行`stack build`应该得到同样的结果。某些情况下可能会有变化，比如修改了操作系统配置，但整体上来说stack基本上是遵循这条设计哲学的。
+- 为了简单地实现这一点，stack使用精心选择和组织的包集合称之为**snapshots**（快照）。
+- 读完`stack --help`中的帮助就足够开始和运行了。
+- 根目录中的`stack.yaml`主要保存项目的环境，称之为**resolver**，根据其中的版本信息来选择要使用哪个版本编译器和库。
+- stack是独立的，不会影响和干扰本地独立安装的GHC或者cabal或者其他安装工具安装的包和编译器。
+- 更推荐在GNU/Linux上使用stack（特别是64位Ubuntu），stack除了极少数子命令是平台特定的外命令基本是跨平台的。代码如果跨平台的话，那项目就可以轻松跨平台。
 
 ### 开始使用
 
-[Stack快速入门](https://docs.haskellstack.org/en/stable/README/#quick-start-guide)：
-
+基本命令：
 ```shell
 stack new my-project
 cd my-project
@@ -345,6 +374,239 @@ stack exec my-project-exe
 - 再次运行`stack build`，`stack`会自动更新`my-project.cabal`，如果想的话，也可以手动编辑`.cabal`然后`stack`为你自动更新`package.yaml`。这两个文件是`stack`和`cabal`的项目文件，`stack`同时提供支持。
 - 如果遇到依赖的包不在当前LTS版本中时，可以尝试在`stack.yaml`中的`extra-deps`域中添加新版本。
 
+### 基本命令
+
+新建项目：
+- `stack new PACKAGE_NAME [TEMPLATE_NAME]`，不指定模板，则使用默认的模板，更多模板相关信息执行`stack templates`查看，模板也可以是本地文件、远程URL。
+- 如果最终会发布的话包的名称就是这个`PACKAGE_NAME`，由字母数组和连字符组成。
+
+构建项目：
+- `stack build`会查找本地没有的依赖，然后自动下载，也可以手动`stack setup`做这一步。然后开始构建。
+- GHC被下载到全局的stack路径中，Windows中是`%LOCALAPPDATA%\Programs\stack\`，而Linux中是`~/.stack/programs/`。
+- `stack ghc`或者`stack exec ghc`执行GHC编译器，还有`runhaskell runghc ghci`等命令。
+- 观察`stack build`的输出，会发现同时构建了库和可执行文件，默认模板中创建了模块`Lib Main`，前者是库，后者是可执行文件包含入口`main`，并将其安装到了`./.stack-work/`中。
+- 现在在目录内执行`stack exec PACKAGE_NAME-exe`就会执行程序了，stack知道去哪里找这个文件。
+- 在目录内执行`stack exec ghci`会直接加载已经编译的所有模块。
+- 构建命令是整个stack的核心和灵魂，用以构建、测试、获取依赖等，还可以定制，有许多高级的功能。
+- 使用同样的选项运行`stack build`两次，那么第二次应该什么事情也不做，构建运行过程应该是可重复的。
+- 后续会更加详细地介绍。
+
+测试项目：
+- 仔细看会发现有一个`test/`目录，其中用来编写测试用例。
+- 执行`stack test`会先编译其中的程序，然后再执行。对于`build test`子命令，已经构建过的组件不会被再次编译，除非经过了修改。
+
+`stack setup`:
+- `stack setup [GHC_VERSION]`可以安装特定版本的GHC，其他选项可以查看帮助。
+- `stack exec -- which ghc`可以查看GHC安装路径（Linux），或者`stack path`。
+
+清理项目：
+- `stack clean`清理工作目录，清理编译器输出文件，一般是`.stack-work/dist/`。
+- `stack clean <specific-package>`为特定的包做清理。
+- `stack purge`清理得更彻底，会直接将整个`.stack-work/`删掉，包括exrea-deps，git依赖和包括日志在内的编译器输出。但不会删除已经安装的包的快照，编译器或者使用`stack install`安装的包。让项目回到未进行`stack build`的状态，是`stack clean --full`的别名。
+
+不同的数据库：
+- 在项目内执行`stack exec -- ghc-pkg list`，会看到不同层级的包。
+- 三个不同位置：
+    - GHC安装位置：`.stack/programs/...`(Linux)或者`%LOCALAPPDATA%\programs\stack\...`(Windows)。编译器自带。
+    - stack安装新包的位置`.stack/snapshots/`(Linux)或者`%STACK_ROOT%\snapshots\`(Windows)。通过`stack install`安装。
+    - 本地项目中生成的。
+- 不同的项目使用同一个包是可以复用但又不会互相干扰。
+
+命令别名：
+- 一些命令是由别名定义的：
+```shell
+  build                    Build the package(s) in this directory/configuration
+  install                  Shortcut for 'build --copy-bins'
+  test                     Shortcut for 'build --test'
+  bench                    Shortcut for 'build --bench'
+  haddock                  Shortcut for 'build --haddock'
+```
+- 具体含义可查看帮助，[Haddock](https://github.com/haskell/haddock)是从Haskell源码生成Haskell文档的标准工具。
+- `install / --copy-bins`仅做一件事情（并非下载），就是将生成的可执行文件拷贝到本地`bin`路径。可以通过`stack path --local-bin`获取。所有文档中会建议将这个路径添加到`path`环境变量。这个特性很方便，一些包在安装时就会做这样的事情，添加之后就可以使用`executable-name`执行，而不再需要在项目内执行`stack exec executable-name`。
+
+灵活地构建：
+- 通过命令参数可以实现非常灵活地构建。
+- 指定包名：`stack build package-name`，包不仅可以是本地的，还可以在`extra-deps`中，snapshot中，或者仅仅是在网络的上游。如果在网络上并且没有在本地或者snapshot和extra-deps中，那么会自动添加到`extra-deps`中（试验中好像并不会）。
+- 最灵活的地方来自`stack build helloworld:test:helloworld-test`指定组件构造，含义是构建`helloworld`包中`helloworld-test`的测试组件。可以简写为`stack build helloworld:helloworld-test`设置`stack build :helloworld-test`。
+- 也可以指定目录构建，只触发该目录和其子目录的构建。仅构建当前所在目录可以用`stack build .`。
+- 不指定参数和同时指定所有包名为参数是同一含义。
+- 这里说组件其实就是指其中的模块，比如默认模板中就会生成`Lib Main`模块。
+- `stack ide targets`可以看到所有目标。
+
+构建测试和Benchmark：
+- `stack build`会构建所有库（如果有）、可执行文件但是会忽略Test Suite和Benchmark。
+- 如果要构建测试用例和性能测试可以使用`--test` `--bench`参数，加进来之后就会一起构建了`stack build --test helloworld`。
+- 直接指定测试组件则不会同时构建可执行文件`stack build :helloworld-test`。（文档中这样说，但是在我本地却同时构建了，尽管并不依赖），构建测试套件之后会执行，benchmark同理，可以使用`--no-run-tests --no-run-benchmarks`来让他们不要运行。
+- stack不会为非本地项目构建测试套件和性能测试。
+
+### 项目配置
+
+仔细看目录结构：
+- `app/Main.hs src/Lib.hs test/Spec.hs`是源文件，分别是可执行文件、库、测试逻辑的代码，是项目的功能代码。
+- `LICENSE README.md ChangeLog.md`是契合开源项目的信息，不参与构建。
+- `my-project.cabal`是另一个构建工具Cabal的配置文件，在`stack build`过程中会自动更新，不应该修改。
+- 核心项目配置文件是`Setup.hs stack.yaml package.yaml`。
+    - `Setup.hs`是Cabal构建系统的一个组件，从技术上来说stack并不需要这个文件，但包含这个文件依然是一个好的实践。
+    - `stack.yaml`中信息并不多，但注释很多。目前主要看两个域：`packages`告诉stack构建本地项目中的哪些包，仅有一个包的话，一个`.`就足够。但stack是支持在同一个项目中包含多个包的。另一个域`resolver`，stack按这个域确定构建项目使用的GHC版本和包的依赖，也就是Stackage的版本，比如lts-18.17就对应ghc-8.10.7，`setup`是根据这个信息去下载GHC的，在[Stackage官网](https://www.stackage.org/)上能够看到。
+    - `package.yaml`则是关于包的信息，是由内建在stack中的[hpack tool](https://github.com/sol/hpack)提供的。默认行为是从`package.yaml`生成`.cabal`，而不去更改`.cabal`。
+- stack是基于Cabal的，Cabal中，每个包使用一个独立的`.cabal`文件描述，其中包含多个组件：库、可执行文件、测试套件、benchmark，还有其他信息，比如库依赖、默认编译选项等。
+- 最重要的是需要知道如何修改`package.yaml`中的必要配置。可以在[Hpack 文档](https://github.com/sol/hpack#quick-reference)中找到所有可用选项。
+
+添加依赖：
+- `package.yaml`的`dependencies`域：
+```yaml
+dependencies:
+- base >= 4.7 && < 5
+- text
+- random
+# add more dependencies here
+```
+- 使用了新的包时需要在此处添加依赖，可以指定版本，再次运行`stack build`将会安装。
+- 列出所有依赖：`stack ls dependencies`。
+
+**extrs-deps**：
+- 如果添加一个依赖:
+```haskell
+module Lib
+    ( someFunc
+    ) where
+
+import Acme.Missiles
+
+someFunc :: IO ()
+someFunc = launchMissiles
+```
+```yaml
+dependencies:
+- base >= 4.7 && < 5
+- acme-missiles
+```
+- 执行`stack build`却报错了。原因就在于[LTS resolver](https://github.com/commercialhaskell/lts-haskell#readme)，`stack new`创建项目时是选择了当前的LTS版本的，每个LTS都有自己的精心维护的包的集合。如果依赖中的包不在这个集合中那么即使添加到了`dependencies`中也会报错。
+- 当前版本已经不包含这个包了，所以自然不行，为了解决这个问题，需要使用到`stack.yaml`的`extra-deps`域，用来定义不在当前LTS resolver但是在[Hackage](https://hackage.haskell.org/package/acme-missiles)中的包。添加之后再次`stack build`就会成功。
+```yaml
+extra-deps: 
+- acme-missiles-0.3 # not in the LTS
+```
+- Stackage是Stable sets of Haskell Packages from Hackage，所以这样的需求可能会常遇到。
+
+关于LTS resolver：
+- 在[Stack官网](https://www.stackage.org/lts)可以找到最新的LTS，`resolver`的值是`resolver: lts-18.17`，在`setup`时会用到。其使用的GHC版本，然后其中可用的包的集合（快照，Snapshots），可以通过Hoogle搜索这个快照。
+- 点开某一个包，可以看到其中可用的模块，根据这些信息可以确定要将那个包加入到`package.yaml`中。
+- 会注意到有[LTS](https://github.com/commercialhaskell/lts-haskell#readme)（Long Term Support）和Nighthly的区分，一般使用长期支持版，stack也会默认使用LTS。
+
+修改编译器版本：
+- 当前使用`lts-18.17`如果我想换成Nighthly版本，那么只需要将`stack.yaml`修改一下：可以指定为LTS版本、Nightly或者GHC版本都可以。
+```yaml
+resolver: nightly-2020-02-08
+```
+- 运行`stack build`将下载对应的GHC和依赖的库，选这个版本也是因为[最新的Nightly版本](https://github.com/commercialhaskell/stackage-snapshots)TUNA和中科大没有镜像用不了，仅选一个有镜像的版本做测试而已，实践中还是使用LTS最好。
+- 在命令中使用`--resolver`选项时，可以用`nightly`参数指代最新Nightly版本，`lts`指代最新LTS版本，`lts-2`指代`lts-2.x.x`的最新版本。不可用于`stack.yaml`。
+```shell
+stack --resolver lts-2 build
+```
+- Nightly的版本是按照日期命名的，`nightly-YYYY-MM-DD`，LTS和GHC则是向上走的版本号`lts-X.Y` `ghc-X.Y.Z`。
+
+本地和远程的依赖：
+- stack可以管理多个包，如果你将多个包`unpack`到本地，那么`packages`域将会有多个包。
+- 需要区分依赖的是本地的包还是上游的包（构建时下载到本地snapshots）。
+
+### 运行现有的项目
+
+来构建一个开源项目，这里选择[yackage](https://www.stackage.org/package/yackage)，为了获取到发布到Stackage的代码，可以使用`stack unpack`：
+```
+stack unpack yackage-0.8.1 [--to yourDir]
+```
+- 也可以直接`git clone`，可以看到其中没有`stack.yaml`，可以手动创建，也可以使用`stack init`：
+- `stack init`会生成`stack.yaml`，并尝试使用一个最匹配的LTS或者Nightly版本：
+- 也可以指定resolver版本：
+```shell
+stack init --resolver <resolver>
+```
+- 由于各种原因，本地构建失败了，略过。
+
+### 编译选项
+
+两种方式更改一个包安装的方式：Cabal标志和GHC选项。
+- 前者为每一个项目设置，意味着编译`yackage`时`-`关掉`upload`选项，说实话没太搞懂什么意思。
+```shell
+stack build --flag yackage:-upload
+```
+- GHC选项和Cabal的标志类似，但有一些改变，[文档](https://docs.haskellstack.org/en/stable/yaml_configuration/#ghc-options)。GHC看来也还是要学习一下，编译选项，基本使用之类的，毕竟stack也是调用的GHC去编译。
+- 这一节都尚不是很清楚，需要实践后补充细节。
+
+### 路径
+
+一般来说不需要知道stack存了一些什么文件在什么地方，`stack path`可以很多好的展示这些路径：
+```shell
+tch@KillingBoat:~$ stack path
+snapshot-doc-root: /home/tch/.stack/snapshots/x86_64-linux-tinfo6/92a82299ffe7e01dd411553be385541e3e9cf3a60cd0bd12003f0fa41dfe1b7a/8.10.7/doc
+local-doc-root: /home/tch/.stack/global-project/.stack-work/install/x86_64-linux-tinfo6/92a82299ffe7e01dd411553be385541e3e9cf3a60cd0bd12003f0fa41dfe1b7a/8.10.7/doc
+local-hoogle-root: /home/tch/.stack/global-project/.stack-work/hoogle/x86_64-linux-tinfo6/92a82299ffe7e01dd411553be385541e3e9cf3a60cd0bd12003f0fa41dfe1b7a/8.10.7
+stack-root: /home/tch/.stack
+project-root: /home/tch/.stack/global-project
+config-location: /home/tch/.stack/global-project/stack.yaml
+bin-path: /home/tch/.stack/snapshots/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7/bin:/home/tch/.stack/compiler-tools/x86_64-linux-tinfo6/ghc-8.10.7/bin:/home/tch/.stack/programs/x86_64-linux/ghc-tinfo6-8.10.7/bin:/home/tch/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+programs: /home/tch/.stack/programs/x86_64-linux
+compiler-exe: /home/tch/.stack/programs/x86_64-linux/ghc-tinfo6-8.10.7/bin/ghc-8.10.7
+compiler-bin: /home/tch/.stack/programs/x86_64-linux/ghc-tinfo6-8.10.7/bin
+compiler-tools-bin: /home/tch/.stack/compiler-tools/x86_64-linux-tinfo6/ghc-8.10.7/bin
+local-bin: /home/tch/.local/bin
+extra-include-dirs:
+extra-library-dirs:
+snapshot-pkg-db: /home/tch/.stack/snapshots/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7/pkgdb
+local-pkg-db: /home/tch/.stack/global-project/.stack-work/install/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7/pkgdb
+global-pkg-db: /home/tch/.stack/programs/x86_64-linux/ghc-tinfo6-8.10.7/lib/ghc-8.10.7/package.conf.d
+ghc-package-path: /home/tch/.stack/global-project/.stack-work/install/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7/pkgdb:/home/tch/.stack/snapshots/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7/pkgdb:/home/tch/.stack/programs/x86_64-linux/ghc-tinfo6-8.10.7/lib/ghc-8.10.7/package.conf.d
+snapshot-install-root: /home/tch/.stack/snapshots/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7
+local-install-root: /home/tch/.stack/global-project/.stack-work/install/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7
+dist-dir: .stack-work/dist/x86_64-linux-tinfo6/Cabal-3.2.1.0
+local-hpc-root: /home/tch/.stack/global-project/.stack-work/install/x86_64-linux-tinfo6/82db7b2595a76656db6d1508a5dd57aced5d628188b355b35247c7fd357c1396/8.10.7/hpc
+local-bin-path: /home/tch/.local/bin
+ghc-paths: /home/tch/.stack/programs/x86_64-linux
+```
+
+- 看到名称基本都能知道是干什么的，`ghc-paths`就是编译器安装路径，基本都是在`.stack`中，`local-bin`就是前面提到的`install`的文件复制的目标目录。Windows同理。
+
+移除stack：
+- 说到路径要移除stack的话，需要移除的目录或文件有：
+    - stack可执行文件本身。
+    - `stack path --stack-root`，根目录，Linux中的`~/.stack/`，windows中的`C:\sr\`。
+    - `stack path --programs`，Windows中的`%LOCALAPPDATA%\Programs\stack`。
+    - 任何项目内的`.stack-work`。
+
+### exec
+
+`stack exec`命令在执行命令时会稍微修改一些环境，查找目录也会额外从stack的二进制路径中查找。然后设置一些额外的环境变量（比如添加一些路径到PATH，设置`GHC_PACKAGE_PATH`环境变量，这个会告诉GHC用哪个包数据库）。
+
+添加到path中的骑士就是`stack path --stack-root`中的一些子目录`bin`和`stack path --programs`中的一些可执行文件目录。
+linux中执行可以看到环境：
+```shell
+stack exec env
+```
+区分传递给`stack`还是传递给`exec`执行的程序的选项很重要，可以用`--`分隔。要执行命令前加`--`，后面都是该命令的参数，前面则是给`stack`的。
+
+运行`stack exec bash`，那么则可以在这个子Shell中执行那些添加到PATH中的命令。
+
+### ghci
+
+GHCI是GHC的REPL环境，进入GHCI：
+```shell
+stack exec ghci
+```
+如果要让本地模块都可以访问，可以在项目内`stack ghci`，会将项目内的包可以被访问。然后使用`:m module`加载模块使用。
+
+对于单文件编译的场合，提供了`stack exec ghc/runghc`命令或者单纯使用`stack ghc/runghc`都可以。
+
+### 脚本
+
+stack还可以作为脚本解释器，用来创建可重用的Haskell脚本，而不像Bash或者Python那样。具体就不展开了。Windows不能直接`./script.hs`执行脚本，可以用`stack script.hs`这样执行。
+```haskell
+#!/usr/bin/env stack
+main = print "hello,world!"
+```
+这样写脚本需要一些必要的注释说明Resolver（固定resolver之后就能保证可重用）等信息，具体信息不展开。上面的脚本会报警告，但能执行。
+
+更多信息可在查阅文档。
 
 ## 感受一下Haskell
 
@@ -2285,4 +2547,3 @@ stack install implicit-hie
 gen-hie > hie.yaml
 ```
 - 尚未成功，明天搞。
-- `stack path`需要改。
