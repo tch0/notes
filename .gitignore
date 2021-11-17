@@ -2,3 +2,5 @@
 **/*.o
 **/*.hi
 **/*.exe
+**/.stack-work/
+**/*.lock

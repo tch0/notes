@@ -20,9 +20,6 @@ Nothing
 
 import Data.Map
 {- Functor of Map k : fmap :: (a -> b) -> Map k a -> Map k b
->>> 1+1
-2
 >>> fmap (+3) (fromList [(1, 2)]) 
 fromList [(1,5)]
 -}
-
