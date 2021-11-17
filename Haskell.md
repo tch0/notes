@@ -74,6 +74,8 @@
     - [文件与字符流](#%E6%96%87%E4%BB%B6%E4%B8%8E%E5%AD%97%E7%AC%A6%E6%B5%81)
     - [命令行参数](#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0)
     - [随机数](#%E9%9A%8F%E6%9C%BA%E6%95%B0)
+    - [ByteString](#bytestring)
+    - [异常(Exceptions)](#%E5%BC%82%E5%B8%B8exceptions)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -2657,7 +2659,218 @@ remove [fileName, numberOfString] = do
 
 其他编程语言是怎么产生随机数的呢？可能会拿到电脑的一些信息，比如时间、鼠标信息、甚至CPU中的微小扰动等，根据这些信息算出一个看起来随机的值，或者更简单的类似于线性同余这种具有特定周期的伪随机数。在Haskell中，我们需要的随机函数应该是接受具有随机性的值，根据信息经过计算后得到一个值，也就是函数本身没有副作用，只是传入参数发生了变化。
 
-`System.Random`模块中提供了这样的函数：`System.Random.random :: (Random a, RandomGen g) => g -> (a, g)`。
+`System.Random`模块（不在基础库`base`中，需要安装`random`包）中提供了这样的函数：`System.Random.random :: (Random a, RandomGen g) => g -> (a, g)`。
+- 其中`Random`是可以用来装随机数的类型类，`RandomGen`是随机数发生器的类型类。
+- `random`会接受一个随机数发生源，返回生成的随机数和新的随机数发生器（random generator）。
 
-再谈开发环境：
-- 首先需要安装`System.Random`模块。
+制作随机数发生器：
+- `mkStdGen :: Int -> StdGen`可以用来制作一个整数随机数发生器。
+- 注意`Random`是一个类型类，在`System.Random`中实现了多个类型实例，所以使用时需要通过类型指定具体用哪一个。
+```haskell
+Prelude System.Random> :i Random
+type Random :: * -> Constraint
+class Random a where
+  randomR :: RandomGen g => (a, a) -> g -> (a, g)
+  default randomR :: (RandomGen g, UniformRange a) =>
+                     (a, a) -> g -> (a, g)
+  random :: RandomGen g => g -> (a, g)
+  default random :: (RandomGen g, Uniform a) => g -> (a, g)
+  randomRs :: RandomGen g => (a, a) -> g -> [a]
+  randoms :: RandomGen g => g -> [a]
+        -- Defined in ‘System.Random’
+instance Random Word -- Defined in ‘System.Random’
+instance Random Integer -- Defined in ‘System.Random’
+instance Random Int -- Defined in ‘System.Random’
+instance Random Float -- Defined in ‘System.Random’
+instance Random Double -- Defined in ‘System.Random’
+instance Random Char -- Defined in ‘System.Random’
+instance Random Bool -- Defined in ‘System.Random’
+```
+- 如果一直调用`random $ mkStdGen 100`的话会得到同样的结果，因为没有副作用，要生成多个随机数的话，需要使用返回的随机数发生器。但又因为没有循环，所以要这样生成很多随机数就很麻烦了。
+- 多个随机数可以使用`randoms :: (Random a, RandomGen g) => g -> [a]`，返回一个无限列表。
+```haskell
+Prelude System.Random> take 10 $ randoms (mkStdGen 100) :: [Double]
+[0.5003737531410817,0.3750119639966999,0.12733827138953357,3.882299251466059e-2,0.21477954261574972,0.6105785015461408,3.65223575759297e-2,0.9636215830016226,0.9939144570578136,0.9113023469143849]
+Prelude System.Random> take 10 $ randoms (mkStdGen 100) :: [Bool]  
+[True,False,False,False,False,False,True,False,False,False]
+Prelude System.Random> take 10 $ randoms (mkStdGen 100) :: [Int] 
+[9216477508314497915,-6917749724426303066,-2348976503111297336,-716157807093485800,-3961983254901128710,7183558718778820252,-673718583171682711,671063348175752782,112258453204082922,1636182906409015240]
+Prelude System.Random> take 10 $ randoms (mkStdGen 100) :: [Char]
+"\537310\28348\950093\909872\685754\243589\711431\321177\1019517\261448"
+```
+- `randoms`的实现就像是这样的：
+```haskell
+randoms' :: (RandomGen g, Random a) => g -> [a]
+randoms' gen = let (value, newGen) = random gen in value:randoms' newGen
+```
+- 做一下验证就知道其实就是这样实现的。
+- 实现一个返回有限个随机数和一个随机数生成器的函数：
+```haskell
+finiteRandoms :: (RandomGen g, Random a) => Int -> g -> ([a], g)
+finiteRandoms n gen
+    | n <= 0 = ([], gen)
+finiteRandoms n gen = 
+    let (value, newGen) = random gen
+        (restOfList, finalGen) = finiteRandoms (n-1) newGen
+    in (value:restOfList, finalGen)
+```
+- 除了`random randoms`还可以使用`randomR randomRs`得到范围内随机数。
+```haskell
+Prelude System.Random> randomR (1, 10000) (mkStdGen 100)
+(892,StdGen {unStdGen = SMGen 712633246999323047 2532601429470541125})
+Prelude System.Random> randomR (1.0, 10.0) (mkStdGen 100)
+(5.503363778269735,StdGen {unStdGen = SMGen 712633246999323047 2532601429470541125})
+Prelude System.Random> randomR (False, True) (mkStdGen 100)
+(True,StdGen {unStdGen = SMGen 712633246999323047 2532601429470541125})
+Prelude System.Random> take 10 $ randomRs (1.0, 100.0) (mkStdGen 100)
+[50.537001560967084,38.12618443567329,13.606488867563824,4.843476258951399,22.26317471895922,61.447271653067936,4.61571340001704,96.39853671716064,99.39753124872354,91.2189323445241]
+Prelude System.Random> take 100 $ randomRs ('a', 'z') (mkStdGen 0)
+"apyzsowwxjpdgslfiaqdhpawqyhuewqdnciakestkcsdttutjrnyjnqvfnmiiyneyggtfggvkoujcptcdeesvswyjxrcssudsgzw"
+```
+
+`mkStdGen`每次只要传入的数相同，得到的随机数序列一定是相同的，传入的数就像随机数种子。实际生产环境这样是不能接受的，要么我们需要一个随机的随机数种子，要么需要更加随机化的随机数发生器。
+
+所以`System.Random`提供了`getStdGen :: Control.Monad.IO.Class.MonadIO m => m StdGen`用来获取一个`IO StdGen`。
+- 程序执行时会有一个全局的随机数生成器，`getStdGen`就是拿到这个random generator并绑定到某个名字上。
+```haskell
+main :: IO ()
+main = do
+    gen <- getStdGen
+    print (take 30 $ randomRs (1.0, 100.0) gen :: [Double])
+```
+- 某些程序在GHCI下也许不需要显式执行也能有一个类型，但在`.hs`中则需要指定类型，比如`random (mkStdGen 100)`，在GHCI中不指定类型会得到整数，需要注意，在`.hs`中则需要像这样声明类型`(let (value, _) = random (mkStdGen 100) in value :: Int)`。
+- `::`类型声明的优先级和结合性值得研究。
+- 两次通过`getStdGen`拿到的`StdGen`其实是一样的。要生成不一样的序列，可从一个长的随机序列中截取。
+- 需要每次都得到不一样的可以使用`newStdGen :: Control.Monad.IO.Class.MonadIO m => m StdGen`：
+```haskell
+Prelude System.Random> getStdGen
+StdGen {unStdGen = SMGen 2577900980329305605 14820693616592480073}
+Prelude System.Random> getStdGen
+StdGen {unStdGen = SMGen 2577900980329305605 14820693616592480073}
+Prelude System.Random> getStdGen
+StdGen {unStdGen = SMGen 2577900980329305605 14820693616592480073}
+Prelude System.Random> newStdGen
+StdGen {unStdGen = SMGen 10681034358804626100 9442248464978456119}
+Prelude System.Random> newStdGen
+StdGen {unStdGen = SMGen 16153741442900193658 9209421901824985913}
+Prelude System.Random> getStdGen
+StdGen {unStdGen = SMGen 6520443225570571049 14820693616592480073}
+Prelude System.Random> getStdGen
+StdGen {unStdGen = SMGen 6520443225570571049 14820693616592480073}
+```
+- 调用`newStdGen`后，全局的随机数发生器会被重新指定，`getStdGen`会和原先不一样，但再次调用又会一样。
+
+### ByteString
+
+在Haskell中因为列表非常重要，因为惰性求值，所以可以用`map filter`等函数来代替其他语言中的循环。由于求值只发生在需要的时候，所以甚至可以实现无限列表的无限列表这种东西。也正是因为惰性求值，所以可以用列表来表示流（Stream），比如`getContents`。
+
+但因为`[1,2,3,4]`只是`1:2:3:4:[]`的语法糖（syntactic sugar），而`[Char]`中Char是Unicode字符，没有一个固定大小，所以用`[Char]`其实并不是一个高效的做法。比如在读大文件时可能就会造成负担。所以Haskell提供了`ByteString`。
+- 模块：`Data.ByteString`，类型`ByteString`，这个类型是严格的，也就是没有惰性求值。严格的`ByteString`不可以无限长，如果求第一个字节，就必须求出整个`ByteString`。它没有Thunk（也即是说Haskell中常说的术语**保证**），缺点是可能快速消耗内存，因为进行了一次性读取。
+- 对应的惰性求值的`ByteString`在`Data.ByteString.Lazy`中。惰性的`ByteString`具有惰性，但不会像`List`那么极端，它的数据被存在一个个64K的chunk（块）中，每次求值会按照chunk作为单位来求值，求到包含需要的字节的chunk即可。有点像装了一堆大小为 64K 的严格`ByteString`的列表。
+- 一个`ByteString`的基本组成是8比特的字节。
+- 大多数情况我们使用惰性的`ByteString`。
+```haskell
+import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as S
+```
+- 要构建`ByteString`需要使用：`pack :: [Word8] -> ByteString`，参数中的`Word8`类型在`GHC.Word`中，可以直接用`[1, 2, 100, 256, 300]`这样的数组来初始化（因为字面值是多态的，可以用于整型浮点等多种数据类型），超过一个字节的值会被截断并报警告。
+- 对`ByteString`调用`show`得到的结果和字符串差不多。
+- `unpack :: ByteString -> [Word8]`做相反的事情。
+- `fromChunks`将一个列表的严格的`ByteString`转换为一个懒惰的，`toChunks`做相反的事情。
+```haskell
+B.fromChunks :: [ByteString] -> ByteString
+B.toChunks :: ByteString -> [ByteString]
+{-
+>>> B.fromChunks [S.pack [40,41,42], S.pack [43,44,45], S.pack [46,47,48]]
+"()*+,-./0"
+>>> B.toChunks (B.pack [40..48])
+["()*+,-./0"]
+-}
+```
+- `ByteString`对应于列表的`:`运算符的是`B.cons :: Word8 -> ByteString -> ByteString` `B.cons' :: Word8 -> ByteString -> ByteString`前者是懒惰的，后者是严格的。但用起来没有看到差别：
+```haskell
+Prelude S B> B.cons 80 $ B.pack [81..90]
+"PQRSTUVWXYZ"
+Prelude S B> B.cons' 80 $ B.pack [81..90]
+"PQRSTUVWXYZ"
+>>> foldr B.cons B.empty [50..60]
+>>> foldr B.cons' B.empty [50..60]
+"23456789:;<"
+"23456789:;<"
+```
+- `ByteString`也有列表操作类似的函数：`head tail init last null length map reverse foldl concat take takeWhile`等。
+- 也有`System.IO`中一样的函数，只是`String`换成了`ByteString`。比如：`B.readFile :: FilePath -> IO ByteString`。
+
+`ByteString`可以为数据读取提供更好的性能，一般正常用`String`，在性能不好是替换为`ByteString`。
+
+### 异常(Exceptions)
+
+Haskell中常用`Maybe Either`这种包装类型来处理失败的情况。
+
+除此之外，Haskell是支持异常的，除了IO这种依赖于环境的行为，算术运算比如除0等操作也可能引发异常。
+```haskell
+Prelude S B> 4 / 0
+Infinity
+Prelude S B> 4 `div` 0
+*** Exception: divide by zero
+Prelude S B> head []
+*** Exception: Prelude.head: empty list
+```
+- 无副作用的纯粹代码（Pure Code）或者IO操作都可能抛出异常，但是异常只能在IO环境中才能被catch。因为纯函数默认懒惰求值，我们不知道什么时候会求值，也就不知道应该在什么地方加捕获代码。而do块中的IO是顺序执行的，可以捕获。
+- 这种设计就要求我们尽量不要在纯函数中使用异常（尽管某些函数还是会抛出），而是使用`Maybe Either`，然后仅在IO操作中使用异常。
+
+捕获异常：
+- 使用`catch :: (MonadCatch m, Exception e) => m a -> (e -> m a) -> m a`
+```haskell
+import System.Environment
+import System.IO
+import System.IO.Error
+import Control.Monad.Catch.Pure (MonadCatch(catch))
+
+{-
+>>> :t catch
+catch :: (MonadCatch m, Exception e) => m a -> (e -> m a) -> m a
+-}
+
+toTry :: IO ()
+toTry = do
+    (fileName:_) <- getArgs
+    contents <- readFile fileName
+    putStrLn ("This file has " ++ (show . length . lines) contents ++ " lines !")
+
+handler :: IOError -> IO ()
+handler e
+    | isDoesNotExistError e = putStrLn ("File not exist : " ++ show e)
+    | isEOFError e = putStrLn "EOF Error!"
+    -- other errors
+    | otherwise = ioError e -- ioError is like raise/throw in other languages
+
+main :: IO ()
+main = toTry `catch` handler
+```
+- 接受一个要捕获的IO动作，和处理异常的函数。
+- 使用不存在的文件调用时就会抛出异常并被捕获到。
+```shell
+$ stack exec runhaskell Exception.hs hello
+File not exist : hello: openFile: does not exist (No such file or directory)
+```
+- 有多个检测IOError类型的函数：
+```haskell
+isDoesNotExistError :: IOError -> Bool
+isAlreadyExistsError :: IOError -> Bool
+isFullError :: IOError -> Bool
+isEOFError :: IOError -> Bool
+isIllegalOperation :: IOError -> Bool
+isPermissionError :: IOError -> Bool
+isUserError :: IOError -> Bool
+```
+
+抛出异常：
+- 也可以捕获到异常后不处理继续抛出：`ioError :: IOError -> IO a`函数。接受一个`IOError`并返回一个会抛出该异常的`IO`操作。
+- 可以使用`userError :: String -> IOError`得到一个对`isUserError`为`True`的`IOError`。
+- 上面的逻辑在处理`IOError`是还可以用`ioeGetFileName :: IOError -> Maybe FilePath`从`IOError`中抽出路径。
+- 不想捕获所有异常的话，可以只捕获某一个IO动作的异常并处理，`catch`函数本身也是返回`IO a`。
+
+这里并未提到如何在纯代码中抛出异常，正如前面所说的，不要这么做。异常也大多是在IO动作中处理，异常本身也都是IO的异常，就算是IO操作，如果能用`IO (Either a b)`相比使用异常可能也会更舒服一些。
+
+总体来说，Haskell具备基本的异常处理，但用起来并不是那么舒服，也不太推荐使用异常。
