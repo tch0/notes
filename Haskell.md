@@ -22,6 +22,8 @@
     - [exec](#exec)
     - [ghci](#ghci)
     - [脚本](#%E8%84%9A%E6%9C%AC)
+  - [编辑器集成](#%E7%BC%96%E8%BE%91%E5%99%A8%E9%9B%86%E6%88%90)
+    - [VsCode环境配置](#vscode%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)
   - [感受一下Haskell](#%E6%84%9F%E5%8F%97%E4%B8%80%E4%B8%8Bhaskell)
   - [基本要素](#%E5%9F%BA%E6%9C%AC%E8%A6%81%E7%B4%A0)
     - [基本内容](#%E5%9F%BA%E6%9C%AC%E5%86%85%E5%AE%B9)
@@ -607,6 +609,132 @@ main = print "hello,world!"
 这样写脚本需要一些必要的注释说明Resolver（固定resolver之后就能保证可重用）等信息，具体信息不展开。上面的脚本会报警告，但能执行。
 
 更多信息可在查阅文档。
+
+## 编辑器集成
+
+主要讨论VsCode如何搭配Stack和[Haskell Language Server](https://github.com/haskell/haskell-language-server)的问题。
+
+Hakell Language Server是[Ghcide](https://github.com/haskell/ghcide)和[Haskell IDE Engine(HIE)](https://github.com/haskell/haskell-ide-engine)的继任者，由双方的团队合作共同开发。后面两者现已归档，最新的程序应该使用Haskell Language Server。
+
+### VsCode环境配置
+
+插件：
+- 使用Haskell官方插件[vscode-haskell](https://github.com/haskell/vscode-haskell)，由Haskell Language Server提供支持。
+
+特性（来自Haskell Language Server）：
+- 来自GHC的警告和错误诊断。
+- 鼠标悬停类型信息和文档信息，包括本地代码中的注释。
+- 本地代码跳转。
+- 文档符号。
+- 文档高亮。
+- 代码补全。
+- 代码格式化。
+- `>>>`注释中的代码求值，`prop>`注释中的代码测试。
+- 继承了retrie，一个强大的代码修改工具。左上角灯泡。
+- 提示导入函数列表，就是会提示只导入使用的符号。
+- 集成了hlint，分析代码并提供快速修复的选项，下划线。
+- 模块名修改建议。
+- 调用层次查询，右键菜单Show Call Hierarchy。
+
+插件配置：
+- 无需过于关心，修改文档和代码打开行为为本地VsCode而不是Hackage网页更好一些。
+- 可能需要手动设置Haskell Language Server的路径，而不是让其自动下载。
+
+依赖：
+- 对于单独的`.hs .lhs`文件来说，GHC必须在PATH中。
+- 基于Cabal的项目，GHC和cabal-install都要在PATH中。
+- 基于stack的项目，stack必须在PATH中。
+
+对stack项目的支持：
+- `haskell-language-server`需要编译项目之后才能提供诊断，也就是说它必须知道怎么做。
+- 一个叫做[hie-bios](https://github.com/haskell/hie-bios)的项目就是用来处理这个事情的。
+- `hie-bios`使用一个项目根目录中的`hie.yaml`来管理这些，显式描述了怎么设置环境来编译项目中的不同组件。为此你需要知道项目中有什么组件（模块）并将它们的路径显式指出来。
+- 可以使用[implicit-hie](https://github.com/Avi-D-coder/implicit-hie)项目来从stack或者cabal配置生成这个`hie.yaml`文件。
+- 如果stack项目中有多个组件，`hie.yaml`会像是这个样子：
+```yaml
+cradle:
+  stack:
+    - path: "./test/functional/"
+      component: "haskell-language-server:func-test"
+    - path: "./exe/Main.hs"
+      component: "haskell-language-server:exe:haskell-language-server"
+    - path: "./exe/Wrapper.hs"
+      component: "haskell-language-server:exe:haskell-language-server-wrapper"
+    - path: "./src"
+      component: "haskell-language-server:lib"
+    - path: "./ghcide/src"
+      component: "ghcide:lib:ghcide"
+    - path: "./ghcide/exe"
+      component: "ghcide:exe:ghcide"
+```
+- 最终的配置会是下面的一个子集：
+```yaml
+cradle:
+  cabal:
+    component: "optional component name"
+  stack:
+    component: "optional component name"
+  bios:
+    program: "program to run"
+    dependency-program: "optional program to run"
+  direct:
+    arguments: ["list","of","ghc","arguments"]
+  default:
+  none:
+
+dependencies:
+  - someDep
+```
+- 上面是Haksell Language Server文档提供的。
+
+看一下`hie-bios`文档：
+- `hie-bios`需要知道传递给GHC的参数，和包的依赖，因为需要先构建依赖。
+- 它的设计指导原则是由构建工具负责描述环境，确定要构建哪一个包。
+- `hie-bios`既不依赖Cabal也不读取任何编译生成文件。而是仅仅依赖于标准GHC的标志，如果一个构建工具支持`repl`命令，运行`repl`会使用正确的标记调用`ghci`，`hie-bios`需要一个方式来得到这些标记。然后才能正确设置给GHC API session。进一步说任何设置API session的错误都是构建工具的锅，他们需要提供正确的标记以便编辑器对项目提供支持。
+
+`hie-bios`对stack的支持：
+- 显式声明想使用stack，那么`hie.yaml`就要像这样：
+```yaml
+cradle:
+  stack:
+```
+- 如果整个项目能够被`stack repl`载入，那么这样就足够了。这种配置在最简单的仅有一个库、一个可执行文件、一个测试套件时正常工作。
+- 一些项目拥有多个`stack-*.yaml`指定了多个版本的GHC编译器。这种情况可以使用`stackYaml`指定要使用哪一个，路径以`hie.yaml`为基准。
+```yaml
+cradle:
+  stack:
+    stackYaml: "./stack-8.8.3.yaml"
+```
+- 如果项目更加复杂，就需要指定想要加载哪一个组件，一个组件简单将就是stack中的一个库、一个可执行文件、或者一个测试套件、或者benchmark。可以使用命令查看所有组件或者叫目标，至于目标的语法可以参见[stack文档-Traget Syntax](stack ide targets)。
+```shell
+stack ide targets
+```
+- 然后指定组件对应的路径（目录或者文件，当多个组件共用一个目录中文件时指定为文件很有用）：
+```yaml
+cradle:
+  stack:
+    - path: "./src"
+      component: "hie-bios:lib"
+    - path: "./exe"
+      component: "hie-bios:exe:hie-bios"
+    - path: "./tests/BiosTests.hs"
+      component: "hie-bios:test:hie-bios"
+    - path: "./tests/ParserTests.hs"
+      component: "hie-bios:test:parser-tests"
+```
+- 如果插件对stack项目未工作，那么可以尝试`stack repl`和`stack repl <component name>`。如果失败了，那么应该就是项目无法构建，当解决之后便能成功加载。
+
+最后便是使用[`implicit-hie`](https://github.com/Avi-D-coder/implicit-hie)自动生成`hie.yaml`：
+```shell
+cd packageDir
+stack install implicit-hie
+gen-hie > hie.yaml
+```
+- 需要在项目根目录运行，根据项目文件识别是使用stack还是cabal，也可以用`--stack --cabal`显式指定。
+- 普通的项目是完全能用的，如果使用了更高级的特性，可能还是需要自己来再修改一下`hie.yaml`。
+
+使用感受：
+- 感觉使用体验也不是那么完美，速度不算快，先用用看吧。
 
 ## 感受一下Haskell
 
@@ -2532,18 +2660,4 @@ remove [fileName, numberOfString] = do
 `System.Random`模块中提供了这样的函数：`System.Random.random :: (Random a, RandomGen g) => g -> (a, g)`。
 
 再谈开发环境：
-- 首先需要安装`System.Random`模块：
-```shell
-stack install random
-```
-- 安装之后在stack项目中就可以使用`System.Random`模块了，但通过`ghc ghci`则不行（因为是从stack安装路径中找到目录添加环境变量的），此时要执行`stack exec runhaskell/ghc/ghci`才能确保可以看到使用stack安装的模块。前面没有使用安装的模块，直接执行`ghc/ghci`毕竟是一种快捷的执行方式，仅能使用Haskell内置的库。
-- 要更好地使用stack，应该从stack执行GHC。
-- 另外VsCode的Hakell插件仅提供了对Haskell语言的支持，没有对Stack工具的支持，导致没有什么契合度。还需要再研究一下怎么配置Stack项目管理和包管理下的VsCode开发环境。
-- Haskell Language Server是支持Stack项目配置的，[相关文档](https://haskell-language-server.readthedocs.io/en/latest/configuration.html#configuring-your-project-build)。为了支持Stack项目配置，Haskell Language Server需要知道你的项目是怎么配置的（比如传递给GHC的参数、项目源码位置等等），[hie-bios](https://github.com/haskell/hie-bios)这个项目就是做这个事情的，它用一个`hie.yaml`文件来告诉Haskell Language Server这些信息。又有一个项目[implicit-hie](https://github.com/Avi-D-coder/implicit-hie)用来生成这个`hie.yaml`。
-- 粗略的使用指南：
-```shell
-cd my-project
-stack install implicit-hie
-gen-hie > hie.yaml
-```
-- 尚未成功，明天搞。
+- 首先需要安装`System.Random`模块。
