@@ -76,6 +76,9 @@
     - [随机数](#%E9%9A%8F%E6%9C%BA%E6%95%B0)
     - [ByteString](#bytestring)
     - [异常(Exceptions)](#%E5%BC%82%E5%B8%B8exceptions)
+  - [问题解决实例](#%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3%E5%AE%9E%E4%BE%8B)
+    - [逆波兰表达式](#%E9%80%86%E6%B3%A2%E5%85%B0%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+    - [路径规划问题](#%E8%B7%AF%E5%BE%84%E8%A7%84%E5%88%92%E9%97%AE%E9%A2%98)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -707,7 +710,7 @@ cradle:
   stack:
     stackYaml: "./stack-8.8.3.yaml"
 ```
-- 如果项目更加复杂，就需要指定想要加载哪一个组件，一个组件简单将就是stack中的一个库、一个可执行文件、或者一个测试套件、或者benchmark。可以使用命令查看所有组件或者叫目标，至于目标的语法可以参见[stack文档-Traget Syntax](stack ide targets)。
+- 如果项目更加复杂，就需要指定想要加载哪一个组件，一个组件简单来说就是stack中的一个库、一个可执行文件、或者一个测试套件、或者benchmark。可以使用命令查看所有组件或者叫目标，至于目标的语法可以参见[stack文档-Traget Syntax](https://docs.haskellstack.org/en/stable/build_command/#target-syntax)。
 ```shell
 stack ide targets
 ```
@@ -2709,13 +2712,17 @@ randoms' gen = let (value, newGen) = random gen in value:randoms' newGen
 finiteRandoms :: (RandomGen g, Random a) => Int -> g -> ([a], g)
 finiteRandoms n gen
     | n <= 0 = ([], gen)
-finiteRandoms n gen = 
+    | otherwise = 
     let (value, newGen) = random gen
         (restOfList, finalGen) = finiteRandoms (n-1) newGen
     in (value:restOfList, finalGen)
 ```
 - 除了`random randoms`还可以使用`randomR randomRs`得到范围内随机数。
 ```haskell
+Prelude System.Random> :t randomR
+randomR :: (Random a, RandomGen g) => (a, a) -> g -> (a, g)
+Prelude System.Random> :t randomRs
+randomRs :: (Random a, RandomGen g) => (a, a) -> g -> [a]
 Prelude System.Random> randomR (1, 10000) (mkStdGen 100)
 (892,StdGen {unStdGen = SMGen 712633246999323047 2532601429470541125})
 Prelude System.Random> randomR (1.0, 10.0) (mkStdGen 100)
@@ -2873,4 +2880,139 @@ isUserError :: IOError -> Bool
 
 这里并未提到如何在纯代码中抛出异常，正如前面所说的，不要这么做。异常也大多是在IO动作中处理，异常本身也都是IO的异常，就算是IO操作，如果能用`IO (Either a b)`相比使用异常可能也会更舒服一些。
 
-总体来说，Haskell具备基本的异常处理，但用起来并不是那么舒服，也不太推荐使用异常。
+总体来说，Haskell具备基本的异常处理，但用起来并不是那么舒服，也不太推荐使用异常，无可避免的时候还是要用的。
+
+## 问题解决实例
+
+看两个经典的问题用Haskell要如何解决。
+
+### 逆波兰表达式
+
+经典的计算逆波兰表达式（RPN，Reverse Polish Notation，或者叫后缀表达式Postfix notation）的例子。
+- 计算方式，比如`10 1 2 + *`，从左往右，遇到数值就压栈，遇到符号从栈中取两个数计算后压栈，直到无运算符或者值，后缀表达式合法时最终栈中仅剩一个数，取出即最终结果。后缀表达式蕴含了计算顺序，不需要括号来规定。
+```haskell
+calculatePostfix :: (Num a, Read a) => String -> a
+calculatePostfix = head . foldl foldingFunction [] . words
+    where   foldingFunction (x:y:ys) "*" = (x * y):ys
+            foldingFunction (x:y:ys) "+" = (x + y):ys
+            foldingFunction (x:y:ys) "-" = (x - y):ys
+            -- other functions
+            foldingFunction xs numberString = read numberString:xs
+```
+- 调用，可以用于整数浮点等类型，还可以容易地扩展至其他运算符，比如`/ ^ log sum`等。
+```haskell
+>>> calculatePostfix "1.1 2.4 + 3.1 *" :: Double
+10.85
+>>> calculatePostfix "1 2 + 3 *" :: Int
+9
+```
+- 其中函数声明用了函数组合，不用组合的话可能会更清晰一些：
+```haskell
+calculatePostfix expression = head (foldl foldingFunction [] (words expression))
+    where ...
+```
+- 基本没有错误处理，数值少了可能直接宕掉，如果要处理错误可以声明成这样并添加错误处理的逻辑。
+```haskell
+calculatePostfix :: (Num a, Read a) => String -> Maybe a
+```
+
+### 路径规划问题
+
+直接看代码，问题描述、建模过程、求解思路都在这里了，问题很简单，建模的过程比较精彩：
+```haskell
+{- a route planing problem from LEARN YOU A HASKELL FOR GREAT GOOD
+example:
+    50      5       40      10
+A-------------------------------
+C       |30     |20     |25     |0  destination
+B-------------------------------
+    10      90      2       8
+
+best route: BCACBB
+best length: 75
+
+input: many groups of length of ABC
+this example: 50  10  30  5  90  20  40  2  25  10  8  0
+-}
+
+-- a section of road, Section a b c
+data Section = Section {getA :: Int, getB :: Int, getC :: Int} deriving(Show)
+type RoadSystem = [Section]
+-- example : [Section 50 10 30, Section 5 90 20, Section 40 2 25, Section 10 8 0]
+
+-- type of path
+data Label = A | B | C deriving(Show)
+type Path = [(Label, Int)]
+
+-- One step of road, input the optimal path to current node of A & B and this section of road,
+-- get next optimal path to next node of A & B.
+roadStep :: (Path, Path) -> Section -> (Path, Path)
+roadStep (pathA, pathB) (Section a b c) =
+    let priceA = sum $ map snd pathA
+        priceB = sum $ map snd pathB
+        forwardPriceToA = priceA + a
+        crossPriceToA = priceB + b + c
+        forwardPriceToB = priceB + b
+        crossPriceToB = priceA + a + c
+        newPathToA = if forwardPriceToA <= crossPriceToA
+                        then (A,a):pathA -- path is a reverse list of actual path, from right to left
+                        else (C,c):(B,b):pathB
+        newPathToB = if forwardPriceToB <= crossPriceToB
+                        then (B,b):pathB
+                        else (C,c):(A,a):pathA
+    in (newPathToA, newPathToB)
+
+-- expected return of example: [(B,10),(C,30),(A,5),(C,20),(B,2),(B,8)]
+optimalPath :: RoadSystem -> Path
+optimalPath roadSystem =
+    let (bestPathA, bestPathB) = foldl roadStep ([], []) roadSystem -- if stackoverflow, try strict version foldl'
+    in if sum (map snd bestPathA) > sum (map snd bestPathB)
+            then reverse bestPathA
+            else reverse bestPathB
+
+{- test of example
+>>> optimalPath [Section 50 10 30, Section 5 90 20, Section 40 2 25, Section 10 8 0]
+[(B,10),(C,30),(A,5),(C,20),(B,2),(B,8)]
+-}
+
+-- group input data into sections
+groupsOf :: Int -> [a] -> [[a]]
+groupsOf _ [] = []
+groupsOf n _
+        | n <= 0 = undefined
+groupsOf n xs = take n xs : groupsOf n (drop n xs)
+
+-- read input from stdin
+main :: IO ()
+main = do
+    contents <- getContents
+    let threes = groupsOf 3 (map read $ lines contents)
+        roadSystem = map (\[a, b, c] -> Section a b c) threes
+        path = optimalPath roadSystem
+        pathString = concatMap (show . fst) path -- concat $ map (show . fst) path
+        pathLength = sum $ map snd path
+    putStrLn $ "Best path is : " ++ show pathString
+    putStrLn $ "Best length is : " ++ show pathLength
+```
+- 测试文件`road.txt`：
+```
+50
+10
+30
+5
+90
+20
+40
+2
+25
+10
+8
+0
+```
+- 运行（windows中可以用`type road.txt`）：
+```
+$ cat road.txt | stack exec runhaskell RoutePlaning.hs
+Best path is : "BCACBB"
+Best length is : 75
+```
+- 从这个问题可以看出，用Haskell对问题建模要一步一步来，一个函数做一个确定的事情，函数最好短小而确切，一个个函数的作用就是对数据的映射筛选和处理。对数据和问题建模，并将问题拆分成一个个小问题之后依次解决，最后在`main`函数中处理IO。
