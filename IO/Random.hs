@@ -28,7 +28,7 @@ randoms' gen = let (value, newGen) = random gen in value:randoms' newGen
 finiteRandoms :: (RandomGen g, Random a) => Int -> g -> ([a], g)
 finiteRandoms n gen
     | n <= 0 = ([], gen)
-finiteRandoms n gen =
+    | otherwise = 
     let (value, newGen) = random gen
         (restOfList, finalGen) = finiteRandoms (n-1) newGen
     in (value:restOfList, finalGen)
@@ -36,5 +36,6 @@ finiteRandoms n gen =
 main :: IO ()
 main = do
     gen <- getStdGen
+    print (finiteRandoms 30 gen :: ([Int], StdGen))
     print (take 30 $ randomRs (1.0, 100.0) gen :: [Double])
     print (let (value, _) = random (mkStdGen 100) in value :: Int)
