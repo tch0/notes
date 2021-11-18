@@ -84,7 +84,7 @@
 
 # Haskell语言入门
 
-提示：本文含有公式，可安装[MathJax Plugin for Github](https://github.com/orsharir/github-mathjax)浏览器插件提供公式渲染，或者Clone到本地查看。
+提示：本文含有少量公式，可安装[MathJax Plugin for Github](https://github.com/orsharir/github-mathjax)浏览器插件提供公式渲染，或者Clone到本地查看。
 
 ## 关于Haskell
 
@@ -98,7 +98,7 @@
 - 不要期待几天几个月就学懂并深入Haskell，这将会是一条艰涩的道路。
 - 不要期待通过一本书或者一门课程就学到Haskell的全部，从不同的教程和书籍不同的视角思考是必要的。
 - 相教传统的命令式编程而言，需要换一种方式来思考，否则永远学不好Haskell。
-- 入门至少要了解一定的范畴论概念，理解函子、应用函子、单子等概念。
+- 入门至少要了解一定的范畴论概念，理解函子、应用函子、单子等概念，理解清楚“**单子是自函子范畴上的幺半群**”这句话。
 - 学习不害怕没有基础，没有老师，怕的是没有热情。
 
 学习一门新的语言，收集资料是必不可少的：
@@ -114,7 +114,7 @@
     - 待补充。
 
 资料选择：
-- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看，本文的主要参考，台湾人翻译的某些名词会有一些差异，比如实现称为实作、类型称为型别、参数称为引数、随机数称为乱数等，需要留意，不是很影响阅读。
+- [Learn You a Haskell for Great Good](https://www.bookstack.cn/read/learnyouahaskell-zh-cn/README.md) 目前在看，本文理论部分的最主要参考，台湾人翻译的某些名词会有一些差异，比如实现称为实作、类型称为型别、参数称为引数、随机数称为乱数等，需要留意，不是很影响阅读。
 - [Real World Haskell](http://cnhaskell.com/index.html)
 - [Haskell 2010 Report](https://www.haskell.org/definition/haskell2010.pdf) 没有什么比标准更准确，进阶的话必须要看，还没有到这一步。
 
@@ -3016,3 +3016,269 @@ Best path is : "BCACBB"
 Best length is : 75
 ```
 - 从这个问题可以看出，用Haskell对问题建模要一步一步来，一个函数做一个确定的事情，函数最好短小而确切，一个个函数的作用就是对数据的映射筛选和处理。对数据和问题建模，并将问题拆分成一个个小问题之后依次解决，最后在`main`函数中处理IO。
+
+## 函子、应用函子与幺半群
+
+接下来就是讨论函子（Functors），应用函子（Applicative Functors）和幺半群（Monoids）。
+
+前面提到了函子`Functor`，就是一群可以被映射的对象，可以理解为一个盒子，`fmap`就是对盒子中的对象做操作，当前已经遇到了很多函子的实例，比如`[] IO Maybe Either`等。
+
+这里还会学到更多比较强一些的版本。
+
+注意：这里用盒子来比喻函子，后续的应用函子和单子也会这样比喻，多数情况下这样比喻是恰当的，但不要过度引申，某些函子可能不适用这个比喻。一个比较正确的形容是函子是一个计算语境（computational context），这个语境可能带有值，可能会失败（`Maybe Either`），可能有多个值（`List`）等。
+
+## 函子
+
+回顾一下`Functor`，是一个类型类，接受一个类型构造器作为类型参数，定义了`fmap`函数，将函子中的值按照传入函数映射之后再包装在一个函子中。
+```haskell
+type Functor :: (* -> *) -> Constraint
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+  (<$) :: a -> f b -> f a
+  {-# MINIMAL fmap #-}
+  	-- Defined in ‘GHC.Base’
+instance Functor (Either a) -- Defined in ‘Data.Either’
+instance Functor [] -- Defined in ‘GHC.Base’
+instance Functor Maybe -- Defined in ‘GHC.Base’
+instance Functor IO -- Defined in ‘GHC.Base’
+instance Functor ((->) r) -- Defined in ‘GHC.Base’
+instance Functor ((,,,) a b c) -- Defined in ‘GHC.Base’
+instance Functor ((,,) a b) -- Defined in ‘GHC.Base’
+instance Functor ((,) a) -- Defined in ‘GHC.Base’
+```
+
+`IO`：
+-看一下`IO`是怎么实现`Functor`实例的：
+```haskell
+instance Functor IO where
+    fmap f action = do
+        result <- action
+        return (f result)
+```
+- 试一试`fmap`：
+```haskell
+main :: IO ()
+main = do line <- fmap (intersperse '-' . reverse . map toUpper) getLine
+          putStrLn line
+```
+- 如果想要对Functor中的数据做变换，可以先将变换函数定义出来，或者使用lambda或者使用函数组合。
+
+`(->) r`：
+- 注意到`(->)`的Kind是`(->) :: * -> * -> *`，也就是说其实`(->)`是一个类型构造器，而非运算符（函数类型）。
+```haskell
+type (->) :: * -> * -> *
+data (->) a b
+```
+- `(->)`接受两个类型参数并得到一个函数类型，而函子接受一个类型参数，所以`(->) r`被实现为`Functor`的实例，而`->`本身并不是函子。如果类型构造器可以像函数一样写成中缀形式的话，那么也可以写成`(r ->)`，实际上并不可以。看一下实现：
+```haskell
+instance Functor ((->) r) where  
+    fmap f g = (\x -> f (g x))
+```
+- 在`fmap :: Functor f => (a -> b) -> f a -> f b`中带入`(->) r`就能得到在这里实例中`fmap`的类型：`fmap :: (a -> b) -> (r -> a) -> (r -> b)`。
+- 表示将`r -> a`的函数映射到`r -> b`的函数。看一下实现其实就是做了一个函数组合（有趣！），简写：
+```haskell
+instance Functor ((->) r) where  
+    fmap = (.)
+```
+- 很明显`fmap`可以当做函数组合来用：
+```haskell
+>>> :t fmap (*3) (+100)
+fmap (*3) (+100) :: Num b => b -> b
+>>> :t (*3) . (+100)
+(*3) . (+100) :: Num c => c -> c
+>>> fmap (*3) (+100) $ 1
+303
+>>> (*3) . (+100) $ 1
+303
+>>> (*3) `fmap` (+100) $ 1
+303
+```
+- `fmap`用于函数时其实就可以用来替代`.`，这很有趣，但并不实用。
+- 这里用再用盒子来比喻就不是那么恰当了，因为实现函子的实例类型是函数，函数里面装了值这种说法可能并不直观和恰当。
+
+**函子和`fmap`的理解**：
+- 将`fmap`柯里化地只传一个参数调用的话，可以解释为接受一个函数，并返回一个接受一个函子然后返回一个函子的函数。
+```haskell
+>>> :t fmap (*3)
+fmap (*3) :: (Functor f, Num b) => f b -> f b
+>>> :t fmap (replicate 3)
+fmap (replicate 3) :: Functor f => f a -> f [a]
+```
+- 也就是说有两种解释`fmap`的说法：
+    - `fmap`接受一个函数和一个函子，将函子看做容器，把函数对容器上的每一个元素做应用，得到应用后的新容器。
+    - 函子是一种计算上下文，`fmap :: (a -> b) -> (f a -> f b)`接受一个普通函数，并将这个函数Lift（提升）成可以在应用在新的计算上下文`f`中的函数。也就是**对函数做映射**。
+    - 对于第二种理解，其中有一种情况就是函子本身就是一个函数，接收的第一个函数类型的参数被提升为可以应用在函数上的函数，应用之后得到的结果就是两个函数的组合，里层是输入的函子，外层是这个普通函数，也即是提升这件事就是做一个组合。理解清楚了也不用那么绕，结论就是这时候`fmap`就是函数的组合。
+    - 因为柯里化，两种解释等价并且都正确。
+
+实现函子的规定（functor law）：
+- 第一条：`fmap id = id`，毕竟`id = (\x -> x)`。即是一个函子应该有`fmap id a = id a = a`。
+- 第二条：`fmap (f . g) = fmap f . fmap g`，函子的`fmap`支持结合律，例：
+    - `famp (f . g) (Just x) = Just ((f . g) x) = Just (f (g x))`
+    - `fmap f . fmap g (Just x) = fmap f (fmap g (Just x)) = fmap f (Just (g x)) = Just (f (g x))`
+- 看一个不满足规定，实现了`Functor`类型类的类型实例，但是不是函子的例子：
+```haskell
+-- example, an instance of typeclass Functor, but it's not a functor
+data CMaybe a = CNothing | CJust Int a deriving(Show)
+instance Functor CMaybe where
+    fmap f CNothing = CNothing
+    fmap f (CJust counter x) = CJust (counter + 1) (f x)
+{-
+>>> fmap id (CJust 1 2)
+CJust 2 2
+>>> fmap ((+1) . (*3)) (CJust 1 2)
+CJust 2 7
+>>> fmap (+1) . fmap (*3) $ CJust 1 2
+CJust 3 7
+-}
+```
+- 第一条第二条都未满足，所以其实`CMaybe`不是函子，这里需要从概念上区分函子和代码中`Functor`的类型实例。
+- 如果我们使用一个`Functor`类型，那么会期待函子的规定（funtor laws）被遵守。如果这些规定被遵守，那么我们就知道它做`fmap`时不会做多余的事情，只是用一个函数来映射而已，基于此看到代码就能推导出它的行为，写出来的代码足够抽象也容易扩展。
+- 所有标准函数库中函子实例都遵守这两点，在自己实现`Functor`实例时也应该花时间推导一下是否满足。
+- 满足第一个规定的话一定满足第二个规定，只需要检查函子是否满足第一条规定即可。
+
+### 应用函子
+
+应用函子（Applicative Functors）是函子的升级版，包含在`Control.Applicative`模块中，由`Applicative`类型类定义。
+
+函子中的函数：
+- 我们知道Haskell函数时默认柯里化的，也就是说函数`f :: a -> b -> c`的调用`f x y`就是`(f x) y`，而单独的`f x`也是合法的调用，那么比如用`fmap (*) (Just 3)`会得到什么呢？很明显`Just (* 3)`，一个装在`Just`中的函数，类型为`Num a => Maybe (a -> a)`。
+```haskell
+>>> :t fmap (*) (Just 3)
+fmap (*) (Just 3) :: Num a => Maybe (a -> a)
+>>> :t Just (* 3)
+Just (* 3) :: Num a => Maybe (a -> a)
+```
+- 也可以有更多参数：
+```haskell
+>>> :t fmap (\x y z w -> x + y + z + w) (Just 1)
+fmap (\x y z w -> x + y + z + w) (Just 1) :: Num a => Maybe (a -> a -> a -> a)
+```
+- 这些放在函子`Maybe`中的函数要怎么调用呢？当然可以使用接受函数的函数来做`fmap`，其中还可以部分应用，得到依然装在`Maybe`中的参数更少的函数。
+```haskell
+>>> fmap (\f -> f 10) (Just (* 3)) 
+Just 30
+>>> :t fmap (\f -> f 10) (fmap (\x y z w -> x + y + z + w) (Just 1))
+fmap (\f -> f 10) (fmap (\x y z w -> x + y + z + w) (Just 1)) :: Num t => Maybe (t -> t -> t)
+```
+- 但如果要用这些装在函子中的函数来运用到装在另一个函子中的数据呢？看起来是没有办法的，只能用模式匹配将数据或者函数抽出来后，再`fmap`。
+
+应用函子就是做这个事情的，看一下`Control.Applicative`中的`Applicative`类型类：
+```haskell
+type Applicative :: (* -> *) -> Constraint
+class Functor f => Applicative f where
+  pure :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
+  liftA2 :: (a -> b -> c) -> f a -> f b -> f c
+  (*>) :: f a -> f b -> f b
+  (<*) :: f a -> f b -> f a
+  {-# MINIMAL pure, ((<*>) | liftA2) #-}
+```
+- 可以看到`Applicative`是`Functor`子类型类，也就是说只要是应用函子那么就一定是函子。
+- 注意`(<*>) :: Applicative f => f (a -> b) -> f a -> f b`函数，和`fmap :: Functor f => (a -> b) -> f a -> f b`很像，不过将函数也放到了函子`f`中。
+- 看一下`Maybe`的`Applicative`类型类实例实现：
+```haskell
+instance Applicative Maybe where
+    pure = Just
+    Nothing <*> _ = Nothing
+    (Just f) <*> something = fmap f something
+```
+- `Nothing`中没有函数，所以作为函数（压根就没有函数）应用于任何参数都是`Nothing`，而`Just f`应用于`something`，就是将函数`f`抽出来之后做了`fmap`。
+- 例子：
+```haskell
+>>> Just (*3) <*> Just 10
+Just 30
+>>> pure (*3) <*> Just 10
+Just 30
+>>> Just (*3) <*> Nothing
+Nothing
+>>> Nothing <*> Just 10
+Nothing
+>>> Just reverse <*> Just "hello"
+Just "olleh"
+```
+- `pure :: Applicative f => a -> f a`函数包装一个参数到应用函子`f`中。经过类型推导后在这个上下文中`pure`和`Just`效果一样。
+- 上面函数仅接受一个参数，看一下其他操作：
+```haskell
+>>> Just (*) <*> Just 3 <*> Just 10
+Just 30
+>>> pure (+) <*> Just 3 <*> Nothing
+Nothing
+>>> Nothing <*> Just 3 <*> Just 10
+Nothing
+>>> Just (\x y z -> x + y + z) <*> Just 1 <*> Just 2 <*> Just 3
+Just 6
+>>> :t Just (\x y z -> x + y + z) <*> Just 1
+Just (\x y z -> x + y + z) <*> Just 1 :: Num a => Maybe (a -> a -> a)
+>>> liftA2 (\x y z -> x + y + z) (Just 1) (Just 2) <*> Just 3
+Just 6
+```
+- 由于柯里化，所以这里第一个例子中对应于`(<*>) :: f (a -> b) -> f a -> f b`中的类型参数`b`其实是`(Int -> Int)`，很好理解。还可以有更多参数，每个`<*>`调用都会接受一个装在`Applicative`中的参数。
+- `Applicative`还定义了`liftA2`函数用来接受两个参数的函数，但感觉完全可以被支持柯里化的`<*>`替代。
+- 显然`<*>`是左结合的，效果上来说就是在做部分参数调用，每次一个参数。
+
+
+**`pure`** ：
+- `pure`是将一个普通值放到一个默认的上下文（函子，注意这里说上下文就是指计算上下文，就是指一个函子，确切说应用函子）中，是一个**最小的包含这个值的上下文（函子）**。
+- 列表的`Applicative`类型类实例的实现：
+```haskell
+instance Applicative [] where  
+    pure x = [x]  
+    fs <*> xs = [f x | f <- fs, x <- xs]
+```
+- 对于列表而言，最小的上下文（函子）就是`[]`，但`[]`不包含值，不能当做`pure`。看`pure`类型声明`pure :: Applicative f => a -> f a`，对于数组，就是接受一个值，返回一值的数组。同样，`Maybe`的最小上下文是`Nothing`，但没有值，要能够产生这个值，所以`pure`的实现是`Just`。
+- `pure`也是多态的，指定类型后会根据类型推导使用不同应用函子的实现。不过不指定类型的话就没有应用函子，这个逻辑是怎么来的呢？
+```haskell
+>>> pure "hello" :: [String]
+["hello"]
+>>> pure "hello" :: Maybe String
+Just "hello"
+>>> pure "hello"
+"hello"
+```
+- 另外注意数组的`<*>`实现，由于数组保存多个数据，所以`<*>`结果是列表中多个函数排列运用于参数中多个值的结果的列表，相当于做了二层循环。如果参数更多，那么循环层数还会更多。
+```haskell
+>>> [(+), (-), (*)] <*> [1..3] <*> [1..3]
+[2,3,4,3,4,5,4,5,6,0,-1,-2,1,0,-1,2,1,0,1,2,3,2,4,6,3,6,9]
+>>> [(\x y z -> x + y + z)] <*> [1..3] <*> [1..3] <*> [1..3]
+[3,4,5,4,5,6,5,6,7,4,5,6,5,6,7,6,7,8,5,6,7,6,7,8,7,8,9]
+```
+- 对于列表而言，使用`<*>`是一种取代列表生成式的好方式
+```haskell
+-- just like list comprehension
+>>> [x * y | x <- [1..5], y <- [6..10]]
+[6,7,8,9,10,12,14,16,18,20,18,21,24,27,30,24,28,32,36,40,30,35,40,45,50]
+>>> (*) <$> [1..5] <*> [6..10]
+[6,7,8,9,10,12,14,16,18,20,18,21,24,27,30,24,28,32,36,40,30,35,40,45,50]
+>>> filter (>25) $ (*) <$> [1..5] <*> [6..10]
+[27,30,28,32,36,40,30,35,40,45,50]
+```
+
+**`<$>`**：
+- 考虑`pure f <*> x`其实就等于`fmap f x`（这是Applicative laws的其中一条）。
+- 如果我们要将函数`f`放到默认的上下文（函子）中并调用其他放在应用函子中的值，可以这样写：`pure f <*> x <*> y <*> ...`，但一般不会这样写而是写成`fmap f x <*> y <*> ...`。
+- 看一下`<$>`运算符：
+```haskell
+Prelude> :i <$>
+(<$>) :: Functor f => (a -> b) -> f a -> f b
+        -- Defined in ‘Data.Functor’
+infixl 4 <$>
+```
+- 定义，其实就是中缀版的`fmap`。
+```haskell
+f <$> x = fmap f x
+```
+- 所以上面的`fmap f x <*> y <*> ...`就等价于`f <$> x <*> y <*> ...`，含义是将普通的函数运用于应用函子`x y ...`上。
+- 所以对于普通函数`f`，想要应用于应用函子，可以写成`f <$> x <*> y <*> z`，如果是应用于普通值则写成`f x y z`。
+- 回顾一下能这样做的底层逻辑是`pure f <*> x = fmap f x = f <$> x`。
+- 区分`<$> <*>`：如果函数在应用函子中，就用`<*>`，普通函数就用`<$>`。
+- 只需要加一些`<$> <*>`就能将运用于普通值的函数改写为运用在应用函子上的函数。
+```haskell
+>>> (++) <$> Just "hello" <*> Just "world"
+Just "helloworld"
+>>> (++) "hello" "world"
+"helloworld"
+```
+
+`IO`：
+- 上面介绍了`Maybe`和`[]`的例子。看一看其他的`Applicative`实例：
+
