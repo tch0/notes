@@ -79,6 +79,11 @@
   - [问题解决实例](#%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3%E5%AE%9E%E4%BE%8B)
     - [逆波兰表达式](#%E9%80%86%E6%B3%A2%E5%85%B0%E8%A1%A8%E8%BE%BE%E5%BC%8F)
     - [路径规划问题](#%E8%B7%AF%E5%BE%84%E8%A7%84%E5%88%92%E9%97%AE%E9%A2%98)
+  - [函子、应用函子与幺半群](#%E5%87%BD%E5%AD%90%E5%BA%94%E7%94%A8%E5%87%BD%E5%AD%90%E4%B8%8E%E5%B9%BA%E5%8D%8A%E7%BE%A4)
+    - [函子](#%E5%87%BD%E5%AD%90)
+    - [应用函子](#%E5%BA%94%E7%94%A8%E5%87%BD%E5%AD%90)
+    - [newtype](#newtype)
+    - [Monoid](#monoid)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -3027,7 +3032,7 @@ Best length is : 75
 
 注意：这里用盒子来比喻函子，后续的应用函子和单子也会这样比喻，多数情况下这样比喻是恰当的，但不要过度引申，某些函子可能不适用这个比喻。一个比较正确的形容是函子是一个计算语境（computational context），这个语境可能带有值，可能会失败（`Maybe Either`），可能有多个值（`List`）等。
 
-## 函子
+### 函子
 
 回顾一下`Functor`，是一个类型类，接受一个类型构造器作为类型参数，定义了`fmap`函数，将函子中的值按照传入函数映射之后再包装在一个函子中。
 ```haskell
@@ -3096,6 +3101,36 @@ fmap (*3) (+100) :: Num b => b -> b
 - `fmap`用于函数时其实就可以用来替代`.`，这很有趣，但并不实用。
 - 这里用再用盒子来比喻就不是那么恰当了，因为实现函子的实例类型是函数，函数里面装了值这种说法可能并不直观和恰当。
 
+`(,) a`:
+- `(,)`是一个二元组的类型构造器，它的`Kind`是`* -> * -> *`。同时也是值构造器，等价于`\x y -> (x, y)`。
+```haskell
+>>> :k (,)
+(,) :: * -> * -> *
+>>> :t (,)
+(,) :: a -> b -> (a, b)
+>>> :k (,) Int
+(,) Int :: * -> *
+>>> :k (,) Int String
+(,) Int String :: *
+>>> (,) 1 2
+(1,2)
+
+```
+- 固定了一个类型参数后，`(,) a`的Kind是`* -> *`，被实现为函子：
+```haskell
+instance Functor ((,) a) where
+    fmap f (x, y) = (x, f y)
+```
+- 多元组的类型构造器`(,,) (,,,) ...`同理：
+```haskell
+instance Functor ((,,) a b) where
+    fmap f (a, b, c) = (a, b, f c)
+
+instance Functor ((,,,) a b c) where
+    fmap f (a, b, c, d) = (a, b, c, f d)
+```
+- `fmap`只应用于最后一个元素。
+
 **函子和`fmap`的理解**：
 - 将`fmap`柯里化地只传一个参数调用的话，可以解释为接受一个函数，并返回一个接受一个函子然后返回一个函子的函数。
 ```haskell
@@ -3153,14 +3188,14 @@ Just (* 3) :: Num a => Maybe (a -> a)
 >>> :t fmap (\x y z w -> x + y + z + w) (Just 1)
 fmap (\x y z w -> x + y + z + w) (Just 1) :: Num a => Maybe (a -> a -> a -> a)
 ```
-- 这些放在函子`Maybe`中的函数要怎么调用呢？当然可以使用接受函数的函数来做`fmap`，其中还可以部分应用，得到依然装在`Maybe`中的参数更少的函数。
+- 这些放在函子`Maybe`中的函数要怎么调用呢？当然可以使用接受函数的函数来做`fmap`，并且还可以部分参数调用，得到依然装在`Maybe`中的参数更少的函数。
 ```haskell
 >>> fmap (\f -> f 10) (Just (* 3)) 
 Just 30
 >>> :t fmap (\f -> f 10) (fmap (\x y z w -> x + y + z + w) (Just 1))
 fmap (\f -> f 10) (fmap (\x y z w -> x + y + z + w) (Just 1)) :: Num t => Maybe (t -> t -> t)
 ```
-- 但如果要用这些装在函子中的函数来运用到装在另一个函子中的数据呢？看起来是没有办法的，只能用模式匹配将数据或者函数抽出来后，再`fmap`。
+- 但如果要用这些装在函子中的函数来应用到装在另一个函子中的数据呢？看起来是没有办法的，只能用模式匹配将数据或者函数抽出来后，再`fmap`，或者都抽出来之后直接调用。
 
 应用函子就是做这个事情的，看一下`Control.Applicative`中的`Applicative`类型类：
 ```haskell
@@ -3182,7 +3217,7 @@ instance Applicative Maybe where
     Nothing <*> _ = Nothing
     (Just f) <*> something = fmap f something
 ```
-- `Nothing`中没有函数，所以作为函数（压根就没有函数）应用于任何参数都是`Nothing`，而`Just f`应用于`something`，就是将函数`f`抽出来之后做了`fmap`。
+- `Nothing`中没有函数，所以将其应用于任何参数都是`Nothing`，而`Just f`应用于`something`，就是将函数`f`抽出来之后做了`fmap`。
 - 例子：
 ```haskell
 >>> Just (*3) <*> Just 10
@@ -3216,7 +3251,6 @@ Just 6
 - `Applicative`还定义了`liftA2`函数用来接受两个参数的函数，但感觉完全可以被支持柯里化的`<*>`替代。
 - 显然`<*>`是左结合的，效果上来说就是在做部分参数调用，每次一个参数。
 
-
 **`pure`** ：
 - `pure`是将一个普通值放到一个默认的上下文（函子，注意这里说上下文就是指计算上下文，就是指一个函子，确切说应用函子）中，是一个**最小的包含这个值的上下文（函子）**。
 - 列表的`Applicative`类型类实例的实现：
@@ -3225,8 +3259,8 @@ instance Applicative [] where
     pure x = [x]  
     fs <*> xs = [f x | f <- fs, x <- xs]
 ```
-- 对于列表而言，最小的上下文（函子）就是`[]`，但`[]`不包含值，不能当做`pure`。看`pure`类型声明`pure :: Applicative f => a -> f a`，对于数组，就是接受一个值，返回一值的数组。同样，`Maybe`的最小上下文是`Nothing`，但没有值，要能够产生这个值，所以`pure`的实现是`Just`。
-- `pure`也是多态的，指定类型后会根据类型推导使用不同应用函子的实现。不过不指定类型的话就没有应用函子，这个逻辑是怎么来的呢？
+- 对于列表而言，最小的上下文（函子）就是`[]`，但`[]`不包含值，不能当做`pure`。看`pure`类型声明`pure :: Applicative f => a -> f a`，对于列表，就是接受一个值，返回仅包含该值的列表。同理，`Maybe`的最小上下文是`Nothing`，但没有值，要能够包含这个值，所以`pure`的实现是`Just`。
+- `pure`也是多态的，指定类型后会根据类型推导使用不同应用函子的实现。不过不指定类型的话就没有应用函子，这个逻辑是怎么来的呢？这个`pure`是调用的哪个`data`的`pure`实现呢？
 ```haskell
 >>> pure "hello" :: [String]
 ["hello"]
@@ -3235,14 +3269,14 @@ Just "hello"
 >>> pure "hello"
 "hello"
 ```
-- 另外注意数组的`<*>`实现，由于数组保存多个数据，所以`<*>`结果是列表中多个函数排列运用于参数中多个值的结果的列表，相当于做了二层循环。如果参数更多，那么循环层数还会更多。
+- 另外注意数组的`<*>`实现，由于数组保存多个数据，所以`<*>`结果是列表中多个函数排列运用于参数中多个值的结果的列表，相当于做了二层循环。如果参数更多，那么循环层数还会更多。前面的列表相当于外层循环，后面相当于内层。
 ```haskell
 >>> [(+), (-), (*)] <*> [1..3] <*> [1..3]
 [2,3,4,3,4,5,4,5,6,0,-1,-2,1,0,-1,2,1,0,1,2,3,2,4,6,3,6,9]
 >>> [(\x y z -> x + y + z)] <*> [1..3] <*> [1..3] <*> [1..3]
 [3,4,5,4,5,6,5,6,7,4,5,6,5,6,7,6,7,8,5,6,7,6,7,8,7,8,9]
 ```
-- 对于列表而言，使用`<*>`是一种取代列表生成式的好方式
+- 对于列表而言，使用`<*>`是一种可以替代列表生成式的方式（本来也就是用列表生成式实现的）：
 ```haskell
 -- just like list comprehension
 >>> [x * y | x <- [1..5], y <- [6..10]]
@@ -3268,7 +3302,7 @@ infixl 4 <$>
 f <$> x = fmap f x
 ```
 - 所以上面的`fmap f x <*> y <*> ...`就等价于`f <$> x <*> y <*> ...`，含义是将普通的函数运用于应用函子`x y ...`上。
-- 所以对于普通函数`f`，想要应用于应用函子，可以写成`f <$> x <*> y <*> z`，如果是应用于普通值则写成`f x y z`。
+- 所以对于普通函数`f`，想要应用于应用函子中的值，可以写成`f <$> x <*> y <*> z`，如果是应用于普通值则写成`f x y z`。这种调用风格叫做**Applicative style**。
 - 回顾一下能这样做的底层逻辑是`pure f <*> x = fmap f x = f <$> x`。
 - 区分`<$> <*>`：如果函数在应用函子中，就用`<*>`，普通函数就用`<$>`。
 - 只需要加一些`<$> <*>`就能将运用于普通值的函数改写为运用在应用函子上的函数。
@@ -3279,6 +3313,418 @@ Just "helloworld"
 "helloworld"
 ```
 
-`IO`：
-- 上面介绍了`Maybe`和`[]`的例子。看一看其他的`Applicative`实例：
+上面介绍了`Maybe`和`[]`的例子。看一看其他的`Applicative`实例：
+```haskell
+instance Monoid m => Applicative (Const m)
+  -- Defined in ‘Data.Functor.Const’
+instance Applicative ZipList -- Defined in ‘Control.Applicative’
+instance Monad m => Applicative (WrappedMonad m)
+  -- Defined in ‘Control.Applicative’
+instance Arrow a => Applicative (WrappedArrow a b)
+  -- Defined in ‘Control.Applicative’
+instance Applicative (Either e) -- Defined in ‘Data.Either’
+instance Applicative [] -- Defined in ‘GHC.Base’
+instance Applicative Maybe -- Defined in ‘GHC.Base’
+instance Applicative IO -- Defined in ‘GHC.Base’
+instance Applicative ((->) r) -- Defined in ‘GHC.Base’
+instance (Monoid a, Monoid b, Monoid c) =>
+         Applicative ((,,,) a b c)
+  -- Defined in ‘GHC.Base’
+instance (Monoid a, Monoid b) => Applicative ((,,) a b)
+  -- Defined in ‘GHC.Base’
+instance Monoid a => Applicative ((,) a) -- Defined in ‘GHC.Base’
+```
+- 抛开没见过的东西，常见的还有`Either a` `IO` `((->) r)` 各种元组。可以看到现在了解到的类型只要是函子，那都实现为了应用函子的实例。
 
+`IO`:
+- 实现：
+```haskell
+instance Applicative IO where  
+    pure = return
+    a <*> b = do
+        f <- a
+        x <- b
+        return (f x)
+```
+- `IO`中同样放函数，所以`<*>`实现就是取出函数和参数，应用后再通过`return`放到`IO`中。而`pure`实现则就是`return`，做一个不做任何事情的IO动作，可以产生某些值作为结果。
+- 考虑下面的例子：
+```haskell
+concatLine :: IO String
+concatLine = do
+    a <- getLine
+    b <- getLine 
+    return $ a ++ b
+
+concatLine' :: IO String 
+concatLine' = (++) <$> getLine <*> getLine
+```
+- 对于`IO`来说，我们说`do`块中的IO动作是类似于顺序执行的。使用应用函子，替换成`<$> <*>`之后是存在一个执行顺序的概念的，就类似于`sequence`。
+- 如果是在做绑定IO动作（取其中的值）的事情，并且绑定之后还调用了一些函数，可以考虑使用Applicative Style。
+
+`(->) r`:
+- 前面提到了`fmap`用于函数作为函子的情况，不适用于盒子的比喻，`fmap`就是在做函数组合。
+- 同样地，`(->) r`也是应用函子。
+- 将`(->) r`带入到`(<*>) :: Applicative f => f (a -> b) -> f a -> f b`类型签名中替代`f`得到，注意`(->) r`转为中缀是`(r ->)`：
+```haskell
+<*> :: (r -> a -> b) -> (r -> a) -> (r -> b)
+```
+- 看一下实现：
+```haskell
+instance Applicative ((->) r) where  
+    pure x = (\_ -> x)  
+    f <*> g = \x -> f x (g x)
+```
+- 将一个值放在函数的上下文中，那么最小上下文（应用函子）就是返回这个值本身的函数，所以`pure`接受一个参数`x`返回接受一个任何参数都返回`x`的函数。
+```haskell
+>>> :t pure 3
+pure 3 :: (Applicative f, Num a) => f a
+>>> :t (pure 3) "hello"
+(pure 3) "hello" :: Num t => t
+>>> (pure 3) "hello"
+3
+>>> pure 3 "hello"
+3
+>>> pure 3
+3
+```
+- 函数调用左结合，括号可以省略，所以给`pure`调用再传递一个参数，通过类型推断就会调用`(->) r`的`pure`实现。
+- 观察`<*>`函数签名和实现，`f`的类型是`r -> a -> b`，`g`类型是`r -> a`，`<*>`实现中接受`r`类型参数，返回`f`函数输出，同时由`g x`作为`f`第二个参数。至于为什么这样实现还不得而知。
+- 看一个例子：
+```haskell
+{-
+>>> f <*> g $ "10"
+110.0
+>>> (\x -> f x (g x)) "10"
+110.0
+>>> f "10" (g "10")
+110.0
+-}
+-- <*> :: (r -> a -> b) -> (r -> a) -> (r -> b)
+-- example : r String, a Int, b Double
+f :: String -> Int -> Double
+f s x = read s + fromIntegral x
+
+g :: String -> Int
+g s = read s * 10
+
+{-
+>>> :t (+) <*> (*100)
+(+) <*> (*100) :: Num a => a -> a
+>>> (+) <*> (*100) $ 10
+1010
+-}
+```
+- 和`<$>`一起用，对于函数来说`<$>`也就是`fmap`就是函数组合：
+```haskell
+>>> :t (+) <$> (+3) <*> (*100)
+(+) <$> (+3) <*> (*100) :: Num b => b -> b
+>>> (+) <$> (+3) <*> (*100) $ 5 
+508
+>>> (\x -> (x+3) + (x*100)) 5
+508
+>>> ((+) . (+3)) <*> (*100) $ 5
+508
+
+>>> (\x y -> [x, y]) <$> (+1) <*> (*10) $ (10 :: Int)
+[11,100]
+>>> (\x y z -> [x,y,z]) <$> (+3) <*> (*2) <*> (/2) $ 5
+[8.0,10.0,2.5]
+```
+- 所以说对于函数`k <$> f <*> g`的含义得到一个函数，这个函数有一个参数，它会将参数分别传给`f g`，并将结果再传给`k`。
+- 上面的代码时能够理解的，但并不算那么好理解，平时使用时我们通常不会将函数当做应用函子来用，但它确实是。
+- 技巧：对于函数类型的应用函子，用`r ->`代入类型变量`f`即可得到最终类型，用最终类型来理解，不要用盒子来类比。
+
+`ZipList`：
+- 考虑`[(+3), (*2)] <*> [1, 2]`这种调用，显然会调用列表的`<*>`，得到`[4, 5, 2, 4]`。
+- 那么如果想得到的结果是`[(+3) 1, (*2) 2]`，也就是列表对应元素调用，有没有办法呢？可能也会有这种需求，所以有了类型`ZipList`。
+- `ZipList`只有一个值构造器`newtype ZipList a = ZipList {getZipList :: [a]}`，包含一个列表类型的字段。并且定义为了应用函子：
+```haskell
+instance Applicative ZipList where  
+    pure x = ZipList (repeat x)  
+    ZipList fs <*> ZipList xs = ZipList (zipWith (\f x -> f x) fs xs)
+```
+- 即是对列表做包装，并将`<*>`的行为定义了第一个列表函数对第二个列表对应元素的调用。
+```haskell
+>>> ZipList [(+3), (*2)] <*> ZipList [1, 2]
+ZipList {getZipList = [4,4]}
+>>> getZipList (ZipList [(+3), (*2)] <*> ZipList [1, 2])
+[4,4]
+>>> getZipList $ (+) <$> ZipList [1, 2] <*> ZipList [2, 3]
+[3,5]
+>>> getZipList $ (,,) <$> ZipList "dog" <*> ZipList "cat" <*> ZipList "rat"  
+[('d','c','r'),('o','a','a'),('g','t','t')]
+```
+- 使用时将列表用`ZipList`包装后，要取出结果则使用`getZipList`。
+- 对于列表，如果要将多个列表Zip起来，需要使用`zipWith3 zipWith4 ...`等函数，但使用Applicative Style的`ZipList`则不需要，只要将任意数量的`ZipList`用`<*>`连接起来即可，因为函数是柯里化的，单纯的数据则不能这样。
+
+`liftA2`函数；
+- 定义：
+```haskell
+liftA2 :: (Applicative f) => (a -> b -> c) -> f a -> f b -> f c  
+liftA2 f a b = f <$> a <*> b
+```
+- 应用函子比起函子要强的一点除了能应用在应用函子中的函数，还在于可以将函数或者函子中的函数应用于多个函子。通过`liftA2`函数或者Applicative Style。
+- 例子：如何将`Just 2`附加到`Just [3, 4]`上使其变成`Just [2, 3, 4]`？
+```haskell
+>>> (:) <$> Just 2 <*> Just [3, 4]
+Just [2,3,4]
+```
+- 实现接受一个装有多个应用函子的列表到一个列表的应用函子：
+```haskell
+sequenceA' :: Applicative f => [f a] -> f [a]
+sequenceA' [] = pure []
+sequenceA' (x:xs) = (:) <$> x <*> sequenceA' xs
+
+sequenceA'' :: Applicative f => [f a] -> f [a]
+sequenceA'' = foldr (\x xs -> (:) <$> x <*> xs) (pure [])
+
+sequenceA''' :: Applicative f => [f a] -> f [a]
+sequenceA''' = foldr (liftA2 (:)) (pure [])
+```
+- 几乎任何递归走遍整个列表然后累加的函数都可以使用`foldr/foldl`实现，和`Data.Traversable`中的`sequenceA`含义是相同的，用`liftA2`还可以进一步简化：
+```haskell
+sequenceA :: (Traversable t, Applicative f) => t (f a) -> f (t a)
+{-
+>>> sequenceA [Just 1, Just 2, Just 3]
+Just [1,2,3]
+>>> sequenceA' [Just 1, Just 2, Just 3]
+Just [1,2,3]
+>>> sequenceA'' [Just 1, Just 2, Just 3]
+Just [1,2,3]
+>>> sequenceA [[1, 2], [3, 4]]
+[[1,3],[1,4],[2,3],[2,4]]
+>>> sequenceA [[1, 2], [3, 4], []]
+[]
+-}
+```
+- `liftA2`在这种场合很实用，理解为将运算符`(:)`提升（Lift）为能应用于应用函子上的函数，函数命名是非常准确的，的确是有存在意义的。
+- 当`sequenceA`接受装有函数的列表时，会回传一个返回列表的函数，此时其实就是应用于`(->) r`应用函子上，直接用`r ->`替换为类型变量`f`来得到最终类型。当有一系列函数需要应用在相同的参数上时使用`sequenceA`会非常方便，比使用`map`用接受函数的函数做映射更加方便。
+```haskell
+>>> :t sequenceA [(>2), (>3)]
+sequenceA [(>2), (>3)] :: (Ord a, Num a) => a -> [Bool]
+>>> sequenceA [(>2), (>3)] 3
+[True,False]
+>>> map (\f -> f 3) [(>2), (>3)]
+[True,False]
+```
+- 当使用在`IO`对象上时，`sequenceA`和`sequence`是等价的。接受一串IO动作，返回一个会执行列表中所有IO动作并将结果放在一个列表中的IO动作。
+```haskell
+sequence :: (Traversable t, Monad m) => t (m a) -> m (t a)
+sequenceA :: (Traversable t, Applicative f) => t (f a) -> f (t a)
+```
+
+Applicative Functor Laws:
+- 同函子一样，应用函子也有一定要遵守的定律，前面提到的`pure f <*> x = fmap f x`是其中最重要的一个：
+```haskell
+pure id <*> v = v
+pure (.) <*> u <*> v <*> w = u <*> (v <*> w)
+pure f <*> pure x = pure (f x)
+u <*> pure y = pure ($ y) <*> u
+```
+
+总结：
+- 应用函子可以用来结合不同种类的运算。
+- `<*> <$> pure`。
+- 注意列表上的non-deterministic的行为。
+
+### newtype
+
+`data`用于定义新类型，`type`用于定义类型别名，还有一种定义新类型的方式就是`newtype`。
+
+比如定义`ZipList`时可以这样定义：
+```haskell
+data ZipList a = ZipList { getZipList :: [a] }
+```
+- 这里的目的是将`[a]`包在`ZipList`中，还可以使用`newtype`，实际的库中也是这样定义的：
+```haskell
+newtype ZipList a = ZipList { getZipList :: [a] }
+```
+
+那么`newtype`相较`data`有何异同呢？
+- 使用`newtype`会告诉Haskell你只是想将一个类型包起来，有了这一点作为基础，Haskell可以将包装和解包的成本优化掉。`data`则不能。
+- `newtype`定义一个新类型时，只能定义一个值构造器，而且这个值构造器只能有一个字段。使用`data`则不限制值构造器数量和值构造器的字段数量。
+- 直观理解就是如果你要想用`newtype`包装一个类型，那么只能是一个类型的一个数据。
+- `newtype`也能使用`deriving`关键字，可以直接派生`Eq Ord Enum Bounded Show Read`。如果想对新的类型类做派生，那么包装的那个类型必须也派生了那个类型类。这很合理。
+- 配合Record Syntax，值构造器就是将内部包装的类型转为新类型的函数，字段名称就是将新类型转为内部包装类型的函数，轻易就可以取到其中的值。
+- 只能包装一个类型的一个数据不代表只能有一个类型参数，内部包装的数据本身可以有多个类型参数，例：
+```haskell
+newtype Pair a b = Pair {getTuple :: (a, b)} deriving(Show, Read, Eq)
+```
+- 可以对`newtype`定义的类型做模式匹配，其实就和`data`一样，本质就是嵌套模式匹配：
+```haskell
+showPair :: (Show a, Show b) => Pair a b -> String
+showPair (Pair (a, b)) = show (Pair (a, b))
+```
+- 元组在做`fmap`时只会对最后一个元素做，可以包装一层并将行为更改为对第一个元素：
+```haskell
+newtype Pair' b a = Pair' {getPair' :: (a, b)} deriving(Eq, Read, Show)
+instance Functor (Pair' b) where
+    fmap f (Pair' (x, y)) = Pair' (f x, y)
+{-
+>>> getPair' $ fmap reverse (Pair' ("hello", 3))
+("olleh",3)
+-}
+```
+- 看做一种有着限制的`data`定义就行。
+
+`newtype`的懒惰特性：
+- `undefined :: a`函数在求值时会触发异常。Haskell默认是懒惰求值，也就是真正需要值的时候才会去求（比如说要输出的时候）。
+```haskell
+>>> [0, 1, 2, 3, undefined, 5, undefined] !! 5
+5
+>>> sum [0, 1, 2, 3, undefined, 5, undefined]
+Prelude.undefined
+```
+- 可以看到列表中元素的求值时懒惰的，下标为`5`的元素取出时，下标为`4`的元素并没有被求值。
+- `newtype`还有一个重要特点就是其对字段求值具有懒惰特性，而`data`则没有：
+```haskell
+data NewBool = NewBool {getNewBool :: Bool}
+helloBool :: NewBool -> [Char]
+helloBool (NewBool _) = "hello"
+{-
+>>> helloBool undefined
+Prelude.undefined
+-}
+
+newtype NewBool' = NewBool' {getNewBool' :: Bool}
+helloBool' :: NewBool' -> [Char]
+helloBool' (NewBool' _) = "hello"
+{-
+>>> helloBool' undefined
+"hello"
+-}
+```
+- 能做到这一点的原因和前面能将包装和解包优化掉的原因一样，`newtype`只能有一个值构造器和一个字段，在模式匹配时不需要计算数据的值就能知道形式一定是匹配的。
+- `newtype`定义一种新的数据类型，但除了从盒子中取东西之外，更像是将一个类型转换为另一个类型。
+
+`type data newtype`对比：
+- `type`定义类型别名，并不定义新类型，只是给一个现有类型起一个新名字。定义别名的作用更多是增加可读性，使l类型签名更清晰。
+```haskell
+{- type & data & newtype
+>>> :t PhoneBook
+PhoneBook :: PersonName -> PhoneNumber -> PhoneBook
+-}
+type PersonName = String
+type PhoneNumber = String
+data PhoneBook = PhoneBook PersonName PhoneNumber deriving(Show, Read, Eq)
+```
+- `data`就是最普通最常见的类型定义，定义一个全新的类型。
+- 当新类型只有一个值构造器和一个字段时，就可以使用`newtype`，可以获得`newtype`的优化，同时和`data`定义的类型含义差不多，只有懒惰求值的特点会有区别。注意和`data`一样，并不会自动派生内部包装的类型的基类，需要手动添加`deriving`或者实现`instance`。
+
+### Monoid
+
+Monoid这个单词的意思是**幺半群**，**半群**则是Semigroup。至于定义是什么，暂时未知，后续再解释。
+
+前面所说的类型类定义多种类型拥有的共同属性，比如`Eq`，可以判断相等的类型都应该实现为`Eq`的实例。
+
+让我们将这种抽象放到函数而不仅限于`data newtype`定义的数据类型，这里考虑函数`*`和`+`的共同特性：
+- 都接受两个参数，参数和返回值类型相同。
+- 存在某些值当应用于二元函数时不会改变其他值，1对于`*`，0对于`+`。
+- 都满足结合律（associativity），`5*(3*4) = 5*3*4`。
+
+将这些性质抽象具体地写出来，就可以得到一个`Monoid`：
+```haskell
+type Monoid :: * -> Constraint
+class Semigroup a => Monoid a where
+  mempty :: a
+  mappend :: a -> a -> a
+  mconcat :: [a] -> a
+  mconcat = foldr mappend mempty
+  {-# MINIMAL mempty #-}
+  	-- Defined in ‘GHC.Base’
+```
+- 是一个类型类，从`Semigroup`派生。
+- 其中`mempty`就是那个相对于二元函数作为Identity的值，是一个多态的常数，`mappend`则是这个二元函数，`mconcat`对一个数组的所有元素做`mappend`（满足结合律）。
+- 实现一个`Monoid`实例时，一般实现`mempty mappend`就行，`mconcat`定义都没有问题，不过在某些情况下比如可以提供更高效的实现，依然可以实现`mconcat`。
+
+`Monoid`类型类的定律（Monoid Law）：
+```haskell
+mempty `mappend` x = x
+x `mappend` mempty = x
+(x `mappend` y) `mappend` z = x `mappend` (y `mappend` z)
+```
+- 即是与元值（Identity，暂且这么翻译）的运算结果还是自己，和满足结合律。
+- Haskell不会检查这些定律是否被遵守，将类型实现为`Monoid`时需要自己小心地检查他们。
+- 值得注意``a `mappend` b``和``b `mappend` a``并不需要相等。交换律并不要求被满足，`+ *`满足这一点这是他们自己的性质。
+
+内置的实现了`Monoid`的类型：
+- 列表：对于列表而言，`mconcat`就是`concat`，这个二元运算就是`++`操作。
+```haskell
+instance Monoid [a] where
+    mempty = []
+    mappend = (++)
+{-
+>>> mempty :: [a]
+[]
+>>> [1, 2] `mappend` [3, 4]
+[1,2,3,4]
+>>> mconcat [[1, 2], [3, 4], [5, 6, 7]]
+[1,2,3,4,5,6,7]
+-}
+```
+- `Product Sum`，对于整数浮点数`+ *`都满足Monoid Law，那么如何选择呢？答案是不做选择，`Data.Monoid`导出了两个类型`Product a/Sum a`，都是用`newtype`定义的，实现了常见的`Num Show Read Eq Ord `等类型类，可以用其来**包装**`Num`实例类型的数据。`Product a/Sum a`的`Monoid`实现中分别定义了`mappend`为`*/+`。使用时选择要用哪一个来包装，而更一般的`Num`则没有从`Monoid`派生。
+```haskell
+newtype Product a = Product {getProduct :: a}
+    -- Defined in ‘Data.Semigroup.Internal’
+    ...
+instance Num a => Monoid (Product a) where
+    mempty = Product 1  
+    Product x `mappend` Product y = Product (x * y)
+
+newtype Sum a = Sum {getSum :: a}
+    -- Defined in ‘Data.Semigroup.Internal’
+    ...
+instance Num a => Monoid (Sum a) where
+    mempty = Sum 0
+    Sum x `mappend` Sum y = Sum (x + y)
+{-
+>>> getSum . mconcat . map Sum $ [1, 2, 3]
+6
+>>> getProduct . mconcat . map Product $ [1, 10, 100]
+1000
+-}
+```
+- 对于`Bool`类型，`&& ||`运算符都满足`Monoid`的规则，所以定义了两个包装类型`Any All`，实现就类似于下面这样，用法类似，包装就行：
+```haskell
+newtype Any = Any {getAny :: Bool}
+instance Monoid Any where
+    mempty = Any False
+    Any x `mappend` Any y = Any (x || y)
+
+newtype All = All {getAll :: Bool}
+instance Monoid All where
+        mempty = All True
+        All x `mappend` All y = All (x && y)
+{-
+>>> getAll . mconcat . map All $ [True, True, False]
+False
+>>> getAny . mconcat . map Any $ [False, False, True]
+True
+-}
+```
+- `Ordering`类型是比较的结果，也是`Monoid`的实例。实现非常符合直觉，这个实现的含义就是：对于列表来说，在进行比较时，左边的元素优先级更高，如果左边小于/大于，那么最终结果就是小于/大于，左边元素相等那么继续比较后续元素。Monoid Law都是满足的。这个`Monoid`会用于什么场合呢？可以用于有多个比较因素时，用`mappend`或者`mconcat`连接起来构成最终的关系。
+```haskell
+data Ordering = LT | EQ | GT
+instance Monoid Ordering where
+    mempty = EQ
+    LT `mappend` _ = LT
+    EQ `mappend` y = y
+    GT `mappend` _ = GT
+
+-- usage
+lengthCompare :: String -> String -> Ordering
+lengthCompare x y = (length x `compare` length y) `mappend` (x `compare` y)
+-- just write as an example, not necessary
+lengthCompare' :: String -> String -> Ordering
+lengthCompare' x y = mconcat $ [compare `on` length, compare, compare `on` map toUpper] <*> [x] <*> [y]
+{-
+>>> lengthCompare "hello" "world"
+LT
+>>> lengthCompare "hello1" "world"
+GT
+>>> lengthCompare' "hello" "world"
+LT
+>>> mconcat (zipWith compare "abcd" "abce")
+LT
+-}
+```
