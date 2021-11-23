@@ -3728,3 +3728,112 @@ LT
 LT
 -}
 ```
+- `Maybe a`类型包装一个数据，如果这个数据的类型`a`是`Monoid`，那么也可以将`Maybe a`实现为`Monoid`:
+```haskell
+instance Monoid a => Monoid (Maybe a) where  
+    mempty = Nothing  
+    Nothing `mappend` m = m  
+    m `mappend` Nothing = m  
+    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)
+{-
+>>> Nothing `mappend` Just "hello"
+Just "hello"
+>>> Just "hello" `mappend` Nothing
+Just "hello"
+>>> Just "hello" `mappend` Just "world"
+Just "helloworld"
+-}
+```
+- `First a / Last a`，`Maybe a`除了包装其中的`Monoid`这种实现方式还可以有其他实现。如果其中的数据类型不是`Monoid`，我们可以选择将`mappend`实现为丢弃其中某个数据，留下前者或者后者，留下前者则是`First a`，后者则是`Last a`，当然如果其中有`Nothing`那会优先留下非`Nothing`的值。`Maybe a`已经有了实现，他们都是`Maybe a`的包装。
+```haskell
+newtype First a = First { getFirst :: Maybe a }  
+    deriving (Eq, Ord, Read, Show)
+instance Monoid (First a) where  
+    mempty = First Nothing  
+    First (Just x) `mappend` _ = First (Just x)  
+    First Nothing `mappend` x = x
+{- First a & Last a
+>>> mempty :: First a
+First {getFirst = Nothing}
+>>> First Nothing `mappend` First (Just 1)
+First {getFirst = Just 1}
+>>> First (Just 1) `mappend` First Nothing
+First {getFirst = Just 1}
+>>> First (Just 1) `mappend` First (Just 2)
+First {getFirst = Just 1}
+
+>>> mempty :: Last a
+Last {getLast = Nothing}
+>>> Last Nothing `mappend` Last (Just 1)
+Last {getLast = Just 1}
+-}
+```
+- `foldl foldr`可以用来折叠`Foldable`，`[a]`也是一种`Foldable`，前面多用于折叠`[a]`，其实还可以用于其他实现了`Foldable`的数据类型。注意其中的`fold foldMap foldMap'`方法，他们会使用`Monoid`的`mappend`方法进行折叠，可以是数据本来就是`Monoid`，也可以是使用传入函数将数据转换为`Monoid`。
+```haskell
+type Foldable :: (* -> *) -> Constraint
+class Foldable t where
+  fold :: Monoid m => t m -> m
+  foldMap :: Monoid m => (a -> m) -> t a -> m
+  foldMap' :: Monoid m => (a -> m) -> t a -> m
+  foldr :: (a -> b -> b) -> b -> t a -> b
+  foldr' :: (a -> b -> b) -> b -> t a -> b
+  foldl :: (b -> a -> b) -> b -> t a -> b
+  foldl' :: (b -> a -> b) -> b -> t a -> b
+  foldr1 :: (a -> a -> a) -> t a -> a
+  foldl1 :: (a -> a -> a) -> t a -> a
+  toList :: t a -> [a]
+  null :: t a -> Bool
+  length :: t a -> Int
+  elem :: Eq a => a -> t a -> Bool
+  maximum :: Ord a => t a -> a
+  minimum :: Ord a => t a -> a
+  sum :: Num a => t a -> a
+  product :: Num a => t a -> a
+  {-# MINIMAL foldMap | foldr #-}
+  	-- Defined in ‘Data.Foldable’
+instance Foldable (Const m) -- Defined in ‘Data.Functor.Const’
+instance Foldable [] -- Defined in ‘Data.Foldable’
+instance Foldable Sum -- Defined in ‘Data.Foldable’
+instance Foldable Product -- Defined in ‘Data.Foldable’
+instance Foldable Maybe -- Defined in ‘Data.Foldable’
+instance Foldable Last -- Defined in ‘Data.Foldable’
+instance Foldable First -- Defined in ‘Data.Foldable’
+instance Foldable (Either a) -- Defined in ‘Data.Foldable’
+instance Foldable Dual -- Defined in ‘Data.Foldable’
+instance Foldable f => Foldable (Ap f)
+  -- Defined in ‘Data.Foldable’
+instance Foldable f => Foldable (Alt f)
+  -- Defined in ‘Data.Foldable’
+instance Foldable ((,) a) -- Defined in ‘Data.Foldable’
+instance Foldable ZipList -- Defined in ‘Control.Applicative’
+```
+- 二叉树的`Foldable`实现例子：
+```haskell
+data Tree a = EmptyTree | TreeNode a (Tree a) (Tree a) deriving(Show, Read, Eq)
+instance Foldable Tree where
+    foldMap f EmptyTree = mempty
+    foldMap f (TreeNode x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
+
+testTree :: Tree Integer
+testTree = TreeNode 5 
+    (TreeNode 3 
+        (TreeNode 1 EmptyTree EmptyTree) 
+        (TreeNode 6 EmptyTree EmptyTree)
+    )
+    (TreeNode 9 
+        (TreeNode 8 EmptyTree EmptyTree) 
+        (TreeNode 10 EmptyTree EmptyTree)
+    )
+{-
+>>> foldl (+) 0 testTree
+42
+>>> foldr (*) 1 testTree
+64800
+>>> foldMap (\x -> [x]) testTree
+[1,3,6,5,8,9,10]
+>>> getAny $ foldMap (\x -> Any $ x > 10) testTree
+False
+>>> getAll $ foldMap (\x -> All $ x > 5) testTree
+False
+-}
+```
