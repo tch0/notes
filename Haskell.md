@@ -84,6 +84,13 @@
     - [应用函子](#%E5%BA%94%E7%94%A8%E5%87%BD%E5%AD%90)
     - [newtype](#newtype)
     - [Monoid](#monoid)
+  - [Monad](#monad)
+    - [Monad类型类](#monad%E7%B1%BB%E5%9E%8B%E7%B1%BB)
+    - [Monad应用](#monad%E5%BA%94%E7%94%A8)
+    - [do表示法](#do%E8%A1%A8%E7%A4%BA%E6%B3%95)
+    - [Monad实例](#monad%E5%AE%9E%E4%BE%8B)
+  - [Monad Law](#monad-law)
+  - [More Monad](#more-monad)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -390,7 +397,7 @@ stack exec my-project-exe
 
 新建项目：
 - `stack new PACKAGE_NAME [TEMPLATE_NAME]`，不指定模板，则使用默认的模板，更多模板相关信息执行`stack templates`查看，模板也可以是本地文件、远程URL。
-- 如果最终会发布的话包的名称就是这个`PACKAGE_NAME`，由字母数组和连字符组成。
+- 如果最终会发布的话包的名称就是这个`PACKAGE_NAME`，由字母数字和连字符组成。
 
 构建项目：
 - `stack build`会查找本地没有的依赖，然后自动下载，也可以手动`stack setup`做这一步。然后开始构建。
@@ -1370,8 +1377,8 @@ f x = let tmp1 y = (let tmp2 z = x * y * z in tmp2) in tmp1
 ### 常用高阶函数
 
 map（映射）/reduce（规约）是最常用的高阶函数。前者将一个列表映射到另一个列表，后者将一个列表规约为一个值。
-- `map :: (a -> b) -> [a] -> [b]` 映射一个数组到另一个数组。
-- `filter :: (a -> Bool) -> [a] -> [a]` 筛选符合条件的元素到结果数组。
+- `map :: (a -> b) -> [a] -> [b]` 映射一个列表到另一个列表。
+- `filter :: (a -> Bool) -> [a] -> [a]` 筛选符合条件的元素到结果列表。
 - `map filter`完全其实可以用列表推导式来代替，或者说本身就是等价的，用什么并不重要，凭个人喜好就好。
 - `takeWhile :: (a -> Bool) -> [a] -> [a]` 按顺序取元素直到条件不满足。
 - `zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]` 将两个列表的对应元素应用函数后得到新列表。
@@ -1607,7 +1614,7 @@ import qualified Data.Map as M hiding (map)
 - `isSuffixOf :: Eq a => [a] -> [a] -> Bool` 检查是否是后缀。
 - `elem :: (Foldable t, Eq a) => a -> t a -> Bool`
 - `notElem :: (Foldable t, Eq a) => a -> t a -> Bool`
-- `partition :: (a -> Bool) -> [a] -> ([a], [a])` 按条件分为满足和不满足的元素构成数组的元组。搜索整个数组，区别于`span break`。
+- `partition :: (a -> Bool) -> [a] -> ([a], [a])` 按条件分为满足和不满足的元素构成列表的元组。搜索整个列表，区别于`span break`。
 - `find :: Foldable t => (a -> Bool) -> t a -> Maybe a` 查找首个满足的元素，结果是一个`Maybe`，其值是`Just something`或者`Nothing`（单个元素或者空值）。
 - `elemIndex :: Eq a => a -> [a] -> Maybe Int` 查找元素并返回下标，`Just index`或者`Nothing`。
 - `elemIndices :: Eq a => a -> [a] -> [Int]` 查找元素返回所有下标。
@@ -1622,7 +1629,7 @@ import qualified Data.Map as M hiding (map)
 - `(\\) :: Eq a => [a] -> [a] -> [a]` `\`运算符，计算差集，从前者中减去后者，使用`\`需要转义，所以代码中都是`\\`。
 - `union :: Eq a => [a] -> [a] -> [a]` 取并集。
 - `intersect :: Eq a => [a] -> [a] -> [a]` 取交集。
-- `insert :: Ord a => a -> [a] -> [a]` 插入元素到可排序数组的首个大于等于它的元素前，如果原先是升序排列的，那么插入后仍是。
+- `insert :: Ord a => a -> [a] -> [a]` 插入元素到可排序列表的首个大于等于它的元素前，如果原先是升序排列的，那么插入后仍是。
 - 对于更为常用的`length take drop splitAt !! replciate`之类函数的参数类型都是`Int`，按道理来说提供`Integral Num`会更好，但是处于历史原因修改会引起兼容性问题。所以提供了`genericLength genericTake genericDrop genericSplitAt genericIndex genericReplicate`函数提供更通用的类型。
 ```haskell
 length :: Foldable t => t a -> Int
@@ -1667,7 +1674,7 @@ groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
 f `on` g = \x y -> f (g x) (g y)
 ```
-- `on`就相当于对两个自变量的函数做一个复合：$(f\circ g)(x, y) = f(g(x), g(y))$。比如``compare `on` length``用于按照数组长度比较，``(==) `on` (>0)``用于按照是否同为正数判等，非常地灵活。
+- `on`就相当于对两个自变量的函数做一个复合：$(f\circ g)(x, y) = f(g(x), g(y))$。比如``compare `on` length``用于按照列表长度比较，``(==) `on` (>0)``用于按照是否同为正数判等，非常地灵活。
 ```haskell
 >>> groupBy ((==) `on` (>0)) [-1, -2, 0, 1, 22, 10, -100]
 [[-1,-2,0],[1,22,10],[-100]]
@@ -2216,7 +2223,7 @@ instance YesNo (Maybe m) where
 yesnoIf :: YesNo a => a -> p -> p -> p
 yesnoIf yesnoVal yesResult noResult = if yesno yesnoVal then yesResult else noResult
 ```
-- 再从`YesNo`派生新类型类`EmptyOrNot`，仅针对数组或者`Maybe`类型，演示一下`class isntance`声明中的类型约束、使用类型类默认实现等情况。
+- 再从`YesNo`派生新类型类`EmptyOrNot`，仅针对列表或者`Maybe`类型，演示一下`class isntance`声明中的类型约束、使用类型类默认实现等情况。
 ```haskell
 {- Empty or not type class
 >>> empty (Just [])
@@ -2785,7 +2792,7 @@ StdGen {unStdGen = SMGen 6520443225570571049 14820693616592480073}
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as S
 ```
-- 要构建`ByteString`需要使用：`pack :: [Word8] -> ByteString`，参数中的`Word8`类型在`GHC.Word`中，可以直接用`[1, 2, 100, 256, 300]`这样的数组来初始化（因为字面值是多态的，可以用于整型浮点等多种数据类型），超过一个字节的值会被截断并报警告。
+- 要构建`ByteString`需要使用：`pack :: [Word8] -> ByteString`，参数中的`Word8`类型在`GHC.Word`中，可以直接用`[1, 2, 100, 256, 300]`这样的列表来初始化（因为字面值是多态的，可以用于整型浮点等多种数据类型），超过一个字节的值会被截断并报警告。
 - 对`ByteString`调用`show`得到的结果和字符串差不多。
 - `unpack :: ByteString -> [Word8]`做相反的事情。
 - `fromChunks`将一个列表的严格的`ByteString`转换为一个懒惰的，`toChunks`做相反的事情。
@@ -3269,7 +3276,7 @@ Just "hello"
 >>> pure "hello"
 "hello"
 ```
-- 另外注意数组的`<*>`实现，由于数组保存多个数据，所以`<*>`结果是列表中多个函数排列运用于参数中多个值的结果的列表，相当于做了二层循环。如果参数更多，那么循环层数还会更多。前面的列表相当于外层循环，后面相当于内层。
+- 另外注意列表的`<*>`实现，由于列表保存多个数据，所以`<*>`结果是列表中多个函数排列运用于参数中多个值的结果的列表，相当于做了二层循环。如果参数更多，那么循环层数还会更多。前面的列表相当于外层循环，后面相当于内层。
 ```haskell
 >>> [(+), (-), (*)] <*> [1..3] <*> [1..3]
 [2,3,4,3,4,5,4,5,6,0,-1,-2,1,0,-1,2,1,0,1,2,3,2,4,6,3,6,9]
@@ -3634,7 +3641,7 @@ class Semigroup a => Monoid a where
   	-- Defined in ‘GHC.Base’
 ```
 - 是一个类型类，从`Semigroup`派生。
-- 其中`mempty`就是那个相对于二元函数作为Identity的值，是一个多态的常数，`mappend`则是这个二元函数，`mconcat`对一个数组的所有元素做`mappend`（满足结合律）。
+- 其中`mempty`就是那个相对于二元函数作为Identity的值，是一个多态的常数，`mappend`则是这个二元函数，`mconcat`对一个列表的所有元素做`mappend`（满足结合律）。
 - 实现一个`Monoid`实例时，一般实现`mempty mappend`就行，`mconcat`定义都没有问题，不过在某些情况下比如可以提供更高效的实现，依然可以实现`mconcat`。
 
 `Monoid`类型类的定律（Monoid Law）：
@@ -3837,3 +3844,389 @@ False
 False
 -}
 ```
+
+## Monad
+
+`Functor`函子代表可以被映射（使用`fmap`）的值，将概念提升到`Applicative`应用函子，代表一种具有上下文的类型，可以用函数操作同时保有其上下文（这里的上下文可以通过`Applicative`将值包了起来，值的这一层包裹就叫做上下文这种说法来理解）。
+
+注意说法上的细微差别，`Functor`一般称其能被map over，提升到`Applicative`时才说其具有上下文，一个Applicative value可以被看做一个附加了上下文的值，`pure`包装就是用来给其附加上下文的。然后使用`<$> <*>`就可以用普通函数或者具有上下文的函数操作具有上下文的值，同时保有上下文到结果中。
+
+然后对于特定的`Applicative`，上下文含义不同，`Maybe a`代表可能失败的计算，`[a]`代表同时有多种结果的计算（non-deterministic），而`IO a`代表有副作用的计算。
+
+现在一个新的问题是如果有一个具有上下文的值`m a`，和一个接受普通值返回具有上下文的值的函数`a -> m b`，如何将函数`a -> m b`应用于值`m a`上得到具有上下文的值`m b`。为此定义新的类型类`Monad`：
+```haskell
+type Monad :: (* -> *) -> Constraint
+class Applicative m => Monad m where
+  (>>=) :: m a -> (a -> m b) -> m b
+  (>>) :: m a -> m b -> m b
+  return :: a -> m a
+  {-# MINIMAL (>>=) #-}
+  	-- Defined in ‘GHC.Base’
+instance Monad (Either e) -- Defined in ‘Data.Either’
+instance Monad [] -- Defined in ‘GHC.Base’
+instance Monad Maybe -- Defined in ‘GHC.Base’
+instance Monad IO -- Defined in ‘GHC.Base’
+instance Monad ((->) r) -- Defined in ‘GHC.Base’
+instance (Monoid a, Monoid b, Monoid c) => Monad ((,,,) a b c)
+  -- Defined in ‘GHC.Base’
+instance (Monoid a, Monoid b) => Monad ((,,) a b)
+  -- Defined in ‘GHC.Base’
+instance Monoid a => Monad ((,) a) -- Defined in ‘GHC.Base’
+```
+其中的`(>>=) :: Monad m => m a -> (a -> m b) -> m b`即是我们要的函数，这个函数称呼为bind。
+
+`Monad`中文则翻译为**单子**，也就是开头所说的单子是自函子范畴上的幺半群的那个单子。
+
+### Monad类型类
+
+`Monad`是`Applicative`的子类型类，所以一个`Monad`单子也是一个应用函子，同样也是一个函子。对于具体的单子实例类型而言，实现`Monad`实例时必须要考虑其上下文的含义。
+
+早期的`Monad`类型类定义看起来像这样：
+```haskell
+class Monad m where  
+    return :: a -> m a  
+    (>>=) :: m a -> (a -> m b) -> m b
+    (>>) :: m a -> m b -> m b
+    x >> y = x >>= \_ -> y
+    fail :: String -> m a
+    fail msg = error msg
+```
+- 这里并没有将`Applicative`加到`m`的类型约束中，实际上是有的，这里没有写出来。在Haskell早期，人们没有想到应用函子适合被放进语言中，那时暂时还没有约束。但确实每个`Monad`都是应用函子，即便没有这么声明。
+- `return`函数就像`Applicative`的`pure`，做一样的事情，类型是`return :: Monad m => a -> m a`，接受普通值并将其放在最小的上下文中。在介绍`IO`时已经遇到过，再次提醒`return`并不表示函数返回，不改变任何函数的执行流程（况且Haskell中函数并非执行流程而是数据的变换），只是将值做包装。
+- 现在`fail :: MonadFail m => String -> m a`函数不在`Monad`中，而是`Monad`的子类型类`MonadFail`中。被用在处理Haskell错误语法的情况，当前不用在意。
+- `>>`已经有了默认实现，一般情况我们不会需要去考虑覆写它。
+
+`Maybe`的实现：
+- `Maybe a`同样也是单子。
+- 实现：
+```haskell
+instance Monad Maybe where  
+    return x = Just x  
+    Nothing >>= f = Nothing  
+    Just x >>= f  = f x  
+    fail _ = Nothing
+```
+- 例子：
+```haskell
+>>> return 1 :: Maybe Int
+Just 1
+>>> Nothing >>= (\x -> Just x)
+Nothing
+>>> Just 10 >>= (\x -> Just $ x * x)
+Just 100
+```
+
+### Monad应用
+
+一个使用`Maybe`表示可能失败的上下文的例子，来自Haskell趣学指南：
+- 大意是一个人在走钢丝，拿着一根长竿，这根竿两端会不时随机飞来一些鸟停在这里或者随机飞走，当两边鸟的数量差达到3时，这个人就会掉下去。
+- 模拟这个过程，得到最终结果，如果掉下去了那么就表示已经失败了，不会有鸟在飞过来，用`Maybe`来表示很合理。
+```haskell
+type Birds = Int
+type Pole = (Birds, Birds)
+
+landLeft :: Birds -> Pole -> Maybe Pole
+landLeft n (left, right)
+    | abs (left + n - right) < 4 = Just (left + n, right)
+    | otherwise = Nothing
+
+landRight :: Birds -> Pole -> Maybe Pole
+landRight n (left, right)
+    | abs (right + n - left) < 4 = Just (left, right + n)
+    | otherwise = Nothing
+```
+- 最后整个模拟过程的调用链条中，上一步输出是`Maybe Pole`，而下一步的要求输入是`Pole`，使用`Maybe`的`Monad`特性，就可以使用`>>=`连接起来。
+```haskell
+>>> :t landLeft 2
+landLeft 2 :: Pole -> Maybe Pole
+>>> Nothing >>= landLeft 1
+Nothing
+
+>>> landLeft 1 (0, 0) >>= landLeft 3 >>= landRight 2 >>= landRight 1
+Nothing
+>>> landLeft 1 (0, 0) >>= landRight 3 >>= landLeft 2 >>= landRight 1
+Just (3,4)
+>>> return (0, 0) >>= landLeft 1 >>= landRight 3 >>= landLeft 2 >>= landRight 1
+Just (3,4)
+```
+- 将初值用`return`函数附加了上下文之后也可以加到调用链条中。
+
+使用`>>=`为我们省去了检查上一步结果的繁琐步骤，`Maybe`的实现含义就是遇到`Nothing`就返回`Nothing`，一直都是有效值就持续地用`Just`进行传递。
+
+再看一下`>>`运算符：
+```haskell
+x >> y = x >>= \_ -> y
+```
+- 和`>>=`很类似，但是它会调用`>>=`传入第一个参数，第二个参数的函数不考虑参数并直接返回`>>`的第二个参数值。
+- 也就是说`>>`做和`>>=`类似的事情，但不传递参数，而是保留最后一个有效的结果。
+- 对于`Maybe`来说，包含可能失败的上下文语义，具体含义就是如果中途某一步失败，那么结果就是`Nothing`，如果每一步都成功，那么最终结果就是最后一步的结果。中间的结果不会被传递。
+```haskell
+>>> :t (>>)
+(>>) :: Monad m => m a -> m b -> m b
+>>> Nothing >> Just 1
+Nothing
+>>> Just 1 >> Just 2 >> Just 3
+Just 3
+>>> Just 1 >> Just 2 >> Nothing
+Nothing
+```
+
+### do表示法
+
+介绍IO时说过了`do`表示法，这是一个语法糖，但并未揭示它的细节。其实`do`串联多个`IO`对象的本质就是使用了`>>=`。
+
+在前面所述的调用链中，如果要插入一些其他的值（这些值也具有上下文，所以也需要使用`>>=`传递），比如某个函数需要两个参数，一个是`>>=`前面的参数，一个是另一个具有上下文的值。那么可以使用lambda：
+```haskell
+>>> Just 3 >>= (\x -> Just "!" >>= (\y -> Just (show x ++ y)))
+Just "3!"
+>>> Just 3 >>= (\x -> Nothing >>= (\y -> Just (show x ++ y)))
+Nothing
+```
+将第一个例子写作多行：
+```haskell
+foo :: Maybe [Char]
+foo = Just 3 >>= (\x ->
+      Just "!" >>= (\y ->
+      Just (show x ++ y)))
+```
+为了简化这种写法，摆脱烦人的lambda，于是有了`do`表示法，将`foo`写成等价的`do`表示法：
+```haskell
+foo' :: Maybe [Char]
+foo' = do
+    x <- Just 3
+    y <- Just "!"
+    Just (show x ++ y)
+{-
+>>> foo
+Just "3!"
+>>> foo'
+Just "3!"
+-}
+```
+这也说明了为什么`do`表达式结果是最后一个式子的值，它串联的前面的所有结果，是最终的结果。
+
+用`do`来表示上一个走钢丝例子中的`return (0, 0) >>= landLeft 1 >>= landRight 3 >>= landLeft 2 >>= landRight 1`：
+```haskell
+bar :: Maybe Pole
+bar = do
+    start <- return (0, 0) -- let start = (0, 0)
+    second <- landLeft 1 start
+    third <- landRight 3 second
+    fourth <- landLeft 2 third
+    landRight 1 fourth
+{-
+>>> bar
+Just (3,4)
+-}
+```
+
+总结：
+- 很显然，如果其中某一步骤没有使用`<-`，其实就是使用`>>`而不是`>>=`。这很好理解。
+- **`do`表示法就是`Monad`的`>>= >>`运算符和lamdba的语法糖**。
+- 在`<-`左端可以使用模式匹配，因为本质上是lambda的参数，参数当然是可以使用模式匹配的。
+- 使用`<-`的语句不能作为最后一个语句，因为本质上它只定义了lambda的参数，还没有定义函数体。
+- 需要注意在每一步过程中结果类型都是可以发生改变的，并不需要和`>>=`的参数保持一致，只需要每一步输出类型和下一步输入类型一致，并且最终结果和返回值类型一致即可。
+
+使用的选择：
+- 具体是使用`>>= >>`还是用`do`其实主要看习惯问题。等价的怎么选都行。
+- 一般来说如果每一步都只使用（甚至不使用）上一步的结果，并且还要是作为最后一个参数（不然会需要使用lambda），没有额外的值的参与，那么使用`>>= >>`就可以很清晰。（走钢丝的例子）
+- 如果有额外的值的参与，或者某一步的值并不仅仅直接用于下一步而是用在后面几步之后，或者使用的值不是最后一个参数，改成`do`会更好一些。（各种复杂的IO动作）
+
+### Monad实例
+
+列表`[a]`：
+- 就像应用函子中讨论的，列表提供了一种**不确定性（Non-determinism）含义的上下文**。
+- 实现：
+```haskell
+instance Monad [] where
+    return x = [x]
+    xs >>= f = concat (map f xs)
+    fail _ = []
+```
+- 目前来说`fail`实现在`MonadFail`中，不用管，`return`同`pure`接受一个值将其放到最小的上下文中。
+- `>>=`提供了类似于`<*>`的non-deterministic（不确定）的计算结果。`>>=`将`xs`中所有参数应用于函数`f`之后将得到的所有列表连接起来。
+- `<*>`的不确定性是由`<*>`连接的多个列表类型参数中值的排列（多层循环）导致的，而`>>=`则是输入列表中的一个值，通过`a -> [a]`的函数变成了多个值导致的（每一层中一个值都会扩展为多个值）。
+- 例子：
+```haskell
+>>> [1, 2, 3] >>= (\x -> [x, -x]) >>= (\x -> [(x, x * 10)])
+[(1,10),(-1,-10),(2,20),(-2,-20),(3,30),(-3,-30)]
+>>> [(x, x * 10) | n <- [1, 2, 3], x <- [n, -n]]
+[(1,10),(-1,-10),(2,20),(-2,-20),(3,30),(-3,-30)]
+>>> [] >>= (\x -> ["hello", "world"])
+[]
+>>> [1, 2, 3] >>= (\x -> [])
+[]
+```
+- 如果输入或者某一步输出是空列表，那么调用链的最终结果都会是`[]`，这就像`Maybe`的`Nothing`，执行任何`map f []`对于任何函数`f`结果都会是空列表。
+- 用`do`表示法改写第一个例子：
+```haskell
+listOfTuples :: [Integer ] -> [(Integer, Integer)]
+listOfTuples l = do
+    n <- l
+    m <- [n, -n]
+    return (m, m * 10)
+{-
+>>> listOfTuples [1, 2, 3]
+[(1,10),(-1,-10),(2,20),(-2,-20),(3,30),(-3,-30)]
+-}
+```
+- 上一个例子中下一步直接使用了上一步返回值，经过几步之后再用也同样可以：
+```haskell
+listOfTuples' :: [(Int,Char)]  
+listOfTuples' = do
+    n <- [1,2]
+    ch <- ['a','b']
+    return (n,ch)
+{-
+>>> listOfTuples'
+[(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+>>> [(n, ch) | n <- [1, 2], ch <- ['a', 'b']]
+[(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+-}
+
+listOfTuples'' :: [(Int, Char)]
+listOfTuples'' = [1, 2] >>= (\n ->
+                ['a', 'b'] >>= (\ch -> 
+                [(n, ch)]))
+{-
+>>> listOfTuples''
+[(1,'a'),(1,'b'),(2,'a'),(2,'b')]
+-}
+
+```
+- 实际使用时，其实就表示一种Non-deterministic的上下文，用`do`表示法亦可。
+- 我们会发现都可以等级为对应的List Comprehension，其实**List Comprehension就是`>>=`函数在列表这个`Monad`上的语法糖**。列表生成式中不需要最后`return`而是将最终列表中元素放在了`|`前。
+- 无论用`do`表示法还是List Comprehension最终都会转换成`>>=`来计算。
+- 列表生成式中可以允许条件来对结果进行筛选，这一点要怎么在`>>=`串联的函数调用中要怎么做到呢？
+    - 可以考虑使用`Control.Monad`中的`guard`函数和`MonadPlus`函数：
+    ```haskell
+    type MonadPlus :: (* -> *) -> Constraint
+    class (Alternative m, Monad m) => MonadPlus m where
+      mzero :: m a
+      mplus :: m a -> m a -> m a
+      	-- Defined in ‘GHC.Base’
+    instance MonadPlus [] -- Defined in ‘GHC.Base’
+    instance MonadPlus Maybe -- Defined in ‘GHC.Base’
+    instance MonadPlus IO -- Defined in ‘GHC.Base’
+
+    instance MonadPlus [] where  
+        mzero = []  -- same as mempty in Monoid
+        mplus = (++) -- same as mappend in Monoid
+
+    -- guard :: Alternative f => Bool -> f () defined in Control.Monad
+    guard' :: MonadPlus m => Bool -> m ()
+    guard' True = return () -- for [] return [()]
+    guard' False = mzero -- for [] return []
+    ```
+    - `[]`同样是`MonadPlus`的实例，`MonadPlus`函数的`mzero mplus`对于列表来说就是`Monoid`的`mempty  mappend`的同义词，实现也一样。用在列表上时`guard`函数的返回类型是`[()]`。
+    - `guard`使用：
+    ```haskell
+    >>> guard (5 > 2) :: [()]
+    [()]
+    >>> guard (2 > 3) :: [()]
+    []
+    >>> [()] >> return "cool" :: [String]
+    ["cool"]
+    >>> [] >> return "cool" :: [String]
+    []
+    >>> [(), ()] >> return "cool" :: [String]
+    ["cool","cool"]
+    >>> [1..50] >>= (\x -> guard ('7' `elem` show x) >> return x)
+    [7,17,27,37,47]
+    >>> [x | x <- [1..50], '7' `elem` show x]
+    [7,17,27,37,47]
+    >>> do x <- [1..50]; guard ('7' `elem` show x); return x
+    [7,17,27,37,47]
+    ```
+    - `guard`实现，对于列表来说，输入`True`返回`[()]`，输入`False`则返回空列表`[]`，如果是非空列表，经过`>>`之后输入的空元组会被忽略，此时是一个成功状态，`return x`得到`[x]`。而输入为`[]`时是一个失败状态（实现上都是`map`然后`concat`）结果会为空`[]`。即实现了筛选功能。
+    - 当然也可以使用`do`表示法。
+    - 当然就这个例子而言，一个简单的`if-then-else`当然也可以做到：
+    ```haskell
+    >>> [1..50] >>= (\x -> if ('7' `elem` show x) then [x] else [])
+    [7,17,27,37,47]
+    ```
+- 另外，对于列表来说，`>>`运算符，将左边列表的所有元素，替换为结果列表中的一个或多个元素（即替换为列表后再`concat`）。就是说左边列表的元素类型和值不重要，一般来说就像`guard`一样可以使用空元组`()`来占位。
+```haskell
+>>> [1..5] >> return 1
+[1,1,1,1,1]
+>>> [1..5] >> return [()]
+[[()],[()],[()],[()],[()]]
+>>> [1..5] >> [0, 1, 2]
+[0,1,2,0,1,2,0,1,2,0,1,2,0,1,2]
+```
+
+一个例子：
+- 查找国际象棋的骑士（就像中国象棋中的马，一个方向走1格，一个方向走两格）走3步可能到达的所有位置。
+- 利用列表上下文的不确定性来做。
+```haskell
+import Data.List
+import Control.Monad
+-- example: find all possible position for knight to move in chess
+-- valid chess posotin : row from 1 to 8, from column 1 to 8
+type KnightPos = (Int, Int)
+moveKnight :: KnightPos -> [KnightPos]
+moveKnight (r, c) = do
+    (a, b) <- [(a, b) | a <- [-1, 1], b <- [-2, 2]] -- offset
+    (or, oc) <- [(a, b), (b, a)] -- all possible offset
+    (rr, rc) <- [(r + or, c + oc)] -- result
+    guard (rr `elem` [1..8] && rc `elem` [1..8]) -- filter
+    return (rr, rc)
+
+moveKnight3 :: KnightPos -> [KnightPos]
+moveKnight3 start = nub $ moveKnight start >>= moveKnight >>= moveKnight
+
+canReachIn3 :: KnightPos -> KnightPos -> Bool
+canReachIn3 start end = end `elem` moveKnight3 start
+{-
+>>> moveKnight (6, 2)
+[(4,1),(5,4),(8,1),(4,3),(7,4),(8,3)]
+>>> moveKnight (8, 1)
+[(7,3),(6,2)]
+>>> moveKnight3 (6, 2)
+[(2,1),(1,2),(2,5),(5,2),(4,1),(1,4),(4,5),(5,4),(3,4),(4,3),(3,2),(7,2),(6,1),(6,5),(7,4),(8,1),(8,3),(2,3),(6,3),(3,8),(2,7),(5,8),(6,7),(8,5),(1,6),(4,7),(5,6),(7,8),(8,7),(3,6),(7,6)]
+>>> (6,2) `canReachIn3` (6,1)
+True
+>>> (6,2) `canReachIn3` (7,3)
+False
+-}
+```
+
+## Monad Law
+
+正如函子和应用函子等各种类型类，单子也有自己的定律需要遵守：
+```haskell
+return x >>= f = f x -- Left Identity
+m >>= return = m -- Right Identity
+(m >>= f) >>= g = m >>= (\x -> f x >>= g) -- Associativity
+```
+- 前两者描述的是`return`的行为，`return`将普通值转换为具有上下文的值，这两条非常重要。前者表示将一个值放到最小`Monad`上下文中再通过`>>=`传递给`f`不应该与直接调用`f`有任何差别。后者表示一个单子通过`>>=`应用于`return`应该就是自己。
+- 最后的结合律则是说明当我们用`>>=`将一串monadic function串联起来，他们的先后顺序不应该有影响。
+
+可以定义一个运算符来将两个Monadic functin复合起来：
+```haskell
+(<=<) :: Monad m => (a -> m b) -> (t -> m a) -> t -> m b
+f <=< g = \x -> g x >>= f
+```
+- `g`是里层，`f`是外层，`<=<`由里层指向外层。
+- `Control.Monad`中定义同样含义的运算符`>=>`，只不过参数是反过来的，注意区分：
+```haskell
+>>> :t (Control.Monad.>=>)
+(Control.Monad.>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
+```
+- 使用`<=<`运算符来描述Moand Law：
+```haskell
+f <=< return = f
+return <=< f = f
+m >>= f >>= g = m >>= (f <=< g)
+```
+
+其实就很像普通函数的：
+```haskell
+f . id = f
+id . f = f
+(f . g) . h = f . (g . h)
+```
+
+## More Monad
+
+已经详细介绍了`Maybe []`，而`IO`这个`Monad`其实前面已经说过了，不需要再赘述。我们需要了解更多的`Monad`以培养对`Monad`的直觉，直觉非常重要。
