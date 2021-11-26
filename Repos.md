@@ -47,6 +47,11 @@
 
 - 《go程序设计语言》
 
+## Haskell
+
+- 《Haskell趣学指南》
+- 《[Real World Haskell](http://cnhaskell.com/index.html)》
+
 ## 计算机基础
 
 - 《编码：隐匿在计算机软硬件背后的语言》
@@ -72,6 +77,7 @@
 
 - 《编译原理》（龙书）
 - 《程序员的自我修养-装载，链接和库》
+- 《Linkers and Loaders》
 
 ## 操作系统/Linux
 
@@ -139,6 +145,7 @@
 
 - [fengyoulin/ef](https://github.com/fengyoulin/ef)——一个C语言的轻量协程（池）实现，以及基于IO多路复用的协程调度。
 - [TheAlgorithms/C](https://github.com/TheAlgorithms/C)——C语言实现的各种数学、机器学习、计算机科学、数学算法，教学目的。
+- [cstack/db_tutorial](https://github.com/cstack/db_tutorial)——一个从头开始C语言实现SQL数据库的教程。
 
 ## Cpp
 
@@ -146,13 +153,15 @@
 - [vczh/tinymoe][cpp-2]——轮子哥的动态类型编程语言，学习编译原理。
 - [wuye9036/cppTemplateTutorial][cpp-3]——C++模板编程入门进阶教程，可惜作者没有写完。
 - [Ubpa/USRefl][cpp-4]——一个C++静态反射库。
-- [facebook/folly](cpp-5)——facebook开源的基于C++14的内部组件库，对标准库的补充，尤其是大规模下的性能。
+- [facebook/folly][cpp-5]——facebook开源的基于C++14的内部组件库，对标准库的补充，尤其是大规模下的性能。
+- [nothings/single_file_libs][cpp-6]——单文件C/C++库目录，收集了许多C/C++的至多两个文件的轻量级库，包含数据结构、数学、Parsing、图形、音视频、调试等多个领域，值得一看。
 
 [cpp-1]: https://github.com/vczh/vczh_toys
 [cpp-2]: https://github.com/vczh/tinymoe
 [cpp-3]: https://github.com/wuye9036/cppTemplateTutorial
 [cpp-4]: https://github.com/Ubpa/USRefl
 [cpp-5]: https://github.com/facebook/folly
+[cpp-6]: https://github.com/nothings/single_file_libs
 
 ## Python
 
