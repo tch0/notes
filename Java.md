@@ -7,6 +7,7 @@
     - [0.1 关于Java](#01-%E5%85%B3%E4%BA%8Ejava)
     - [0.2 开发环境](#02-%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
     - [0.3 基本Eclipse使用](#03-%E5%9F%BA%E6%9C%ACeclipse%E4%BD%BF%E7%94%A8)
+    - [0.4 基本IntelliJ IDEA使用](#04-%E5%9F%BA%E6%9C%ACintellij-idea%E4%BD%BF%E7%94%A8)
   - [1. Java语言基础](#1-java%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80)
     - [1.1 hello,world!](#11-helloworld)
     - [1.2 基本约定](#12-%E5%9F%BA%E6%9C%AC%E7%BA%A6%E5%AE%9A)
@@ -908,7 +909,7 @@ module Hello.World {
 
 ### 3.1 字符串与编码
 
-- String是一个引用类型，本身也是一个class，Java编译器对String有特殊处理，可以直接用字符串字面值`"string-literal"`来表示。
+- `String`是一个引用类型，本身也是一个class，Java编译器对`String`有特殊处理，可以直接用字符串字面值`"string-literal"`来表示，每一个字符串字面值底层都被实现为一个`String`实例。
 - 实际上字符串内部是通过字符数组来表示，这点很多编程语言应该都是一样的。
 - Java字符串的重要特性就是不可变，内部保存字符串的字段是`private final`的字符数组，赋值后即**不可变**。`String`类中没有实现任何修改这个数组的方法。使用Eclipse的话F3到定义里面可以看到其实是一个字节数组`private final byte[] value;`，并不是`char[]`。
 - 用字符串字面值创建就相当于使用字符数组创建。java的语法层面支持使我们可以简写。
@@ -920,7 +921,7 @@ String s2 = new String(new char[] {'y', 'e', 's'});
 - 忽略大小写判等：`equalsIgnoreCase`
 - 搜索提取子串的接口：`idnexOf` `lastIndexOf` `startsWith` `endsWith` `substring`
 - 下标从0开始，遗憾的是不支持像数组一样使用`[]`来引用字符串中的字符。可能是因为不允许改变的原因。还是说因为内建的字符类型不支持引用，就算获取了也无法设置，没有理由提供语法层面支持。获取某一个字符使用`public char charAt(int index)`。
-- 字符串操作不改变原字符串内容，而是返回新字符串。
+- 修改字符串的所有操作都不改变原字符串内容，而是返回新字符串。
 - 去除收尾空字符：`trim()`，返回去除后的新字符串。包括`\t` `\t` `\n` `\0`。
 - `stricp()`也是去除首位空字符，在`trim()`基础上还会去除像`\u3000`中文空格这样的字符。只移除首或尾：`stricpLeading` `stripTrailing`
 - 判空：`isEmpty`
