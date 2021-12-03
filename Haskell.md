@@ -98,6 +98,8 @@
   - [Zippers](#zippers)
     - [定义一个树](#%E5%AE%9A%E4%B9%89%E4%B8%80%E4%B8%AA%E6%A0%91)
     - [Zipper](#zipper)
+    - [Zipper of List](#zipper-of-list)
+  - [总结](#%E6%80%BB%E7%BB%93)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
