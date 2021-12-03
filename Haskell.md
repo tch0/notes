@@ -4827,3 +4827,17 @@ goBack (xs, []) = error "go back of full list"
 更多应用：
 - 利用`Zipper`和树类型可以实现文件系统。
 - 对于可能失败的情况可以将数据用`Maybe`上下文包装，并将`-:`运算符换成`>>=`。
+
+
+## 总结
+
+总结：
+- 到此Haskell趣学指南就结束了，也算基本入门了Haskell了？但其实一开始的那句话单子是自函子范畴上的幺半群其实并没有理解，并不涉及到范畴论的内容。对于函子、应用函子、单子的理解仅限于实践层面，对应的范畴论还没有学习。
+- 另外这本书确实一点都不Real World，其中的内容仅算是介绍，真实世界的Haskell编程其实基本可以说没有任何了解。
+
+下一步方向：
+- 刷完[Haskell 99 Problem](https://wiki.haskell.org/H-99:_Ninety-Nine_Haskell_Problems)，这只是习题水平，还是远远不足以指导实践。
+- 看[Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)，搞清楚所有常用内建类型类，建立起直觉。
+- 看[Real World Haskell](http://cnhaskell.com/index.html)。
+- 学习范畴论。
+- 暂时可以放一放，有空有兴趣了来做。
