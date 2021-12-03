@@ -89,8 +89,15 @@
     - [Monad应用](#monad%E5%BA%94%E7%94%A8)
     - [do表示法](#do%E8%A1%A8%E7%A4%BA%E6%B3%95)
     - [Monad实例](#monad%E5%AE%9E%E4%BE%8B)
-  - [Monad Law](#monad-law)
+    - [Monad Law](#monad-law)
   - [More Monad](#more-monad)
+    - [Writer](#writer)
+    - [Reader Monad](#reader-monad)
+    - [State Monad](#state-monad)
+    - [常用的操作Monad的函数](#%E5%B8%B8%E7%94%A8%E7%9A%84%E6%93%8D%E4%BD%9Cmonad%E7%9A%84%E5%87%BD%E6%95%B0)
+  - [Zippers](#zippers)
+    - [定义一个树](#%E5%AE%9A%E4%B9%89%E4%B8%80%E4%B8%AA%E6%A0%91)
+    - [Zipper](#zipper)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -314,6 +321,11 @@ Ok, one module loaded.
 - 仅执行haskell脚本不编译：
 ```shell
 runhaskell hello.hs
+```
+- 列出所有已安装的包，通过stack执行则可以同时列出通过stack安装的所有包：
+```shell
+ghc-pkg list
+stack exec ghc-pkg list
 ```
 
 VsCode环境配置：
@@ -3438,7 +3450,7 @@ g s = read s * 10
 [8.0,10.0,2.5]
 ```
 - 所以说对于函数`k <$> f <*> g`的含义得到一个函数，这个函数有一个参数，它会将参数分别传给`f g`，并将结果再传给`k`。
-- 上面的代码时能够理解的，但并不算那么好理解，平时使用时我们通常不会将函数当做应用函子来用，但它确实是。
+- 上面的代码是能够理解的，但并不算那么好理解，平时使用时我们通常不会将函数当做应用函子来用，但它确实是。
 - 技巧：对于函数类型的应用函子，用`r ->`代入类型变量`f`即可得到最终类型，用最终类型来理解，不要用盒子来类比。
 
 `ZipList`：
@@ -3650,7 +3662,7 @@ mempty `mappend` x = x
 x `mappend` mempty = x
 (x `mappend` y) `mappend` z = x `mappend` (y `mappend` z)
 ```
-- 即是与元值（Identity，暂且这么翻译）的运算结果还是自己，和满足结合律。
+- 即是与单位元（Identity，暂且这么翻译）的运算结果还是自己，和满足结合律。
 - Haskell不会检查这些定律是否被遵守，将类型实现为`Monoid`时需要自己小心地检查他们。
 - 值得注意``a `mappend` b``和``b `mappend` a``并不需要相等。交换律并不要求被满足，`+ *`满足这一点这是他们自己的性质。
 
@@ -4191,7 +4203,7 @@ False
 -}
 ```
 
-## Monad Law
+### Monad Law
 
 正如函子和应用函子等各种类型类，单子也有自己的定律需要遵守：
 ```haskell
@@ -4230,3 +4242,588 @@ id . f = f
 ## More Monad
 
 已经详细介绍了`Maybe []`，而`IO`这个`Monad`其实前面已经说过了，不需要再赘述。我们需要了解更多的`Monad`以培养对`Monad`的直觉，直觉非常重要。
+
+下面介绍的`Monad`都在包[`mtl`](https://github.com/haskell/mtl)中，这个包是GHC内置的(用`[stack exec] ghc-pkg list`查看已安装的包)，我的本地版本是`mtl-2.2.2`，模块名都是`Control.Monad.xxx`。这个包叫做The Monad Transformer Library，是一系列`Monad`类型类的集合。
+
+### Writer
+
+对比`Maybe`是可能失败的上下文，`[]`是加入不确定性语义的上下文，`Writer`则是加进了一个附加值的上下文，就像日志一样，`Writer`可以在计算的同时搜索log记录，汇集成一个最终的log附加到结果上。
+
+模拟`Writer`：
+- 考虑附加其上的信息不仅可以是字符串、列表，任何`Monoid`都可以。
+- 将附有上下文的数据用`Monoid m => (a, m)`来表示，那么`>>=`的实现就类似于：
+```haskell
+-- implement a Writer-like >>= function
+applylog :: Monoid m => (a, m) -> (a -> (b, m)) -> (b, m)
+applylog (x, log) f = let (y, newLog) = f x in (y, log `mappend` newLog)
+```
+- 使用：
+```haskell
+type Food = String  
+type Price = Sum Int  
+addDrink :: Food -> (Food,Price)  
+addDrink "beans" = ("milk", Sum 25)  
+addDrink "jerky" = ("whiskey", Sum 99)  
+addDrink _ = ("beer", Sum 30)
+{-
+>>> ("jerky", Sum 25) `applyLog` addDrink
+("whiskey",Sum {getSum = 124})
+>>> ("beef", Sum 5) `applyLog` addDrink
+("beer",Sum {getSum = 35})
+-}
+```
+
+`Writer`类型：
+- `Control.Monad.Writer`模块，`Writer w`是`WriterT w Identity`的别名。
+```haskell
+type Writer :: * -> * -> *
+type Writer w = WriterT w Identity :: * -> *
+type WriterT :: * -> (* -> *) -> * -> *
+newtype WriterT w m a = WriterT {runWriterT :: m (a, w)}
+instance [safe] (Monoid w, Monad m) => Monad (WriterT w m)
+```
+- 等价定义就像是这样，基本就和`applyLog`一个意思：
+```haskell
+instance (Monoid w) => Monad (Writer w) where  
+    return x = Writer (x, mempty)  
+    (Writer (x,v)) >>= f = let (Writer (y, v')) = f x in Writer (y, v `mappend` v')
+```
+- `return`附加的信息是空值`mempty`，最小的上下文就是没有附加的信息。
+- 类型`Writer w a`中，`w`是附加的信息的类型，是一个`Monoid`，`a`是其中的数据的类型。
+- 文档：[Control.Monad.Writer.Lazy](https://www.stackage.org/haddock/lts-18.18/mtl-2.2.2/Control-Monad-Writer-Lazy.html)
+- 方法：
+```haskell
+writer :: MonadWriter w m => (a, w) -> m a
+runWriter :: Writer w a -> (a, w)
+execWriter :: Writer w a -> w
+mapWriter :: ((a, w) -> (b, w')) -> Writer w a -> Writer w' b
+```
+- `writer`生成一个函数。
+- `runWriter`得到`(result, output)`形式输出。
+- `execWriter`就等价于`execWriter m = snd (runWriter m)`，只取出其中累加的信息。
+- `mapWriter`则使用函数将`(result, output)`两者都进行计算。
+- `MonadWriter`是`WriterT`实现的类型类，具体信息查看文档。
+```haskell
+>>> writer (1, Sum 0) :: Writer (Sum Int) Int
+WriterT (Identity (1,Sum {getSum = 0}))
+>>> runWriter (return 0 :: Writer String Int)
+(0,"")
+>>> execWriter (writer (10, "hello") :: Writer String Int)
+"hello"
+>>> runWriter . mapWriter (\(a, Sum b) -> (show a, show b)) $ (writer (1, Sum 0))
+("1","0")
+```
+
+使用：
+- 可以通过`do`表示法来用，如果就是想在某个时间点放入一个Monoid值，那么可以使用`tell :: MonadWriter w m => w -> m ()`（可以看到返回一个包装空元组的Monad，可以通过`>>`或者`do`来用）：
+```haskell
+logNumber :: Int -> Writer [String] Int
+logNumber x = writer (x, ["Got a number: " ++ show x])
+
+multWithLog :: Writer [String] Int 
+multWithLog = do
+    a <- logNumber 3
+    b <- logNumber 5
+    tell ["hello"]
+    c <- logNumber 2
+    return (a * b * c)
+{-
+>>> runWriter multWithLog
+(30,["Got a number: 3","Got a number: 5","hello","Got a number: 2"])
+-}
+```
+- 例子，计算最大公约数的同时记录计算过程：
+```haskell
+gcd' :: Int -> Int -> Writer [String] Int 
+gcd' a b
+    | b == 0 = do
+        tell ["Finished with : " ++ show a]
+        return a
+    | otherwise = do
+        tell [show a ++ " mod " ++ show b ++ " = " ++ show (a `mod` b)]
+        gcd' b (a `mod` b)
+{-
+ghci> mapM_ putStrLn $ snd $ runWriter $ gcd' 98 51
+98 mod 51 = 47
+51 mod 47 = 4
+47 mod 4 = 3
+4 mod 3 = 1
+3 mod 1 = 0
+Finished with : 1
+-}
+```
+
+使用Difference List：
+- 注意其中`[]`的`++`运算符的效率，列表是从右往左递归定义的，所以`a ++ (b ++ (c ++ d))`会很高效，而`((a ++ b) ++ c) ++ d`则相对效率不够好。上面的`gcd'`没有这种问题，但这点是需要注意的，如果在递归中先计算`gcd'`再`tell`则会有效率问题。
+- 为了能够总是在列表的`++`操作上得到最好的效率，可以定义一个新的类型差异列表，将列表包装一下，实现无论怎么附加列表都是`(a ++ b) ++ c) ++ d`的效果。
+- 类型定义：
+```haskell
+newtype DiffList a = DiffList {getDiffList :: [a] -> [a]}
+
+toDiffList :: [a] -> DiffList a
+toDiffList xs = DiffList (xs++)
+
+fromDiffList :: DiffList a -> [a]
+fromDiffList (DiffList f) = f []
+```
+- 将列表`xs`转换为`xs++`函数包装在`DiffList`中，通过传入`[]`就可以得到内部的原始列表，通过定义新函数来实现转换而不是使用模式匹配。
+- 将其定义为`Monoid`:
+```haskell
+-- declare DiffList as a Monoid
+instance Semigroup (DiffList a) where
+    DiffList f <> DiffList g = DiffList (f . g)
+
+instance Monoid (DiffList a) where
+    mempty = DiffList ([]++)
+    DiffList f `mappend` DiffList g = DiffList (f . g)
+```
+- `Monoid`派生自`Semigourp`，实现`Monoid`同时需要实现`Semigourp`，可以看到`DiffList`的`mempty`是附加一个空列表的函数，而`mappend`是函数组合。每次`mappend`，新的列表都会通过函数函数组合调用的方式附加到列表最前面，不会有从前往后附加这种情况出现。
+- 效率测试：
+```haskell
+-- test performance of DiffList
+finalCountDown :: Int -> Writer (DiffList String) ()
+finalCountDown 0 = do
+    tell (toDiffList ["0"])
+finalCountDown x = do
+    finalCountDown (x-1)
+    tell (toDiffList [show x])
+
+finalCountDown2 :: Int -> Writer [String] ()
+finalCountDown2 0 = do
+    tell ["0"]
+finalCountDown2 x = do
+    finalCountDown2 (x-1)
+    tell [show x]
+
+test1 :: IO ()
+test1 = mapM_ putStrLn . fromDiffList . snd . runWriter $ finalCountDown 50000
+test2 :: IO ()
+test2 = mapM_ putStrLn . snd . runWriter $ finalCountDown2 50000
+
+main :: IO ()
+main = test1
+-- main = test2
+```
+- 这里从一个数计数直到`0`，`Writer`值保存为`()`不关心，附加的信息使用`[]`或者`DiffList`的`mappend`来做。最终得到的`Writer`是`0-x`字符串的列表。
+- 执行`test1 test2`，参数`50000`时能够感受到非常明显的性能差距。其实直观理解上来说就是$O(N)$和$O(N^2)$时间复杂度的差别。
+- 做到这一点依赖于Haskell的懒惰求值的特性，函数的调用只是数据的变换过程，真正需要数据时才会计算。因为`finalCountDown`是将数组累加变成了函数的组合，没有实际地进行计算，计算过程中`DiffList`中的信息是类似于这样的：`["50000"]++["49999"]++ ... ++["xxxx"]++`，是一个函数。将数据的叠加变成了函数的组合，从而改变了最终运算符的结合顺序
+- **设计要点：将数据以函数形式存储并包装起来，将`Monoid`的`mappend`则实现为函数的组合，改变运算符的结合顺序**。
+- 当然底层涉及到函数式编程数据结构的设计，这和命令式编程的数据结构设计是存在差别的，这需要进一步了解，在入门Hakell之后如果有需求的话。
+
+### Reader Monad
+
+函数`(->) r`除了是函子和应用函子，同样也是一个`Moand`，实现：
+```haskell
+instance Monad ((->) r) where
+    return x = \_ -> x
+    h >>= f = \w -> f (h w) w
+```
+- 其中`return`的定义同`pure`，最小的函数上下文就是接受一个参数，直接返回`x`。
+- 看`>>=`类型签名：
+```haskell
+(>>=) :: Monad m => m a -> (a -> m b) -> m b
+```
+- 将`(->) r`也就是`r ->`带入到`m`，得到`(->) r`实例的`>>=`函数签名：
+```haskell
+(>>=) :: (r -> a) -> (a -> r -> b) -> r -> b
+```
+- 定义中`h :: r -> a`，`f :: a -> r -> b`。定义很像`Applicative`的`<*>`。
+- 最终得到一个函数，接受`r`类型参数，传给函数`h`后得到`a`类型结果，作为`f`第一个参数，`r`类型参数同时作为`f`第二个参数，得到最终`b`类型返回值。
+
+例子：
+```haskell
+addStuff :: Int -> Int
+addStuff = do
+    a <- (*2)
+    b <- (+10)
+    return (a + b)
+
+addStuff' :: Int -> Int
+addStuff' x = let
+    a = (*2) x
+    b = (+10) x
+    in a + b
+{-
+>>> addStuff 3
+19
+>>> addStuff' 3
+19
+-}
+```
+- `addStuff`中所有的函数都固定从一个地方取值，所以function monad又被称作**reader monad**。
+
+总结：
+- 函数作为单子的含义是将所有的函数粘在一起做成一个大的函数，把这个大的函数的参数喂给全部组成的函数。
+- 通常使用`do`来实现，`>>=`会保证一切能够正常工作。
+
+说实话不是非常理解。
+
+### State Monad
+
+Haskell是纯函数式语言，除去有副作用的部分比如IO，程序是由一堆无法改变全局状态或变量的纯函数组成。能做的事情只有处理并返回结果，这个性质使得我们很容易思考程序在干什么，不需要关心变量在某一时间点的值是什么。
+
+然而某些领域的问题根本上就是随着时间改变的状态，要写出这样的程序，纯函数的特性就变成了阻碍。因此引入了State Monad，让程序能够处理状态性的问题，并让其他部分依然保持纯粹。
+
+考虑随机数：生成随机数需要一个有副作用的随机数生成器，并返回新的随机数生成器，但随机数生成的过程是纯粹的。所以需要将会发生改变的状态传入，并将新的状态作为返回值返回。而在其他命令式语言中的话，一般会将妆台作为全局的状态，在生成随机数的同时改变状态，而不是将状态返回。
+```haskell
+let (value, _) = random (mkStdGen 100) in value :: Int
+```
+
+一般来说，这种函数的签名都会类似这样：
+```haskell
+s -> (a, s)
+```
+- `s`是状态类型，`a`是计算结果类型。
+- 为了保持纯粹性，状态必须被作为参数和返回值。这样写非常不方便，可以将这些事情扔给State Monad来做。
+
+例子：
+- 考虑建立一个栈的模型，支持压栈和出栈操作，压栈时传入新值和栈，得到新的栈，出栈时传入栈得到新栈。
+- 其中的栈就可以看做状态，通过返回值的方式返回新的状态：
+```haskell
+type Stack a = [a]
+
+pop :: Stack a -> (a, Stack a)
+pop [] = undefined
+pop (x:xs) = (x, xs)
+
+push :: a -> Stack a -> ((), Stack a)
+push a xs = ((), a:xs)
+
+stackMainOp :: Num a => Stack a -> (a, Stack a)
+stackMainOp stack = let
+    ((), newStack1) = push 3 stack
+    (a, newStack2) = pop newStack1
+    in pop newStack2
+{-
+>>> stackMainOp [1, 2, 3]
+(1,[2,3])
+-}
+```
+- 为了避免将状态操作写得这么具体，我们可以将状态封装在State Monad中，之后便可以像这样的方式调用：
+```haskell
+stackMainOp' = do
+    push 3
+    a <- pop
+    pop
+```
+
+State Monad：
+- 位于`Control.Monad.State`模块，具体来说`Control.Monad.State.Lazy`。
+```haskell
+type State :: * -> * -> *
+type State s = StateT s Identity :: * -> *
+type StateT :: * -> (* -> *) -> * -> *
+newtype StateT s m a = StateT {runStateT :: s -> m (a, s)}
+
+state :: MonadState s m => (s -> (a, s)) -> m a
+runState :: State s a -> s -> (a, s)
+(>>=) :: State s a -> (a -> State s b) -> State s b
+```
+- 更多信息查看[Wiki](https://wiki.haskell.org/State_Monad)。
+- 类型`State s a`代表改变状态的操作，`s`是状态类型，`a`是产生的结果类型，`State s`被实现为`Monad`。
+- `Monad`实例的实现类似于：
+```haskell
+instance Monad (State s) where
+    return x = State $ \s -> (x,s)  
+    (State h) >>= f = State $ \s -> let (a, newState) = h s
+                                        (State g) = f a
+                                    in  g newState
+```
+- 注意`State`作为类型构造器，接受2个类型参数，`s a`分别是状态和结果类型，而作为值构造器接受一个`s -> (a, s)`的函数类型参数，即是改变状态的操作。书上是这样写的，但注意现在的版本实现有了变化，就像`Writer`一样，应该使用`state`函数来构造`State`对象，而不是`State`直接作为值构造器。
+- `return`要做的事是接受一个值，返回做出一个改变状态的操作，所以此时值构造器接受参数就是`\s -> (x, s)`函数，`x`当成结果，状态仍然是`s`。这即是最小上下文。
+- `State`中封装的改变状态的操作，接受改变状态操作`h`，`f`则是接受状态操作返回`State Monad`的函数。`>>=`实现则是，先做操作`h`，再将结果做操作`f`。说实话不是很好理解。
+- 运行一个`State`则使用，`runState myState initial_state`。
+- 改写栈做为状态的例子：
+```haskell
+pop' :: State (Stack a) a
+pop' = state $ \(x:xs) -> (x, xs)
+
+push' :: a -> State (Stack a) ()
+push' a = state $ \xs -> ((), a:xs)
+
+stackMainOp' :: State (Stack Int) Int
+stackMainOp' = do
+    push' 3
+    pop'
+    pop'
+
+{-
+>>> runState stackMainOp' [1, 2, 3]
+(1,[2,3])
+>>> runState (push' 10 >> push' 100 >> pop') [1, 2, 3]
+(100,[10,1,2,3])
+-}
+```
+- 有一点点费解，因为`Monad`中函数，`>>=`其实是在对`Monad (State s)`中的函数做解开包装之后，将其应用在另一个接受函数返回使用`Monad (State s)`封装函数的函数上。简而言之就是对函数做映射，可以理解为将两个改变状态的行为合在了一起。
+- 单纯的`>>`则可以直接将多个`State s a`合并起来，前提是后面的状态不会使用前面状态的返回值。等价在`do`中则就是不使用`<-`。当然有依赖的话用`do`表示法是最好的：
+```haskell
+stackComplexOp :: State (Stack Int) ()
+stackComplexOp = do
+    a <- pop'
+    if a >= 10 then do
+        push' 100
+    else do
+        push' 1000
+{-
+>>> runState stackComplexOp [1, 2, 10]
+((),[1000,2,10])
+>>> runState stackComplexOp [10, 1, 2]
+((),[100,1,2])
+-}
+```
+
+总结：
+- 封装函数的行为还是有点太让人费解了，暂时尚无法熟练运用，需要后续有机会结合实践加深理解。注意和函数作为`Monad`相区分，这完全不是一个东西。和`DiffList`这样以函数形式封装数据也不一样（和单纯封装数据差别不大）。
+- 写代码时对比`IO`就行，用`do`表示法的话非常符合直觉，用起来并不难。
+
+
+### 常用的操作Monad的函数
+
+操作包装在单子中的值（Monadic value）的函数，称之为Monadic Function，有一些是常见函数的变形，有一些是第一次遇到。
+
+`liftM`：
+```haskell
+liftM :: Monad m => (a1 -> r) -> m a1 -> m r
+fmap :: Functor f => (a -> b) -> f a -> f b
+```
+- 其实就是`fmap`，不过是针对`Monad`单独定义的，即使每一个`Monad`都是`functor`，但我们不需要依赖这一点。就像`pure`和`return`其实是同一件事，不过一个在`Applicative`中，一个在`Monad`中。
+- 例：
+```haskell
+>>> liftM (*2) (Just 10)
+Just 20
+>>> liftM (*2) [1, 2, 3]
+[2,4,6]
+>>> :t liftM not
+liftM not :: Monad m => m Bool -> m Bool
+>>> runWriter $ liftM not $ writer (True, "whatever")
+(False,"whatever")
+```
+- 除了`fmap`含义，另一种含义就是将直接用于值的函数提升为能够用于`Monad`的函数。
+- 也就是说`fmap <$> liftM`其实是一个意思。
+- 看一下实现：
+```haskell
+liftM :: (Monad m) => (a -> b) -> m a -> m b  
+liftM f m = m >>= (\x -> return (f x))
+```
+- 用等价的`do`表示法：
+```haskell
+liftM :: (Monad m) => (a -> b) -> m a -> m b  
+liftM f m = do
+    x <- m
+    return (f x)
+```
+- 实现只用到了`Monad`而并没有用到`Functor`的性质。可以看出`Monad`比`Functor`性质要强。
+- 回顾`<*>`的类型签名：
+```haskell
+(<*>) :: Applicative f => f (a -> b) -> f a -> f b
+```
+- 其实`<*>`也能够用`Monad`保证的性质实现出来：
+```haskell
+apply :: Monad m => m (a -> b) -> m a -> m b
+apply mf m = do
+    f <- mf
+    x <- m
+    return (f x)
+{-
+>>> Just (*3) `apply` Just 5
+Just 15
+-}
+```
+- 对于`liftA2`等函数，也可以类似实现：
+```haskell
+liftA2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
+liftA2 f x y = f <$> x <*> y
+```
+- 对于`Monad`有类似的函数，`liftM2 liftM3 liftM4 ...`等。
+
+`join`:
+- 如果有包了多层`Monad`的值，那么可以使用`join`函数来解开包装。
+```haskell
+join :: Monad m => m (m a) -> m a
+```
+- 例子：
+```haskell
+>>> join (Just (Just 1))
+Just 1
+>>> join . join $ (Just (Just (Just 1)))
+Just 1
+>>> join $ Just Nothing
+Nothing
+>>> join [[1, 2, 3], [4, 5, 6]]
+[1,2,3,4,5,6]
+>>> runWriter $ join (writer (writer (1, "aaa"), "bbb"))
+(1,"bbbaaa")
+>>> join (Right (Right 1))
+Right 1
+>>> join (Right (Left "error"))
+Left "error"
+```
+- 对于列表其实就是`concat`，对于`Monoid`会调用`mappend`。
+- `m >>= f`永远等价于`join (fmap f m)`。
+
+`filterM`：
+```haskell
+filterM :: Applicative m => (a -> m Bool) -> [a] -> m [a]
+```
+- 对比`filter`，只是将函数编程了返回Monadic Value，然后相应的返回值也变了。
+```haskell
+>>> filterM (\a -> Just (a > 0)) $ [-10..0] ++ [0..10]
+Just [1,2,3,4,5,6,7,8,9,10]
+>>> filterM (\a -> [True, False]) [1, 2, 3]
+[[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
+```
+- 使用返回绝对不仅仅只是筛选这么简单，比如配合列表的不确定性得到一个列表的幂集。配合`Writer`可以在筛选同时写信息进去等，结合上下文的含义会让功能变得很强大。
+
+`foldM`：
+- `foldl`对`Monad`的版本是`foldM`：
+```haskell
+foldl :: Foldable t => (b -> a -> b) -> b -> t a -> b
+foldM :: (Foldable t, Monad m) => (b -> a -> m b) -> b -> t a -> m b
+```
+- 例子：
+```haskell
+>>> foldM (\a b -> Just (max a b)) 10 [1, 2, 3]
+Just 10
+```
+
+## Zippers
+
+### 定义一个树
+
+尝试定义一个二叉树类型，因为数据不可变，要修改只能使用模式匹配：
+```haskell
+data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show)
+
+freeTree :: Tree Char  
+freeTree =   
+    Node 'P'  
+        (Node 'O'  
+             (Node 'L'  
+              (Node 'N' Empty Empty)  
+              (Node 'T' Empty Empty)  
+             )  
+             (Node 'Y'  
+              (Node 'S' Empty Empty)  
+              (Node 'A' Empty Empty)  
+             )  
+        )  
+        (Node 'L'  
+             (Node 'W'  
+                  (Node 'C' Empty Empty)  
+                  (Node 'R' Empty Empty)  
+             )  
+             (Node 'A'  
+                  (Node 'A' Empty Empty)  
+                  (Node 'C' Empty Empty)  
+             )
+        )
+
+data Direction = L | R deriving (Eq, Show)
+type Directions = [Direction]
+
+changeToP :: Directions -> Tree Char -> Tree Char
+changeToP (L:ds) (Node x l r) = Node x (changeToP ds l) r
+changeToP (R:ds) (Node x l r) = Node x l (changeToP ds r)
+changeToP [] (Node _ l r) = Node 'P' l r
+changeToP _ Empty = Empty
+
+{-
+>>> changeToP [R, L] freeTree
+Node 'P' (Node 'O' (Node 'L' (Node 'N' Empty Empty) (Node 'T' Empty Empty)) (Node 'Y' (Node 'S' Empty Empty) (Node 'A' Empty Empty))) (Node 'L' (Node 'P' (Node 'C' Empty Empty) (Node 'R' Empty Empty)) (Node 'A' (Node 'A' Empty Empty) (Node 'C' Empty Empty)))
+-}
+```
+- 可以将要修改的节点的路径作为一个数组传入，方便在树上游走。
+
+### Zipper
+
+但是这样非常不方便，我们希望在游走的同时保留能够重建一颗树所需要的所有信息以满足修改某个节点删除某个子树等需求。举个例子，游走到左节点，就可以将树的根节点值和右子树保存起来，单独定义一个类型`TreePath`来保留这两个信息，和左子树的二元组就构成了这棵树的完整信息。
+```haskell
+-- save a path of walking through a tree, LeftPath/RightPath rootValue subTreeOfTheOtherSide
+data TreePath a = LeftPath a (Tree a) | RightPath a (Tree a) deriving(Show)
+type TreePaths a = [TreePath a]
+
+goLeft :: (Tree a, TreePaths a) -> (Tree a, TreePaths a)
+goLeft (Node x l r, tzs) = (l, LeftPath x r:tzs)
+goLeft (Empty, tzs) = error "go to left of empty tree"
+
+goRight :: (Tree a, TreePaths a) -> (Tree a, TreePaths a)
+goRight (Node x l r, tzs) = (r, RightPath x l:tzs)
+goRight (Empty, tzs) = error "go to right of empty tree"
+
+goUp :: (Tree a, TreePaths a) -> (Tree a, TreePaths a)
+goUp (t, LeftPath x r:tzs) = (Node x t r, tzs)
+goUp (t, RightPath x l:tzs) = (Node x l t, tzs)
+goUp (t, []) = error "go to up of root node"
+
+infixl 5 -:
+(-:) :: t1 -> (t1 -> t2) -> t2
+x -: f = f x
+
+{- 
+>>> fst $ goLeft (goRight (freeTree, []))
+Node 'W' (Node 'C' Empty Empty) (Node 'R' Empty Empty)
+>>> fst $ (freeTree, []) -: goLeft -: goRight -: goLeft
+Node 'S' Empty Empty
+-}
+
+```
+
+这样的二元组就称之为`Zipper`，就像拉链一样，将其定义为类型别名，作为函数的输入和输出就可以方便的修改一棵树：
+```haskell
+-- type synonym
+type TreeZipper a = (Tree a, TreePaths a)
+
+-- modify value of a node
+modify :: (a -> a) -> TreeZipper a -> TreeZipper a
+modify f (Node x l r, tps) = (Node (f x) l r, tps)
+modify f (Empty, tps) = (Empty, tps)
+
+-- replace a subtree
+attach :: Tree a -> TreeZipper a -> TreeZipper a
+attach t (_, tps) = (t, tps)
+
+-- go to root of a tree
+goRoot :: TreeZipper a -> TreeZipper a
+goRoot (t, []) = (t, [])
+goRoot (t, tps) = goRoot $ goUp (t, tps)
+
+{-
+>>> let (newTree, zipper) = (freeTree, []) -: goRight -: goLeft -: modify (\_ -> 'P')
+>>> newTree
+Node 'P' (Node 'C' Empty Empty) (Node 'R' Empty Empty)
+>>> fst $ (newTree, zipper) -: goUp -: attach (Node '&' Empty Empty) -: goRoot
+Node 'P' (Node 'O' (Node 'L' (Node 'N' Empty Empty) (Node 'T' Empty Empty)) (Node 'Y' (Node 'S' Empty Empty) (Node 'A' Empty Empty))) (Node '&' Empty Empty)
+-}
+```
+
+虽然数据不可变，但通过`Zipper`，其实基本上所有的事情都可以做了。
+
+### Zipper of List
+
+`Zipper`几乎可以套用在任何数据结构，其实思想很简单，就是将一个数据结构拆开，边界位于关心的位置，要增加删除或者修改都可以方便地做，然后也可以方便的合并起来得到最终的结果。操作前后的对象类型就是`Zipper`。
+
+比如列表：
+```haskell
+-- zipper of list, (rightSideOfList, reversedLeftSideOfList)
+type ListZipper a = ([a], [a])
+
+-- index from low to high
+goForward :: ListZipper a -> ListZipper a
+goForward (x:xs, ys) = (xs, x:ys)
+goForward ([], ys) = error "go forward of empty list"
+
+-- index from high to low
+goBack :: ListZipper a -> ListZipper a
+goBack (xs, x:ys) = (x:xs, ys)
+goBack (xs, []) = error "go back of full list"
+{-
+>>> goForward . goForward . goForward $ ([1, 2, 3, 4], [])
+([4],[3,2,1])
+>>> goBack ([4],[3,2,1])
+([3,4],[2,1])
+-}
+```
+
+更多应用：
+- 利用`Zipper`和树类型可以实现文件系统。
+- 对于可能失败的情况可以将数据用`Maybe`上下文包装，并将`-:`运算符换成`>>=`。
