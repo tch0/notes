@@ -20,6 +20,9 @@ C/C++：
 - [SQL.md](SQL.md)：基本SQL知识。
 - [Prolog.md](Prolog.md)：声明式编程语言Prolog入门。
 
+Linux/Unix：
+- [APUE.md](APUE.md)：《Unix环境高级编程》（APUE）阅读笔记。
+
 工具：
 - [LaTex.md](LaTeX.md)：LaTex学习笔记，暂无实质内容。
 - [Git.md](Git.md)：Git学习笔记。
