@@ -35,6 +35,7 @@ Linux/Unix：
 
 数学：
 - [MathFunc.md](MathFunc.md)：`<math.h>`常用数学函数分析与实现。
+- [CategoryTheory.md](CategoryTheory.md)：范畴论粗浅了解，为了理解Haskell，TODO中。
 
 杂项：
 - [Encoding.md](Encoding.md)：关于字符编码。
