@@ -13,6 +13,8 @@
 
 提示：本文含有少量公式，可安装[MathJax Plugin for Github](https://github.com/orsharir/github-mathjax)浏览器插件提供公式渲染，但终究存在一定问题很多$*$被渲染成了`<em>`，导致显示问题，公式语法本身并不存在问题。最好还是Clone到本地查看。
 
+避免$ * $被渲染为`<em>`粗体标签最终无奈解决方案：在公式中的$*$两端加上空格。
+
 # 范畴论了解
 
 简单了解一下范畴论，也谈不上入门，不求深入。主要是为了对Haskell中各种类型类有更好的理解。
@@ -41,10 +43,10 @@
 ### 群（Group）
 
 **定义1**：有着非空集合$G$和它的一个二元运算$*$，若满足：
-- **封闭性**： $\forall a,b\in G\exists c \in G(a * b = c)$。
+- **封闭性**： $\forall a,b\in G \exists c \in G(a * b = c)$。
 - **结合律**： $\forall x,y,z \in G((x * y) * z = x * (y * z))$ 。
-- **单位元存在**：$\exists e \in G\forall x \in G(x * e = x = e * x)$ ， $e$称之为单位元，也称幺元。
-- **逆元存在**：$\forall x \in G\exists y\in G(x * y = e = y * e)$，称$x$和$y$为互逆元素，简称逆元（inverse），$y$可以记做$x^{-1}$。
+- **单位元存在**：$\exists e \in G \forall x \in G(x * e = x = e * x)$ ， $e$称之为单位元，也称幺元。
+- **逆元存在**：$\forall x \in G \exists y\in G(x * y = e = y * e)$，称$x$和$y$为互逆元素，简称逆元（inverse），$y$可以记做$x^{-1}$。
 
 则称$G$对$x$构成一个**群**。
 
@@ -113,6 +115,6 @@
 
 ### 生成新群
 
-子群：从群 $\mathcal{G} = (G,*,e)$ 中取出部分元素 $G^{'}$，使其对于群运算 $*$ 闭合，且 $G^{'}$ 的**逆元**（inverse）也是 $G$ 的逆元。那么称$\mathcal{G}^{'}=(G^{'},*,e)$是$\mathcal{G} = (G,*,e)$的一个**子群**（subgroup）。
+子群：从群 $\mathcal{G} = (G , * , e)$ 中取出部分元素 $G^{'}$，使其对于群运算 $ * $ 闭合，且 $G^{'}$ 的**逆元**（inverse）也是 $G$ 的逆元。那么称$\mathcal{G}^{'}=(G^{'}, * , e)$是$\mathcal{G} = (G , * , e)$的一个**子群**（subgroup）。
 
-两个群的积：对于两个群 $(G,*,e)$和$(G^{'},*^{'},e^{'})$，设$H$为配对元素 $\langle x,y\rangle$ （就是二元组），定义 $d=\langle e, e^{'}\rangle$，又有 $\forall x\in G,y\in G^{'}(\langle x,x^{'}\rangle\star\langle y,y^{'}\rangle = \langle x*y,x^{'}*y^{'}\rangle)$，那么称群 $\mathcal{H} = (H,\star,d)$ 为群 $(G,*,e)$ 和群 $(G^{'},*^{'},e^{'})$ 的**积**（product）。
+两个群的积：对于两个群 $(G, * ,e)$和$(G^{'}, * ^{'},e^{'})$，设$H$为配对元素 $\langle x,y\rangle$ （就是二元组），定义 $d=\langle e, e^{'}\rangle$，又有 $\forall x\in G,y\in G^{'}(\langle x,x^{'}\rangle\star\langle y,y^{'}\rangle = \langle x * y,x^{'} * y^{'}\rangle)$，那么称群 $\mathcal{H} = (H,\star,d)$ 为群 $(G, * ,e)$ 和群 $(G^{'}, * ^{'},e^{'})$ 的**积**（product）。
