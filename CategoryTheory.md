@@ -24,9 +24,9 @@
 |$\not$|取反|`\not`|
 |$\subset \subseteq$|集合关系|`\subset \subseteq`|
 |$\land \lor \lnot$|逻辑与、或、非|`\land \lor \lnot`|
-|$\ni \in \notin \notni $|元素与集合关系|`\ni \in \notin \notni \not`|
+|$\ni \in \notin \not\ni$|元素与集合关系|`ni \in \notin \not\ni`|
 |$\to \Rightarrow \Leftrightarrow$|函数、逻辑推导|`\to \Rightarrow \Leftrightarrow`|
-|$\forall \exist$|全称、存在量词|`\forall \exist`|
+|$\forall \exists$|全称、存在量词|`\forall \exists`|
 |$\mathcal{ABHG}$|手写体字母，表示群|`\mathcal{ABHG}`|
 |$\sim \cong$|等价、同构|`\sim \cong`|
 |$f\circ g$|函数、群同态复合|`f \circ g`|
@@ -41,10 +41,10 @@
 ### 群（Group）
 
 **定义1**：有着非空集合$G$和它的一个二元运算$*$，若满足：
-- **封闭性**：$\forall a,b\in G\exist c \in G(a*b = c)$
+- **封闭性**：$\forall a,b\in G\exists c \in G(a*b = c)$
 - **结合律**：$\forall x,y,z \in G((x*y)*z = x*(y*z))$
-- **单位元存在**：$\exist e \in G\forall x \in G(x*e = x = e*x)$，$e$称之为单位元，也称幺元。
-- **逆元存在**：$\forall x \in G\exist y\in G(x * y = e = y * e)$，称$x$和$y$为互逆元素，简称逆元（inverse
+- **单位元存在**：$\exists e \in G\forall x \in G(x*e = x = e*x)$，$e$称之为单位元，也称幺元。
+- **逆元存在**：$\forall x \in G\exists y\in G(x * y = e = y * e)$，称$x$和$y$为互逆元素，简称逆元（inverse
 ），$y$可以记做$x^{-1}$。
 
 则称$G$对$x$构成一个**群**。
@@ -97,10 +97,10 @@
 说明：
 - 对于函数$f:A\to B$。
 - 单射（injection，一对一）：$\forall a,b\in A(f(a) = f(b)\Rightarrow a = b)$。
-- 满射（surjection，映上）：$\forall y\in B\exist x\in A(f(x) = y)$。
+- 满射（surjection，映上）：$\forall y\in B\exists x\in A(f(x) = y)$。
 - 双射（bijection，一一对应）：即是单射，又是满射则称为双射。即陪域$B$中所有元素都是$A$中唯一的一个元素的像。
 
-**定理2**：一个群同态$f:\mathcal{G}\to \mathcal{H}$是一个同构当且仅当它有一个**双边逆元**（two-sieded inverse），即$\exist f^{'}:\mathcal{H}\to \mathcal{G}(f^{'}\circ f = 1_{\mathcal{G}},f\circ f^{'}=1_{\mathcal{H}})$。
+**定理2**：一个群同态$f:\mathcal{G}\to \mathcal{H}$是一个同构当且仅当它有一个**双边逆元**（two-sieded inverse），即$\exists f^{'}:\mathcal{H}\to \mathcal{G}(f^{'}\circ f = 1_{\mathcal{G}},f\circ f^{'}=1_{\mathcal{H}})$。
 
 **定理3**：群之间的同构关系是群之间的**等价关系**（equivalence relation）。
 
@@ -114,8 +114,8 @@
 
 ### 生成新群
 
-子群：从群$\mathcal{G} = (G,*,e)$中取出部分元素$G^{'}$，使其对于群运算$*$闭合，且$G^{'}$的**逆元**（inverse）也是$G$的逆元。那么称$\mathcal{G}^{'}=(G^{'},*,e)$是$\mathcal{G} = (G,*,e)$的一个**子群**（subgroup）。
+子群：从群 $\mathcal{G} = (G,*,e)$ 中取出部分元素 $G^{'}$，使其对于群运算 $*$ 闭合，且 $G^{'}$ 的**逆元**（inverse）也是 $G$ 的逆元。那么称$\mathcal{G}^{'}=(G^{'},*,e)$是$\mathcal{G} = (G,*,e)$的一个**子群**（subgroup）。
 
-两个群的积：$(G,*,e),(G^{'},*^{'},e^{'})$，设$H$为配对元素$\langle x,y\rangle$（就是二元组），定义$d=\langle e, e^{'}\rangle$，又有$\forall x\in G,y\in G^{'}(\langle x,x^{'}\rangle\star\langle y,y^{'}\rangle = \langle x*y,x^{'}*y^{'}\rangle)$，那么称群 $\mathcal{H} = (H,\star,d)$ 为群 $(G,*,e)$ 和群 $(G^{'},*^{'},e^{'})$ 的**积**（product）。
+两个群的积：$(G,*,e),(G^{'},*^{'},e^{'})$，设$H$为配对元素 $\langle x,y\rangle$ （就是二元组），定义 $d=\langle e, e^{'}\rangle$，又有 $\forall x\in G,y\in G^{'}(\langle x,x^{'}\rangle\star\langle y,y^{'}\rangle = \langle x*y,x^{'}*y^{'}\rangle)$，那么称群 $\mathcal{H} = (H,\star,d)$ 为群 $(G,*,e)$ 和群 $(G^{'},*^{'},e^{'})$ 的**积**（product）。
 
 
