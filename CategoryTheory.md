@@ -11,9 +11,9 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-提示：本文含有少量公式，可安装[MathJax Plugin for Github](https://github.com/orsharir/github-mathjax)浏览器插件提供公式渲染，但终究存在一定问题很多$*$被渲染成了`<em>`，导致显示问题，公式语法本身并不存在问题。最好还是Clone到本地查看。
+提示：本文含有少量公式，可安装[MathJax Plugin for Github](https://github.com/orsharir/github-mathjax)浏览器插件提供公式渲染，但终究存在一定问题很多$*$被渲染成了`<em>`，导致显示问题，公式语法本身并不存在问题。可以Clone到本地查看。
 
-避免$ * $被渲染为`<em>`粗体标签最终无奈解决方案：在公式中的$*$两端加上空格。
+避免$ * $被渲染为`<em>`斜体标签最终无奈解决方案：在公式中的$*$两端加上空格。
 
 # 范畴论了解
 
@@ -23,7 +23,7 @@
 
 |符号|含义|$LaTeX$写法|
 |:-:|:-:|:-:|
-|$\not$|取反|`\not`|
+|$\not$|符号取反|`\not`|
 |$\subset \subseteq$|集合关系|`\subset \subseteq`|
 |$\land \lor \lnot$|逻辑与、或、非|`\land \lor \lnot`|
 |$\ni \in \notin \not\ni$|元素与集合关系|`ni \in \notin \not\ni`|
@@ -59,9 +59,9 @@
 - 群$G$元素个数有限，在称为有限群，反之无限群，有限群的元素个数称为有限群的阶。
 
 运算：
-- $g\in G, H \subseteq G$，定义$g* H = \{gh|h\in H\}$，简写作 $gH$， $H*g = \{hg|h\in H\}$，简写作 $Hg$。
-- $A,B \subseteq G$，定义$A*B = \{ab|a\in A, b\in B\}$，简写做$AB$。
-- $H\subseteq G$，记$H^{-1} = \{h^{-1}|h\in H\}$。
+- $g\in G, H \subseteq G$，定义$g* H = \left\{gh|h\in H\right\}$，简写作 $gH$， $H*g = \left\{hg|h\in H\right\}$，简写作 $Hg$。
+- $A,B \subseteq G$，定义$A*B = \left\{ab|a\in A, b\in B\right\}$，简写做$AB$。
+- $H\subseteq G$，记 $H^{-1} = \left\{h^{-1}|h\in H\right\}$。
 
 替换定理：若$(G, *)$是群，那么$\forall g \in G(gG = Gg = G)$。
 
