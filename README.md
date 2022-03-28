@@ -41,6 +41,9 @@ Linux/Unix：
 - [Encoding.md](Encoding.md)：关于字符编码。
 - [Repos.md](Repos.md)：感兴趣的开源项目列表，用来索引和查询。
 
+娱乐：
+- [Wordle分支](../../tree/Wordle/)：填字游戏[Wordle](https://www.nytimes.com/games/wordle/index.html)的作弊程序。
+
 ## 关于这个仓库
 
 记录个人计算机相关笔记，方便随时查阅，一些入门的东西。
