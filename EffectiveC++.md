@@ -49,6 +49,15 @@
     - [条款38：通过复合建模出has-a或者is-implemented-in-terms-of关系](#%E6%9D%A1%E6%AC%BE38%E9%80%9A%E8%BF%87%E5%A4%8D%E5%90%88%E5%BB%BA%E6%A8%A1%E5%87%BAhas-a%E6%88%96%E8%80%85is-implemented-in-terms-of%E5%85%B3%E7%B3%BB)
     - [条款39：明智而审慎地使用私有继承](#%E6%9D%A1%E6%AC%BE39%E6%98%8E%E6%99%BA%E8%80%8C%E5%AE%A1%E6%85%8E%E5%9C%B0%E4%BD%BF%E7%94%A8%E7%A7%81%E6%9C%89%E7%BB%A7%E6%89%BF)
     - [条款40：明智而审慎地使用多重继承](#%E6%9D%A1%E6%AC%BE40%E6%98%8E%E6%99%BA%E8%80%8C%E5%AE%A1%E6%85%8E%E5%9C%B0%E4%BD%BF%E7%94%A8%E5%A4%9A%E9%87%8D%E7%BB%A7%E6%89%BF)
+  - [第七章：模板与泛型编程](#%E7%AC%AC%E4%B8%83%E7%AB%A0%E6%A8%A1%E6%9D%BF%E4%B8%8E%E6%B3%9B%E5%9E%8B%E7%BC%96%E7%A8%8B)
+    - [条款41：了解隐式接口与编译期多态](#%E6%9D%A1%E6%AC%BE41%E4%BA%86%E8%A7%A3%E9%9A%90%E5%BC%8F%E6%8E%A5%E5%8F%A3%E4%B8%8E%E7%BC%96%E8%AF%91%E6%9C%9F%E5%A4%9A%E6%80%81)
+    - [条款42：了解typename的双重意义](#%E6%9D%A1%E6%AC%BE42%E4%BA%86%E8%A7%A3typename%E7%9A%84%E5%8F%8C%E9%87%8D%E6%84%8F%E4%B9%89)
+    - [条款43：学习处理模板话基类内的名称](#%E6%9D%A1%E6%AC%BE43%E5%AD%A6%E4%B9%A0%E5%A4%84%E7%90%86%E6%A8%A1%E6%9D%BF%E8%AF%9D%E5%9F%BA%E7%B1%BB%E5%86%85%E7%9A%84%E5%90%8D%E7%A7%B0)
+    - [条款44：将参数无关的代码抽离模板](#%E6%9D%A1%E6%AC%BE44%E5%B0%86%E5%8F%82%E6%95%B0%E6%97%A0%E5%85%B3%E7%9A%84%E4%BB%A3%E7%A0%81%E6%8A%BD%E7%A6%BB%E6%A8%A1%E6%9D%BF)
+    - [条款45：运用成员函数模板接受所有兼容类型](#%E6%9D%A1%E6%AC%BE45%E8%BF%90%E7%94%A8%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0%E6%A8%A1%E6%9D%BF%E6%8E%A5%E5%8F%97%E6%89%80%E6%9C%89%E5%85%BC%E5%AE%B9%E7%B1%BB%E5%9E%8B)
+    - [条款46：需要类型转换时请为模板定义非成员函数](#%E6%9D%A1%E6%AC%BE46%E9%9C%80%E8%A6%81%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E6%97%B6%E8%AF%B7%E4%B8%BA%E6%A8%A1%E6%9D%BF%E5%AE%9A%E4%B9%89%E9%9D%9E%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0)
+    - [条款47：请使用traits类表现类型信息](#%E6%9D%A1%E6%AC%BE47%E8%AF%B7%E4%BD%BF%E7%94%A8traits%E7%B1%BB%E8%A1%A8%E7%8E%B0%E7%B1%BB%E5%9E%8B%E4%BF%A1%E6%81%AF)
+    - [条款48：认识模板元编程（TMP）](#%E6%9D%A1%E6%AC%BE48%E8%AE%A4%E8%AF%86%E6%A8%A1%E6%9D%BF%E5%85%83%E7%BC%96%E7%A8%8Btmp)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -591,7 +600,7 @@ const可以修饰基本任何变量：
 一言以蔽之：默认参数值是静态绑定，而虚函数是动态绑定，这是冲突的。重新定义继承而来的默认参数同样会让代码陷入不确定的漩涡。
 
 通常来说，如果基类给了虚函数默认参数，那么选择可以是：
-- 派生类不要再给默认参数，有基类指针引用调用该函数时可以使用基类的默认参数。由派生类调用则需要指定参数。
+- 派生类不要再给默认参数，由基类指针引用调用该函数时可以使用基类的默认参数。由派生类调用则需要指定参数。
 - 派生类定义相同的默认参数，这会带来代码重复与依赖，如果基类默认参数改变，派生类所有默认参数必须相应改变。通常来说不要这样做。
 - 但如果就是要派生类也可以使用该默认参数呢？使用条款35提到的NVI（Non-Virtual Interface），将虚函数变为非虚接口并定义默认参数，实际工作在私有虚接口中做即可。
 
@@ -649,3 +658,252 @@ const可以修饰基本任何变量：
 - 多重继承也是有合理用途的，比如公有继承与私有/保护继承混用（公有继承一个接口类，私有继承某个帮助实现的实现类），同时表达is-a和has-a/is-implemented-in-terms-of关系。
 - 多重继承无可替代（我们总是应该先考虑单一继承）或者有显著优势时，是值得使用的，相比私有、保护继承，多重继承可能使用频率还会更高一些。
 - 总之，明智而审慎地使用多重继承。
+
+## 第七章：模板与泛型编程
+
+### 条款41：了解隐式接口与编译期多态
+
+在一个普通函数中，要使用多态，可以将参数定义为基类接口（指针引用），传入派生类对象来实现运行时多态，这种接口也叫做显式接口。
+
+而在函数模板中，可以将使用模板类型参数作为函数参数类型，在函数中调用该类型的函数，只要拥有这些函数的类型（函数类的表达式有效）都可以做为模板类型参数用以实例化函数模板，这种接口被称作隐式接口（implicit interface）。对于重载的函数，在编译期确定的多态行为称之为编译期多态（compile-time polymorphism）。
+- 隐式接口仅仅由一组有效表达式组成。只要支持这一组表达式，就可以作为类型参数实例化模板。（很像动态类型的鸭子类型，不过发生在编译期）。
+- 编译期多态则是通过模板实例化与函数重载解析发生于编译期。
+
+### 条款42：了解typename的双重意义
+
+- 首先，typename用在模板类型参数中时，和class语义完全相同。我更倾向于使用typename。
+- 在模板中指代一个类型时，必须使用typename作为、前缀，但不能使用在基类列表、以及构造函数成员初始化列表中作为基类修饰符。
+
+模板内部`typename`用以显式表明这是一个类型：
+- 指代类型必须加`typename`的原因是嵌套从属名称（nested dependent names，比如`T::iterator`这样是嵌套在模板类型参数T作用域的名称，非嵌套的则是普通从属名称dependent names比如`T&`，不依赖于模板参数的则是费从属名称non-dependent names比如int）可能导致解析困难。
+- 为了区分普通嵌套从属名称与嵌套从属类型名称，编译器在遇到一个嵌套从属名称（nested dependent type names）时，直接假定其不是一个类型名称。如果其是一个类型名称，需要在前面添加`typename`关键字。
+- 并且`typename`只被用来验明嵌套从属名称。单纯的模板参数`T&`这种则不应该使用。
+- 应该用在参数、返回值类型等所有地方。
+- 但不能用于基类列表、以及构造函数成员初始化列表中表示基类。（估计是这种情况能够确定一定是一个类型？）。这样的不一致有点令人烦恼。
+```C++
+template<typename T>
+class Derived : public Base<T>::Nested // do not allow typename
+{
+public:
+    explicit Derived(int x) : Base<T>::Nested(x) // do not allow typename
+    {
+        typename Base<T>::Nested temp; // need typename
+        ...
+    }
+}
+```
+
+### 条款43：学习处理模板话基类内的名称
+
+类模板比普通类更为泛化，但是也就会造成更多的不确定，比如上面的`typename`需要显式指明一个嵌套从属名称。还有一点也很类似，就是在派生类模板中使用基类名称时需要显式指明其使用的是基类的东西（比如在不知道模板参数的情况下，解析到派生类模板时，不知道一个模板参数是否得到了特化，这个特化中是否包含这个被调用的基类函数，所以需要在派生类中显式声明），有三个方法可以避免这个问题：
+- 在基类函数调用前加上`this->`。
+- 使用`using`声明使基类名称可见（推荐做法）。
+- 显式使用作用域运算符指定使用基类函数。（这样会导致不支持多态，如果是虚函数的话不推荐这样做，当然如果是在重写的虚函数中这样做那么是合适的）。
+- 例：
+```C++
+template<typename T>
+class Foo
+{
+public:
+    void bar() {}
+};
+
+template<typename T>
+class DerivedFoo : public Foo<T>
+{
+public:
+    using Foo<T>::bar; // solution 1
+    void derivedBar()
+    {
+        bar(); // invalid without using declaration, there are no arguments to 'bar' that depend on a template parameter, so a declaration of 'bar' must be available
+        this->bar(); // solution 2
+        Foo<T>::bar(); // solution 3
+    }
+};
+```
+
+### 条款44：将参数无关的代码抽离模板
+
+定义了一个函数模板或者类模板时，对于不同的模板参数会生成不同的代码。模板参数是不同的，最终生成的代码也是不同的，但我们应该最大限度地提取出其中本质上来说是二进制相同的部分。
+
+就像定义类时，如果多个类拥有相同的某些操作，我们不会重复实现他们，而会将他们提取到一个公共类中，使用继承或者组合来复用。
+
+为了最大化地减少最终生成代码臃肿，我们应该使用共性与变性分析（commonality and variability analysis）：
+- 在模板中也能够共用最终会生成二进制相同的代码，其中主要是非类型模板参数。
+- 可以将涉及到非类型模板参数的代码提出来将非类型模板参数作为函数参数实现为模板参数无关的函数，将该部分代码提取到不含该非类型参数的公共基类模板中来做。在派生类中传入非类型模板参数去调用。
+- 优点是能够减小生成的二进制体积，一族类模板使用同一函数。
+- 缺点是生成的代码可能没有直接使用运行时的非类型模板参数作为常量表达式的版本高效（编译期常量版本能得到更好的优化），并且可能需要额外增加对象大小（可能需要在基类中存储必要信息以实现该函数）。
+- 例子：
+```C++
+template<typename T>
+class SquareMatrixBase
+{
+protected:
+    SquareMatrixBase(size_t n, T* pMem) : size(n), pData(pMem) {}
+    void setDataPtr(T* ptr) { pData = ptr; }
+    void invert(); // common function for all SquareMatrix<T, N>, different N shares one invert()
+private:
+    size_t size;
+    T* pData;
+};
+
+template<typename T, size_t N>
+class SquareMatrix : private SquareMatrixBase<T>
+{
+public:
+    SquareMatrix() : SqaureMatrixBase<T>(N, data) {}
+private:
+    T data[N*N];
+};
+```
+- 因类型参数而造成的代码膨胀，也有可能可以相处，前提是他们拥有完全相同的模板实例化的二进制代码。比如在容器中保存指针：用`void*`类型（无类型指针）可以保存所有类型指针，而不是使用强类型指针然后为所有指针类型生成同样的二进制代码。
+- 总结：无论怎样设计都需要权衡（tradeoff），精密的做法会让事情变得复杂，时空占用与代码复杂度代码清晰程度存在取舍，时间和空间也存在取舍。视具体情况抉择。
+
+### 条款45：运用成员函数模板接受所有兼容类型
+
+当我们实现智能指针这种类型时，要使其行为就像内置指针一样，就需要支持派生类指针向基类指针的转换。但是我们不可能为所有具体类型定义函数，这时就需要在为类模板编写泛化的**成员函数模板**：
+- 在实现过程中需要允许满足预期的合法行为，将非预期的非法行为筛选掉（让其在编译期报错）。通常来说这可以由实现中的有效表达式来约束。
+- 就智能指针这个例子：我们需要泛化的接受裸指针的构造函数、拷贝构造、拷贝赋值、移动赋值以及`get`接口等。
+- 泛化的构造、赋值运算符不会阻止编译器生成默认构造、默认赋值，如果要阻止编译器生成默认构造、默认赋值需要自行定义默认构造、默认赋值。
+
+### 条款46：需要类型转换时请为模板定义非成员函数
+
+条款24中说明了，要实现在所有实参上都能够进行隐式转换，应该将其定义为非成员函数。
+
+但在模板中有点不一样，因为在模板实参推导中，不将隐式类型转换考虑在内。
+- 例子：
+```C++
+template<typename T>
+class Rational
+{
+    friend const Rational operator*(const Rational& lhs, const Rational& rhs)
+    {
+        return Rational(lhs.numerator() * rhs.numerator(), lhs.denominator() * rhs.denominator());
+    }
+    // equal to:
+    // friend const Rational<T> operator*(const Rational<T>& lhs, const Rational<T>& rhs);
+public:
+    Rational(const T& numerator = 0, const T& denominator = 1) : nume(numerator), denom(denominator) { }
+    const T numerator() const { return nume; }
+    const T denominator() const { return denom; }
+private:
+    T nume;
+    T denom;
+};
+```
+- 如果将`operator*`定义在类外部会导致`Rational(1, 2) * 2`这样的代码无法编译通过。因为在模板实参推导中，不考虑隐式类型转换。这就是C++的模板部分与OO部分的众多区别之一。
+- 那么要怎么做才能编译成功呢？
+- 可行的方法是将这个非成员定义为友元，因为需要在类内有了声明，编译器便知道可以去匹配这个函数了。和友元的常见用法有点区别。
+    - 上面的友元声明中，在类模板内部可以不适用模板参数，如果使用类模板名称默认就是使用整个类模板的模板参数的意思，如果要定义成员模板或者定义了其他的模板参数才必须加。当然就类模板的同一个模板参数来说加不加都是可以的（前提是在作用域内）。
+- 但只有声明而没有定义会导致链接时找不到定义（即使在外部给了定义）。这时外部的定义依然没有实例化。解决方法可以是将模板函数的定义放在友元声明中，令友元声明成为一个定义。
+- 这时候声明为友元，并且在外部定义，且进行显式实例化也会找不到，具体原理未知？进行显式实例化依然未实例化？
+- 看来目前来说只有定义为类模板内部的友元函数这一个途径处理。
+- 如果逻辑很长的话，可以转调一个外部函数。友元仅做一个转调以内联处理。
+
+### 条款47：请使用traits类表现类型信息
+
+看一个例子，编写标准库`std::advance(iter, diff)`功能，对迭代器移动给定的距离：
+- 很容易想到，对不同类型的迭代器，实现可能不同，输入要求也不同。
+- C++为不同的迭代器类型定义了多个空的struct结构来标识：
+```C++
+struct input_iterator_tag {};
+struct output_iterator_tag {};
+struct forward_iterator_tag : input_iterator_tag {};
+struct bidirectional_iterator_tag : forward_iterator_tag {};
+struct random_access_iterator_tag : bidirectional_iterator_tag {};
+```
+- 每个迭代器类中都会有一个名为`iterator_category`的类型别名，这个别名指代的类型就是上面的结构类型
+- 我们可能会想到在实现中去做这样一个`if`判断，用`typeid`去检测输入迭代器类型是否是对应类型。但是这样就不能兼容内置的指针类型了，因为内置类型中没有这样一个类型别名。还有`if`判断会带来运行时消耗。
+- 标准的做法是在定义一个`traits`类型，即标准库中的`std::iterator_traits<T>`其中定义了`iterator_category`类型别名，对于标准库中迭代器而代表其内部的`iterator_category`类型，对于内置指针偏特化一个版本，将其定义为`random_access_iterator_tag`。
+- 接下来实现是使用traits类，并且为不同类别的迭代器做一个重载，将实际工作转发到一个添加了tag参数的重载函数中做，即可实现编译期的分支选择。
+- 标准库`std::advance`实现模拟：
+```C++
+// simulation of std::iterator_traits
+template<typename IterT>
+struct my_iterator_traits
+{
+    using iterator_category = typename IterT::iterator_category;
+};
+template<typename IterT>
+struct my_iterator_traits<IterT*>
+{
+    using iterator_category = std::random_access_iterator_tag;
+};
+
+template<typename IterT, typename DistT>
+void doAdvance(IterT& iter, DistT d, std::random_access_iterator_tag)
+{
+    iter += d;
+}
+
+template<typename IterT, typename DistT>
+void doAdvance(IterT& iter, DistT d, std::bidirectional_iterator_tag)
+{
+    if (d >= 0)
+    {
+        while (d--)
+            ++iter;
+    }
+    else
+    {
+        while (d++)
+            --iter;
+    }
+}
+
+template<typename IterT, typename DistT>
+void doAdvance(IterT& iter, DistT d, std::input_iterator_tag)
+{
+    if (d < 0)
+    {
+        throw std::out_of_range("Negative distance");
+    }
+}
+
+// implementation of advance
+template<typename IterT, typename DistT>
+void advance(IterT& iter, DistT d)
+{
+    doAdvance(iter, d, typename my_iterator_traits<IterT>::iterator_category());
+}
+```
+
+如何设计并实现一个traits类：
+- 确认若干希望将来可以取得的类型相关信息。（例如对于迭代器可以取得其分类）
+- 为该信息选择一个名称。（如`iterator_category`）
+- 提供一个模板和一组特化版本，内含希望支持的类型相关信息。
+
+如何使用traits类：
+- 建立一组重载函数或者函数模板，彼此差异只在traits参数。不同traits参数可以根据其提供的信息来建立不同具体实现。
+- 建立一个控制函数或者函数模板，使用traits类在编译期获得类型相关信息，用其来调用上面的重载函数或者重载函数模板。以实现根据类型在编译期选择特定实现的目的。
+
+总结：
+- traits类的作用：在编译期获得类型相关信息。通过模板和模板特化实现。
+- 通过整合重载技术，traits类可以在编译期对类型进行`if-else`测试。
+- 标准库中的traits类定义在`<type_traits>`中，很多常用的traits类都在其中，比如：`remove_reference add_const add_pointer`等，都是通过类似手法来做的。
+- traits类是模板编程中的重要一环，可以通过这一条款认识其意义。
+
+### 条款48：认识模板元编程（TMP）
+
+模板元编程（Template Metaprogramming，TMP）是编写基于模板的C++程序并执行与编译期的程序，也就是通过编译这个过程来执行。一旦TMP程序结束执行，其执行输出就是从模板实例化出的若干C++源码，一如往常会被编译。
+
+TMP是图灵完全（Turing complete）的，也就是任何计算都能够在编译期做到。
+- 就像前面使用函数模板特化与重载和traits类来实现if-else一样。TMP中的各种程序结构和正常的C++中可能存在一定的区别。
+- TMP是嵌入在C++中的一门子语言，准确地说，一门函数式语言（functional language）。
+- 在TMP也可以进行循环，是通过递归模板实例化来做到的。
+- 起手式，编译期计算阶乘：
+```C++
+template<unsigned n>
+struct Factorial
+{
+    enum { value = n * Factorial<n-1>::value };
+};
+
+template<>
+struct Factorial<0>
+{
+    enum { value = 1 };
+};
+```
+- 可以看到`enum`常量在编译期的妙用，枚举值不占用对象空间，当写出`Factorial<10>::value`这种表达式时，它已经在编译期就算好了。（这叫enum hack，在条款2中介绍过。）
+- 更多内容这里也没有，需要另外的资料来学习。
