@@ -52,12 +52,17 @@
   - [第七章：模板与泛型编程](#%E7%AC%AC%E4%B8%83%E7%AB%A0%E6%A8%A1%E6%9D%BF%E4%B8%8E%E6%B3%9B%E5%9E%8B%E7%BC%96%E7%A8%8B)
     - [条款41：了解隐式接口与编译期多态](#%E6%9D%A1%E6%AC%BE41%E4%BA%86%E8%A7%A3%E9%9A%90%E5%BC%8F%E6%8E%A5%E5%8F%A3%E4%B8%8E%E7%BC%96%E8%AF%91%E6%9C%9F%E5%A4%9A%E6%80%81)
     - [条款42：了解typename的双重意义](#%E6%9D%A1%E6%AC%BE42%E4%BA%86%E8%A7%A3typename%E7%9A%84%E5%8F%8C%E9%87%8D%E6%84%8F%E4%B9%89)
-    - [条款43：学习处理模板话基类内的名称](#%E6%9D%A1%E6%AC%BE43%E5%AD%A6%E4%B9%A0%E5%A4%84%E7%90%86%E6%A8%A1%E6%9D%BF%E8%AF%9D%E5%9F%BA%E7%B1%BB%E5%86%85%E7%9A%84%E5%90%8D%E7%A7%B0)
+    - [条款43：学习处理模板化基类内的名称](#%E6%9D%A1%E6%AC%BE43%E5%AD%A6%E4%B9%A0%E5%A4%84%E7%90%86%E6%A8%A1%E6%9D%BF%E5%8C%96%E5%9F%BA%E7%B1%BB%E5%86%85%E7%9A%84%E5%90%8D%E7%A7%B0)
     - [条款44：将参数无关的代码抽离模板](#%E6%9D%A1%E6%AC%BE44%E5%B0%86%E5%8F%82%E6%95%B0%E6%97%A0%E5%85%B3%E7%9A%84%E4%BB%A3%E7%A0%81%E6%8A%BD%E7%A6%BB%E6%A8%A1%E6%9D%BF)
     - [条款45：运用成员函数模板接受所有兼容类型](#%E6%9D%A1%E6%AC%BE45%E8%BF%90%E7%94%A8%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0%E6%A8%A1%E6%9D%BF%E6%8E%A5%E5%8F%97%E6%89%80%E6%9C%89%E5%85%BC%E5%AE%B9%E7%B1%BB%E5%9E%8B)
     - [条款46：需要类型转换时请为模板定义非成员函数](#%E6%9D%A1%E6%AC%BE46%E9%9C%80%E8%A6%81%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E6%97%B6%E8%AF%B7%E4%B8%BA%E6%A8%A1%E6%9D%BF%E5%AE%9A%E4%B9%89%E9%9D%9E%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0)
     - [条款47：请使用traits类表现类型信息](#%E6%9D%A1%E6%AC%BE47%E8%AF%B7%E4%BD%BF%E7%94%A8traits%E7%B1%BB%E8%A1%A8%E7%8E%B0%E7%B1%BB%E5%9E%8B%E4%BF%A1%E6%81%AF)
     - [条款48：认识模板元编程（TMP）](#%E6%9D%A1%E6%AC%BE48%E8%AE%A4%E8%AF%86%E6%A8%A1%E6%9D%BF%E5%85%83%E7%BC%96%E7%A8%8Btmp)
+  - [第八章：定制new和delete](#%E7%AC%AC%E5%85%AB%E7%AB%A0%E5%AE%9A%E5%88%B6new%E5%92%8Cdelete)
+    - [条款49：了解new-handler的行为](#%E6%9D%A1%E6%AC%BE49%E4%BA%86%E8%A7%A3new-handler%E7%9A%84%E8%A1%8C%E4%B8%BA)
+    - [条款50：了解new和delete的合理替换时机](#%E6%9D%A1%E6%AC%BE50%E4%BA%86%E8%A7%A3new%E5%92%8Cdelete%E7%9A%84%E5%90%88%E7%90%86%E6%9B%BF%E6%8D%A2%E6%97%B6%E6%9C%BA)
+    - [条款51：编写new和delete时需要固守常规](#%E6%9D%A1%E6%AC%BE51%E7%BC%96%E5%86%99new%E5%92%8Cdelete%E6%97%B6%E9%9C%80%E8%A6%81%E5%9B%BA%E5%AE%88%E5%B8%B8%E8%A7%84)
+    - [条款52：写了placement new也要写placement delete](#%E6%9D%A1%E6%AC%BE52%E5%86%99%E4%BA%86placement-new%E4%B9%9F%E8%A6%81%E5%86%99placement-delete)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -665,20 +670,20 @@ const可以修饰基本任何变量：
 
 在一个普通函数中，要使用多态，可以将参数定义为基类接口（指针引用），传入派生类对象来实现运行时多态，这种接口也叫做显式接口。
 
-而在函数模板中，可以将使用模板类型参数作为函数参数类型，在函数中调用该类型的函数，只要拥有这些函数的类型（函数类的表达式有效）都可以做为模板类型参数用以实例化函数模板，这种接口被称作隐式接口（implicit interface）。对于重载的函数，在编译期确定的多态行为称之为编译期多态（compile-time polymorphism）。
+而在函数模板中，可以将使用模板类型参数作为函数参数类型，在函数中调用该模板参数类型的成员函数，只要拥有这些函数的类型（函数类的表达式有效）都可以做为模板类型实参用以实例化函数模板，这种接口被称作隐式接口（implicit interface）。对于重载的函数模板，在编译期确定的多态行为称之为编译期多态（compile-time polymorphism）。
 - 隐式接口仅仅由一组有效表达式组成。只要支持这一组表达式，就可以作为类型参数实例化模板。（很像动态类型的鸭子类型，不过发生在编译期）。
 - 编译期多态则是通过模板实例化与函数重载解析发生于编译期。
 
 ### 条款42：了解typename的双重意义
 
 - 首先，typename用在模板类型参数中时，和class语义完全相同。我更倾向于使用typename。
-- 在模板中指代一个类型时，必须使用typename作为、前缀，但不能使用在基类列表、以及构造函数成员初始化列表中作为基类修饰符。
+- 在模板中指代一个嵌套从属类型时，必须使用typename作为前缀，但不能使用在基类列表、以及构造函数成员初始化列表中作为基类修饰符。
 
 模板内部`typename`用以显式表明这是一个类型：
-- 指代类型必须加`typename`的原因是嵌套从属名称（nested dependent names，比如`T::iterator`这样是嵌套在模板类型参数T作用域的名称，非嵌套的则是普通从属名称dependent names比如`T&`，不依赖于模板参数的则是费从属名称non-dependent names比如int）可能导致解析困难。
+- 指代类型必须加`typename`的原因是嵌套从属名称（nested dependent names，比如`T::iterator`这样是嵌套在模板类型参数T作用域的名称，非嵌套的则是普通从属名称dependent names比如`T&`，不依赖于模板参数的则是非从属名称non-dependent names比如int）可能导致解析困难。
 - 为了区分普通嵌套从属名称与嵌套从属类型名称，编译器在遇到一个嵌套从属名称（nested dependent type names）时，直接假定其不是一个类型名称。如果其是一个类型名称，需要在前面添加`typename`关键字。
-- 并且`typename`只被用来验明嵌套从属名称。单纯的模板参数`T&`这种则不应该使用。
-- 应该用在参数、返回值类型等所有地方。
+- `typename`只被用来验明嵌套从属名称。单纯的模板参数`T&`这种则不应该使用。
+- 应该用在参数、返回值类型等所有用到嵌套从属名称的地方。
 - 但不能用于基类列表、以及构造函数成员初始化列表中表示基类。（估计是这种情况能够确定一定是一个类型？）。这样的不一致有点令人烦恼。
 ```C++
 template<typename T>
@@ -687,18 +692,20 @@ class Derived : public Base<T>::Nested // do not allow typename
 public:
     explicit Derived(int x) : Base<T>::Nested(x) // do not allow typename
     {
-        typename Base<T>::Nested temp; // need typename
+        typename Base<T>::Nested temp; // must need typename
         ...
     }
 }
 ```
 
-### 条款43：学习处理模板话基类内的名称
+### 条款43：学习处理模板化基类内的名称
 
-类模板比普通类更为泛化，但是也就会造成更多的不确定，比如上面的`typename`需要显式指明一个嵌套从属名称。还有一点也很类似，就是在派生类模板中使用基类名称时需要显式指明其使用的是基类的东西（比如在不知道模板参数的情况下，解析到派生类模板时，不知道一个模板参数是否得到了特化，这个特化中是否包含这个被调用的基类函数，所以需要在派生类中显式声明），有三个方法可以避免这个问题：
+类模板比普通类更为泛化，但是也就会造成更多的不确定，比如上面的`typename`需要显式指明一个嵌套从属名称。还有一点也很类似，就是在派生类模板中使用基类名称时需要显式指明其使用的是基类的东西（比如在不知道模板参数的情况下，解析到派生类模板的成员函数中调用了一个函数，不知道基类针对某一个模板参数是否进行了特化，这个特化中是否包含这个被调用的基类函数，所以需要在派生类中显式声明），有三个方法可以避免这个问题：
 - 在基类函数调用前加上`this->`。
 - 使用`using`声明使基类名称可见（推荐做法）。
-- 显式使用作用域运算符指定使用基类函数。（这样会导致不支持多态，如果是虚函数的话不推荐这样做，当然如果是在重写的虚函数中这样做那么是合适的）。
+- 显式使用作用域运算符指定使用基类函数。
+    - 这样会导致不支持多态，如果是派生类非虚函数中调用基类虚函数的话不推荐这样做。
+    - 当然如果是在重写的虚函数中调用基类实现，那么这就是标准做法。
 - 例：
 ```C++
 template<typename T>
@@ -724,15 +731,15 @@ public:
 
 ### 条款44：将参数无关的代码抽离模板
 
-定义了一个函数模板或者类模板时，对于不同的模板参数会生成不同的代码。模板参数是不同的，最终生成的代码也是不同的，但我们应该最大限度地提取出其中本质上来说是二进制相同的部分。
+定义了一个函数模板或者类模板时，对于不同的模板参数会生成不同的代码。模板参数是不同的，最终生成的代码也是不同的，但我们应该最大限度地提取出其中本质上来说是二进制相同的部分以减少最终的二进制代码冗余。
 
 就像定义类时，如果多个类拥有相同的某些操作，我们不会重复实现他们，而会将他们提取到一个公共类中，使用继承或者组合来复用。
 
 为了最大化地减少最终生成代码臃肿，我们应该使用共性与变性分析（commonality and variability analysis）：
-- 在模板中也能够共用最终会生成二进制相同的代码，其中主要是非类型模板参数。
-- 可以将涉及到非类型模板参数的代码提出来将非类型模板参数作为函数参数实现为模板参数无关的函数，将该部分代码提取到不含该非类型参数的公共基类模板中来做。在派生类中传入非类型模板参数去调用。
-- 优点是能够减小生成的二进制体积，一族类模板使用同一函数。
-- 缺点是生成的代码可能没有直接使用运行时的非类型模板参数作为常量表达式的版本高效（编译期常量版本能得到更好的优化），并且可能需要额外增加对象大小（可能需要在基类中存储必要信息以实现该函数）。
+- 在模板中代码都是共用的，但是最终会生成二进制相同的代码，主要是只有非类型模板参数变化的那一部分。
+- 可以将涉及到非类型模板参数的代码提出来将非类型模板参数作为函数参数实现为模板参数无关的函数，将该部分代码提取到不含该非类型模板参数的公共基类模板中来做。在派生类中传入非类型模板参数去调用（继承实现，私有或者保护继承）。
+- 优点是能够减小生成的二进制体积，一族类模板使用同一函数来实现功能。
+- 缺点是生成的代码可能没有直接使用运行时的非类型模板参数作为常量表达式的版本高效（编译期常量版本能得到更好的优化，基于常量传播、常量折叠等手段），并且可能需要额外增加对象大小（可能需要在基类中存储必要信息以实现该函数）。
 - 例子：
 ```C++
 template<typename T>
@@ -756,12 +763,12 @@ private:
     T data[N*N];
 };
 ```
-- 因类型参数而造成的代码膨胀，也有可能可以相处，前提是他们拥有完全相同的模板实例化的二进制代码。比如在容器中保存指针：用`void*`类型（无类型指针）可以保存所有类型指针，而不是使用强类型指针然后为所有指针类型生成同样的二进制代码。
+- 因类型参数而造成的代码膨胀，也有可能可以消除，前提是他们拥有完全相同的模板实例化后的二进制代码。比如在容器中保存指针：用`void*`类型（无类型指针）可以保存所有类型指针，而不是使用强类型指针然后为所有指针类型生成同样的二进制代码。
 - 总结：无论怎样设计都需要权衡（tradeoff），精密的做法会让事情变得复杂，时空占用与代码复杂度代码清晰程度存在取舍，时间和空间也存在取舍。视具体情况抉择。
 
 ### 条款45：运用成员函数模板接受所有兼容类型
 
-当我们实现智能指针这种类型时，要使其行为就像内置指针一样，就需要支持派生类指针向基类指针的转换。但是我们不可能为所有具体类型定义函数，这时就需要在为类模板编写泛化的**成员函数模板**：
+当我们实现智能指针这种类型时，要使其行为就像内置指针一样，就需要支持派生类指针向基类指针的转换。但是我们不可能为所有可能用到的具体类型定义转换构造函数，这时就需要在为类模板编写泛化的**成员函数模板**：
 - 在实现过程中需要允许满足预期的合法行为，将非预期的非法行为筛选掉（让其在编译期报错）。通常来说这可以由实现中的有效表达式来约束。
 - 就智能指针这个例子：我们需要泛化的接受裸指针的构造函数、拷贝构造、拷贝赋值、移动赋值以及`get`接口等。
 - 泛化的构造、赋值运算符不会阻止编译器生成默认构造、默认赋值，如果要阻止编译器生成默认构造、默认赋值需要自行定义默认构造、默认赋值。
@@ -770,7 +777,7 @@ private:
 
 条款24中说明了，要实现在所有实参上都能够进行隐式转换，应该将其定义为非成员函数。
 
-但在模板中有点不一样，因为在模板实参推导中，不将隐式类型转换考虑在内。
+但在模板中有点不一样，**因为在模板实参推导中，不将隐式类型转换考虑在内**。
 - 例子：
 ```C++
 template<typename T>
@@ -794,10 +801,10 @@ private:
 - 如果将`operator*`定义在类外部会导致`Rational(1, 2) * 2`这样的代码无法编译通过。因为在模板实参推导中，不考虑隐式类型转换。这就是C++的模板部分与OO部分的众多区别之一。
 - 那么要怎么做才能编译成功呢？
 - 可行的方法是将这个非成员定义为友元，因为需要在类内有了声明，编译器便知道可以去匹配这个函数了。和友元的常见用法有点区别。
-    - 上面的友元声明中，在类模板内部可以不适用模板参数，如果使用类模板名称默认就是使用整个类模板的模板参数的意思，如果要定义成员模板或者定义了其他的模板参数才必须加。当然就类模板的同一个模板参数来说加不加都是可以的（前提是在作用域内）。
+    - 上面的友元声明中，在类模板内部可以不写模板参数，如果使用类模板名称默认就是使用类模板同样的模板参数的意思，如果要定义成员模板函数或者泛化的友元模板才必须加（同时需要在前面加上`template<typename xxx>`）。当然就类模板的同一个模板参数来说加不加都是可以的（前提是在作用域内，如果在类外实现，那么在进入作用域之前是必须加的，和类的作用域限定差不多）。
 - 但只有声明而没有定义会导致链接时找不到定义（即使在外部给了定义）。这时外部的定义依然没有实例化。解决方法可以是将模板函数的定义放在友元声明中，令友元声明成为一个定义。
-- 这时候声明为友元，并且在外部定义，且进行显式实例化也会找不到，具体原理未知？进行显式实例化依然未实例化？
-- 看来目前来说只有定义为类模板内部的友元函数这一个途径处理。
+- 这时候声明为友元，并且在外部定义，且进行显式实例化也会链接时找不到函数，具体原理未知？进行了显式实例化定义依然未实例化？
+- 看来目前来说只有定义为类模板内部的友元函数并在类内实现这一个途径处理。
 - 如果逻辑很长的话，可以转调一个外部函数。友元仅做一个转调以内联处理。
 
 ### 条款47：请使用traits类表现类型信息
@@ -813,9 +820,9 @@ struct bidirectional_iterator_tag : forward_iterator_tag {};
 struct random_access_iterator_tag : bidirectional_iterator_tag {};
 ```
 - 每个迭代器类中都会有一个名为`iterator_category`的类型别名，这个别名指代的类型就是上面的结构类型
-- 我们可能会想到在实现中去做这样一个`if`判断，用`typeid`去检测输入迭代器类型是否是对应类型。但是这样就不能兼容内置的指针类型了，因为内置类型中没有这样一个类型别名。还有`if`判断会带来运行时消耗。
-- 标准的做法是在定义一个`traits`类型，即标准库中的`std::iterator_traits<T>`其中定义了`iterator_category`类型别名，对于标准库中迭代器而代表其内部的`iterator_category`类型，对于内置指针偏特化一个版本，将其定义为`random_access_iterator_tag`。
-- 接下来实现是使用traits类，并且为不同类别的迭代器做一个重载，将实际工作转发到一个添加了tag参数的重载函数中做，即可实现编译期的分支选择。
+- 我们可能会想到在实现中去做这样一个`if`判断，用`typeid`去检测输入迭代器类型是否是对应类型。但是这样就不能兼容内置的指针类型了，因为内置类型中没有这样一个类型别名。还有`if`判断会带来运行时消耗，当然其实还会有编译的时候有不支持的操作导致编不过的问题。
+- 标准的做法是在定义一个`traits`类型，即标准库中的`std::iterator_traits<T>`，其中定义了`iterator_category`类型别名，对于标准库中迭代器而言指代其内部的`iterator_category`类型，对于内置指针偏特化一个版本，将其定义为`random_access_iterator_tag`（即内置指针实质上等价于随机访问迭代器）。
+- 接下来在实现时使用traits类，根据模板参数中的迭代器类型获取到其tag结构类型，为不同类别的迭代器做一个重载，将实际工作转发到一个添加了tag参数的重载函数中做，即可实现编译期的分支选择。
 - 标准库`std::advance`实现模拟：
 ```C++
 // simulation of std::iterator_traits
@@ -870,11 +877,11 @@ void advance(IterT& iter, DistT d)
 
 如何设计并实现一个traits类：
 - 确认若干希望将来可以取得的类型相关信息。（例如对于迭代器可以取得其分类）
-- 为该信息选择一个名称。（如`iterator_category`）
+- 为该信息选择一个名称。（这个例子中是`iterator_category`，更典型的是`value_type`）
 - 提供一个模板和一组特化版本，内含希望支持的类型相关信息。
 
 如何使用traits类：
-- 建立一组重载函数或者函数模板，彼此差异只在traits参数。不同traits参数可以根据其提供的信息来建立不同具体实现。
+- 建立一组重载函数或者函数模板，彼此差异只在traits参数。不同traits参数可以根据其提供的信息来编写不同具体实现。
 - 建立一个控制函数或者函数模板，使用traits类在编译期获得类型相关信息，用其来调用上面的重载函数或者重载函数模板。以实现根据类型在编译期选择特定实现的目的。
 
 总结：
@@ -885,12 +892,11 @@ void advance(IterT& iter, DistT d)
 
 ### 条款48：认识模板元编程（TMP）
 
-模板元编程（Template Metaprogramming，TMP）是编写基于模板的C++程序并执行与编译期的程序，也就是通过编译这个过程来执行。一旦TMP程序结束执行，其执行输出就是从模板实例化出的若干C++源码，一如往常会被编译。
-
-TMP是图灵完全（Turing complete）的，也就是任何计算都能够在编译期做到。
+模板元编程（Template Metaprogramming，TMP）是编写基于模板的执行于编译期的C++程序，也就是通过编译这个过程来执行。一旦TMP程序结束执行，其执行的输出结果就是从模板实例化出的若干C++源码，一如往常会被编译。
+- TMP是图灵完全（Turing complete）的，也就是任何计算都能够在编译期做到。
 - 就像前面使用函数模板特化与重载和traits类来实现if-else一样。TMP中的各种程序结构和正常的C++中可能存在一定的区别。
-- TMP是嵌入在C++中的一门子语言，准确地说，一门函数式语言（functional language）。
-- 在TMP也可以进行循环，是通过递归模板实例化来做到的。
+- TMP是嵌入在C++中的一门子语言，准确地说，一门**函数式语言**（functional language）。
+- 在TMP也可以进行循环，是通过递归模板实例化（recursive template instantiation）来做到的。
 - 起手式，编译期计算阶乘：
 ```C++
 template<unsigned n>
@@ -906,4 +912,231 @@ struct Factorial<0>
 };
 ```
 - 可以看到`enum`常量在编译期的妙用，枚举值不占用对象空间，当写出`Factorial<10>::value`这种表达式时，它已经在编译期就算好了。（这叫enum hack，在条款2中介绍过。）
-- 更多内容这里也没有，需要另外的资料来学习。
+- 模板递归同普通递归一样，需要特别注意递归终止条件，TMP没有调试器，而模板特别是TMP相关的报错众所周知也是非常晦涩，所以编写起来更多地需要靠经验。
+- 更多内容这里也没有，需要另外的资料来学习（如《C++ Templates》）。
+
+## 第八章：定制new和delete
+
+### 条款49：了解new-handler的行为
+
+标准库`<new>`中定义了`new_handler`类型，是一个函数类型，签名是`void()`，含义是`operator new`无法分配够内存时调用的函数。
+- 可以通过`new_handler set_new_handler(new_handler) noexcept`这个函数设置，返回旧的`new_handler`。
+- 一个设计良好的`new_handler`必须做的事情（拥有很大的弹性，可以自行选择怎么处理）：
+    - 让更多内存可被使用（比如释放某些不必要的内存）。
+    - 安装另一个`new_handler`。（这个做法的变种之一是让`new_handler`修改自己的行为，为了达成这种目的，做法之一是修改静态或者全局数据。）
+    - 卸载`new_handler`，也就是`set_new_handler(nullptr)`，这样在内存不足时会执行默认行为抛出`bad_alloc`异常。
+    - 抛出`bad_alloc`（或派生自其的）异常。
+    - 不返回，通常调用`abort`或者`exit`结束程序运行。
+- C++支持类定制自己的`operator new`，但不支持其定制自己的`new_handler`。但我们可以自己实现这一点：
+    - 为类定义一个静态成员函数`set_new_handler`，类似于全局的，作用是为类的`operator new`设置专门的`new_handler`。
+    - 当然上述的`set_new_handler`操作的数据应该是一个类的`new_handler`类型的静态数据成员。
+    - 在`operator new`中做以下事情：
+        - 将该类的静态`new_handler`成员调用全局`set_new_handler`设置给全局，并保存全局的`new_handler`。
+        - 调用全局`operator new`来分配内存。
+        - 将全局的`new_handler`恢复回来。
+        - 这个步骤可以通过自定义一个资源管理类来做，以保证抛出异常时能够正确恢复。
+    - 典型实现：
+    ```C++
+    class Foo
+    {
+    public:
+        static new_handler set_new_handler(new_handler nh) noexcept
+        {
+            new_handler oldHandler = currentNewHandler;
+            currentNewHandler = nh;
+            return oldHandler
+        }
+        void* operator new(size_t size)
+        {
+            currentNewHandler = set_new_handler(currentNewHandler);
+            void* pMem = ::operator new(size);
+            set_new_handler(currentNewHandler);
+            return pMem;
+        }
+    private:
+        static new_handler currentNewHandler;
+    };
+
+    new_handler Foo::currentNewHandler = nullptr;
+    ```
+- 为了避免调用全局`operator new`过程中抛出`bad_alloc`异常导致`new_handler`不能恢复的情况，更好的方式是使用RAII：
+    - 典型实现：
+    ```C++
+    // RAII class that manage new_handler
+    class NewHandlerHolder
+    {
+    public:
+        explicit NewHandlerHolder(new_handler nh) : handler(nh) {}
+        ~NewHandlerHolder() { set_new_handler(handler); }
+        NewHandlerHolder(const NewHandlerHolder&) = delete; // prevent copying
+        NewHandlerHolder& operator=(const NewHandlerHolder&) = delete;
+    private:
+        new_handler handler;
+    };
+
+    class Bar
+    {
+    public:
+        static new_handler set_new_handler(new_handler nh) noexcept
+        {
+            new_handler oldHandler = currentNewHandler;
+            currentNewHandler = nh;
+            return oldHandler;
+        }
+        static void* operator new(size_t size)
+        {
+            NewHandlerHolder holder(set_new_handler(currentNewHandler));
+            return ::operator new(size);
+        }
+    private:
+        static new_handler currentNewHandler;
+    };
+
+    new_handler Bar::currentNewHandler = nullptr;
+    ```
+    - 任何类都可以这样做。在每个类做一次依然会带来代码的重复。
+- 最终级的做法是将这些功能定制为一个公共基类模板，只要派生就可以得到这个功能：
+- 典型实现：
+```C++
+// generic RAII
+template<typename T>
+class NewHandlerSupport
+{
+public:
+    static new_handler set_new_handler(new_handler nh) noexcept
+    {
+        new_handler oldHandler = currentNewHandler;
+        currentNewHandler = nh;
+        return oldHandler;
+    }
+    static void* operator new(size_t size)
+    {
+        NewHandlerHolder holder(set_new_handler(currentNewHandler));
+        return ::operator new(size);
+    }
+private:
+    static new_handler currentNewHandler;
+};
+
+template<typename T>
+new_handler NewHandlerSupport<T>::currentNewHandler = nullptr;
+
+class Buz : public NewHandlerSupport<Buz>
+{
+    
+};
+```
+- 为了不同的类型拥有不同的静态`currentNewHandler`成员，需要将派生类加到基类的模板类型参数中。即使这个类型参数在基类中并没有被使用。这在模板编程中算是一个很常用的技术手段（初看起来确实奇怪）。
+- 这种手段主要用来表示：我要针对我自己继承某个模板，这个基类与继承该模板的其他派生类的基类是全然不同的类型。
+- 另外存在`nothrow`版本的`operator new`，主要用来兼容比较老的代码，行为是分配失败不抛出异常，而是返回空指针。但是众所周知`new`运算符包含两个阶段，分配内存和构造，这并不保证在构造中就不抛出异常，所以`nothrow`版本其实没有多少使用场景。
+
+### 条款50：了解new和delete的合理替换时机
+
+常见理由：
+- 用来检测运用上的错误：检测是否有内存没有释放、多次delete、或者发生了overrun或者underrun（写入到分配区块之后或之前）。在替换的`operator new/delete`中管理这些事情。
+- 为了强化效能：现实实现中的`operator new/delete`采用中庸之道，既要适合小内存分配，也要满足大内存分配。所以不可能根据程序的内存分配状况表现出最佳的性能，而是对所有情况都表现出适度好的性能。如果你对你的程序的动态内存分配状况有深刻了解，可以定制`operator new/delete`替换标准库版本，以获得更佳的性能和内存占用。这属于比较高级的用法了。
+- 为了收集使用上的统计数据：在深度定制动态内存分配之前，必须先收集软件上的动态内存是怎么使用的的信息。区块大小分布如何？寿命分布如何？分配释放次序倾向于FIFO还是LIFO？最大动态内存分配量是多少？等等各种信息。这些信息就可以通过定制`operator new/delete`来实现。
+- 为了检测运行时错误。
+- 为了收集动态内存使用的统计信息。
+- 为了增加分配和释放的速度。
+- 为了降低内存管理器带来的额外空间开销。
+- 为了弥补分配器中的非最佳对齐。
+- 为了将相关对象组织得更加集中。降低换页频率，提高缓存命中。
+- 为了获得非传统的行为，比如将释放掉的内存置为0以提高数据安全性。
+- 总而言之，自定义`operator new/delete`属于比较高级的内容，写一个好用的分配器是不简单的，通常的程序可能不会这样做，大型程序中几乎都需要这样做。
+
+### 条款51：编写new和delete时需要固守常规
+
+无论什么目的，无论怎样实现，实现new和delete时有一些必须遵守的原则：
+
+首先是`operator new`：
+- `operator new`应该实现的正确行为：
+    - 如果有能力提供该内存，就返回一个指针指向那块内存。
+    - 如果没有能力，就抛出`std::bad_alloc`异常。
+    - 还有条款49中提到的：如果`new_handler`为空，才抛出异常。如果不为空则在每次失败后调用new-handler函数。
+    - C++规定，即使用户要求0字节，也返回一个合法指针。实现时可以简单处理为在分配0字节时分配1个字节。
+- 典型实现示例：
+```C++
+void* operator new(size_t size)
+{
+    using namespace std;
+    if (size == 0)
+    {
+        size == 1
+    }
+    while (true)
+    {
+        if (/*allocation is successful*/)
+        {
+            return /*pointer to memory*/;
+        }
+        new_handler globalNewHandler = get_new_handler();
+        if (globalNewHandler)
+        {
+            (*globalNewHandler)();
+        }
+        else
+        {
+            throw std::bad_alloc();
+        }
+    }
+}
+```
+- 需要注意的是这个无限循环，如果设置了`new_handler`但是其中既没有抛出异常、也没有设置其他`new_handler`、也没有直接结束程序、也没有通过释放一部分内存来让下一次分配成功，那么就会一直死循环，所以`new_handler`必须做到条款49所述的事情。
+
+为自定义类型定制的`operator new`：
+- 关于`operator new`还需要注意的一点是，其可以被派生类继承，也就是说在基类中重载了`operator new`，动态分配派生类对象时也会使用基类的`operator new`。
+- 但通常来说基类的`operator new`可能是针对基类大小优化的，派生类大小改变了。因为可能为派生类分配内存，所以不能假定一定是为基类分配内存：
+- 这时候的典型实现是在基类`operator new`中做一个判断，如果要分配的内存大小等于基类大小，照常做，不等则调用全局的`operator new`：
+```C++
+static void* operator new(size_t size)
+{
+    if (size != sizeof(Base)) // include size == 0
+    {
+        return ::operator new(size);
+    }
+    else
+    {
+        // process of base class allocation
+    }
+}
+```
+- 但是对于`operator new[]`这就行不通，同理我们也不能通过`size / sizeof(Base)`这种方式获取要分配的动态数组大小。只能所有大小同等处理。
+
+关于`operator delete`：
+- 需要记住的唯一一件事就是C++保证删除空指针永远是安全的。
+- 典型实现：
+```C++
+void operator delete(void* pMem) noexcept
+{
+    if (pMem == nullptr)
+        return;
+    // process of delete
+}
+```
+- 成员版本与成员版本的`operator new`同理：
+```C++
+static void operator delete(void* pMem, size_t size) noexcept
+{
+    if (pMem == nullptr)
+        return;
+    if (size != sizeof(Base))
+    {
+        ::operator delete(pMem);
+        return;
+    }
+    // process of base class deallocation
+}
+```
+
+### 条款52：写了placement new也要写placement delete
+
+每个人看到这里可能都会奇怪为什么会有placement delete这种东西，因为placement delete（狭义版本的）确实是不可用的，我们使用显式的析构调用来替代placement delete的地位。但读完之后你会发现placement new的定义被扩充了（所有加了多余参数的版本都可以叫做placement new，加了对应参数的`operator delete`也就是其对应的placement delete），所以对应的placement delete可以是有用的，并且只被用在非常有限的场景。
+
+所以标题中并非我们通常意义上的狭义的placement new（因为狭义的placement new不分配内存，何来内存泄漏一说。），而是加了其他参数的广义版本的placement new的意思（也就是说同样要分配内存）。分清这一点就能理解了，细节不赘述，赘述了也大概率很久都用不到，直接看总结：
+
+总结：
+- 当编写一个palcement operator new时，也需要写出对应的placement operator delete。如果没有这样做，则会在分配内存成功，但构造函数抛异常时，发生内存泄漏（编译器会使用placement new对应的placement delete来释放，如果没有就会直接不管从而造成内存泄漏）。
+- 当声明了placement new和placement delete时，请不要无意识地遮盖他们的正常版本。通常是说在类中定义的成员版本的情况：
+    - 方法1：为类定义所有需要的`operator new`和`operator delete`，其余的非关注的可以直接调用全局的实现。
+    - 方法2：定义一个基类，实现所有重载的`operator new`和`operator delete`（直接调用全局版本），在派生类中使用`using`声明使基类名称`operator new`和`operator delete`可见，然后定义自己需要定制的版本。
