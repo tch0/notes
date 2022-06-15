@@ -1140,3 +1140,18 @@ static void operator delete(void* pMem, size_t size) noexcept
 - 当声明了placement new和placement delete时，请不要无意识地遮盖他们的正常版本。通常是说在类中定义的成员版本的情况：
     - 方法1：为类定义所有需要的`operator new`和`operator delete`，其余的非关注的可以直接调用全局的实现。
     - 方法2：定义一个基类，实现所有重载的`operator new`和`operator delete`（直接调用全局版本），在派生类中使用`using`声明使基类名称`operator new`和`operator delete`可见，然后定义自己需要定制的版本。
+
+## 第九章：杂项讨论
+
+### 条款53：不要轻易忽视编译器的警告
+
+- 严肃对待编译器提供的警告信息。
+- 不要过度依赖编译器的报警能力，不同编译器对待同一件事情的态度可能不同。
+
+### 条款54：让自己熟悉TR1在内的标准程序库
+
+已经成为历史，现已进入标准库，略。
+
+### 条款55：让自己熟悉Boost
+
+去看[https://Boost.org](https://Boost.org)。
