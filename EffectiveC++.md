@@ -63,6 +63,10 @@
     - [条款50：了解new和delete的合理替换时机](#%E6%9D%A1%E6%AC%BE50%E4%BA%86%E8%A7%A3new%E5%92%8Cdelete%E7%9A%84%E5%90%88%E7%90%86%E6%9B%BF%E6%8D%A2%E6%97%B6%E6%9C%BA)
     - [条款51：编写new和delete时需要固守常规](#%E6%9D%A1%E6%AC%BE51%E7%BC%96%E5%86%99new%E5%92%8Cdelete%E6%97%B6%E9%9C%80%E8%A6%81%E5%9B%BA%E5%AE%88%E5%B8%B8%E8%A7%84)
     - [条款52：写了placement new也要写placement delete](#%E6%9D%A1%E6%AC%BE52%E5%86%99%E4%BA%86placement-new%E4%B9%9F%E8%A6%81%E5%86%99placement-delete)
+  - [第九章：杂项讨论](#%E7%AC%AC%E4%B9%9D%E7%AB%A0%E6%9D%82%E9%A1%B9%E8%AE%A8%E8%AE%BA)
+    - [条款53：不要轻易忽视编译器的警告](#%E6%9D%A1%E6%AC%BE53%E4%B8%8D%E8%A6%81%E8%BD%BB%E6%98%93%E5%BF%BD%E8%A7%86%E7%BC%96%E8%AF%91%E5%99%A8%E7%9A%84%E8%AD%A6%E5%91%8A)
+    - [条款54：让自己熟悉TR1在内的标准程序库](#%E6%9D%A1%E6%AC%BE54%E8%AE%A9%E8%87%AA%E5%B7%B1%E7%86%9F%E6%82%89tr1%E5%9C%A8%E5%86%85%E7%9A%84%E6%A0%87%E5%87%86%E7%A8%8B%E5%BA%8F%E5%BA%93)
+    - [条款55：让自己熟悉Boost](#%E6%9D%A1%E6%AC%BE55%E8%AE%A9%E8%87%AA%E5%B7%B1%E7%86%9F%E6%82%89boost)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1154,4 +1158,4 @@ static void operator delete(void* pMem, size_t size) noexcept
 
 ### 条款55：让自己熟悉Boost
 
-去看[https://Boost.org](https://Boost.org)。
+如标题，去看[https://Boost.org](https://Boost.org)。
