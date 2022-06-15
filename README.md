@@ -5,8 +5,8 @@ C/C++：
 - [CMake.md](CMake.md)：CMake笔记。
 - [TCC.md](TCC.md)：一个轻量极简自举的C编译器TinyCC的使用文档与源码解析。
 - [CTrapsAndPitFalls.md](CTrapsAndPitFalls.md)：《C陷阱与缺陷》粗略笔记。
-- [C++Primer.md](C++Primer.md)：《C++ Primer》笔记与代码记录。
-- [EffectiveC++.md](EffectiveC++.md)：《Effective C++》笔记与记录，更推荐直接去看书。
+- [C++Primer.md](C++Primer.md)：C++入门书籍《C++ Primer》笔记与代码记录。
+- [EffectiveC++.md](EffectiveC++.md)：C++必读书籍《Effective C++》笔记与记录，更推荐直接去看书。
 
 通用编程语言：
 - [Java.md](Java.md)：Java入门。
@@ -14,8 +14,8 @@ C/C++：
 - [Haskell.md](Haskell.md)：纯函数式编程语言Haskell入门。
 - [Scala.md](Scala.md)：Scala语言入门，基本语法。
 - [SICP.md](SICP.md)：SICP学习笔记，兼Scheme语法入门。
-- [IoLanguage.md](IoLanguage.md)：编程语言IO入门，非常粗浅。
-- [Ruby.md](Ruby.md)：Ruby语言入门，很粗浅。
+- [IoLanguage.md](IoLanguage.md)：编程语言IO入门，非常粗浅无甚参考价值。
+- [Ruby.md](Ruby.md)：Ruby语言入门，很粗浅无甚参考价值。
 
 领域特定语言：
 - [BatchScript.md](BatchScript.md)：Windows批处理脚本了解。
