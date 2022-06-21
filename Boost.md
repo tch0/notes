@@ -87,10 +87,11 @@ g++ -IC:\LibsCpp\boost_1_79_0 hello.cpp -o hello
 ```
 - 写一个简单的`Makefile`：
 ```Makefile
+CXX = g++
 CXXFLAGS += -IC:\\LibsCpp\\boost_1_79_0
 
-% : %.c
-	g++ %.c -o %
+% : %.cpp
+	$(CXX) $(CXXFLAGS) $^ -o $@
 ```
 - 即可一步编译：
 ```shell
