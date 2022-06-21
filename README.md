@@ -8,6 +8,7 @@ C/C++：
 - [C++Primer.md](C++Primer.md)：C++入门书籍《C++ Primer》笔记与代码记录。
 - [EffectiveC++.md](EffectiveC++.md)：C++必读书籍《Effective C++》笔记与记录，更推荐直接去看书。
 - [Boost.md](Boost.md)：C++Boost库学习，TODO。
+- [C++STL.md](C++STL.md)：C++标准库学习。
 
 通用编程语言：
 - [Java.md](Java.md)：Java入门。
