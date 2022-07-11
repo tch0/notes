@@ -9,6 +9,7 @@ C/C++：
 - [EffectiveC++.md](EffectiveC++.md)：C++必读书籍《Effective C++》笔记与记录，更推荐直接去看书。
 - [Boost.md](Boost.md)：C++Boost库学习，TODO。
 - [C++STL.md](C++STL.md)：C++标准库学习。
+- [C++ObjectModel.md](C++ObjectModel.md)：C++对象模型。
 
 通用编程语言：
 - [Java.md](Java.md)：Java入门。
