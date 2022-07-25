@@ -6,10 +6,11 @@ C/C++：
 - [TCC.md](TCC.md)：一个轻量极简自举的C编译器TinyCC的使用文档与源码解析。
 - [CTrapsAndPitFalls.md](CTrapsAndPitFalls.md)：《C陷阱与缺陷》粗略笔记。
 - [C++Primer.md](C++Primer.md)：C++入门书籍《C++ Primer》笔记与代码记录。
-- [EffectiveC++.md](EffectiveC++.md)：C++必读书籍《Effective C++》笔记与记录，更推荐直接去看书。
+- [EffectiveC++.md](EffectiveC++.md)：C++必读书籍《Effective C++》笔记与记录。
+- [C++STL.md](C++STL.md)：《C++标准库》笔记与代码。
+- [C++ObjectModel.md](C++ObjectModel.md)：《深度探索C++对象模型》笔记与代码。
+- [MySTL.md](MySTL.md)：基于《STL源码剖析》的个人STL实现。
 - [Boost.md](Boost.md)：C++Boost库学习，TODO。
-- [C++STL.md](C++STL.md)：C++标准库学习。
-- [C++ObjectModel.md](C++ObjectModel.md)：C++对象模型。
 
 通用编程语言：
 - [Java.md](Java.md)：Java入门。
