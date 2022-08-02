@@ -12,6 +12,7 @@ C/C++：
 - [MySTL.md](MySTL.md)：基于《STL源码剖析》的个人STL实现。
 - [Boost.md](Boost.md)：C++Boost库学习，TODO。
 - [CppToolChain.md](CppToolChain.md)：C++工具链使用总结。
+- [C++NewStandard.md](C++NewStandard.md)：C++新标准学习（C++11/14/17/20/23）。
 
 通用编程语言：
 - [Java.md](Java.md)：Java入门。
