@@ -15,6 +15,7 @@ C/C++：
 - [C++NewStandard.md](C++NewStandard.md)：C++新标准学习（C++11/14/17/20/23）。
 - [C++TemplateProgramming.md](C++TemplateProgramming.md)：C++模板编程学习。
 - [C++20Programming.md](C++20Programming.md)：《C++20高级编程》代码记录。
+- [C++TemplateMetaProgrammingInAction.md](C++TemplateMetaProgrammingInAction.md)：《C++模板元编程实战：一个深度学习框架的初步实现》代码记录。
 - [C++ToDo.md](C++ToDo.md)：C++待学习的更多东西。
 
 通用编程语言：
