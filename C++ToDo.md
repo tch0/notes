@@ -12,6 +12,6 @@ C++库：
 工具链相关：
 - xmake
 - bazel
-- cannon
+- conan
 - [Itanium C++ ABI](http://itanium-cxx-abi.github.io/cxx-abi/)
 - profiling工具：gpreftools
