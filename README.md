@@ -17,6 +17,7 @@ C/C++：
 - [C++20Programming.md](C++20Programming.md)：《C++20高级编程》代码记录。
 - [C++TemplateMetaProgrammingInAction.md](C++TemplateMetaProgrammingInAction.md)：《C++模板元编程实战：一个深度学习框架的初步实现》代码记录。
 - [C++CodingStandards.md](C++CodingStandards.md)：《C++编程规范：101条规则、准则与最佳实践》笔记。
+- [C++ConcurrencyInAction.md](C++ConcurrencyInAction.md)：《C++并发编程实战》笔记。
 - [C++ToDo.md](C++ToDo.md)：C++待学习的更多东西。
 
 通用编程语言：
