@@ -35,8 +35,9 @@ C/C++：
 - [SQL.md](SQL.md)：基本SQL知识。
 - [Prolog.md](Prolog.md)：声明式编程语言Prolog入门。
 
-Linux/Unix：
+操作系统：
 - [APUE.md](APUE.md)：《Unix环境高级编程》（APUE）阅读笔记。
+- [CSAPP.md](CSAPP.md)：《深入理解计算机系统》（CSAPP）阅读笔记。
 
 工具：
 - [LaTex.md](LaTeX.md)：LaTex学习笔记，暂无实质内容。
