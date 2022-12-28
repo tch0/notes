@@ -57,6 +57,9 @@ C/C++：
 - [Encoding.md](Encoding.md)：关于字符编码。
 - [Repos.md](Repos.md)：感兴趣的开源项目列表，用来索引和查询。
 
+文档链接记录：
+- [Docs.md](Docs.md)：各种计算机相关的文档与资料链接记录。
+
 娱乐：
 - [Wordle分支](../../tree/Wordle/)：填字游戏[Wordle](https://www.nytimes.com/games/wordle/index.html)的作弊程序。
 
