@@ -49,6 +49,9 @@ C/C++：
 - [OperatorPrecedenceParser.md](OperatorPrecedenceParser.md)：运算符优先级分析法解析表达式。
 - [CompilerOptimizations.md](CompilerOptimizations.md)：粗浅的编译器优化方法了解。
 
+图形学：
+- [LearnOpenGL.md](LearnOpenGL.md)：OpenGL学习。
+
 数学：
 - [MathFunc.md](MathFunc.md)：`<math.h>`常用数学函数分析与实现，TODO。
 - [CategoryTheory.md](CategoryTheory.md)：范畴论粗浅了解，为了理解Haskell，TODO中。
