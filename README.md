@@ -29,6 +29,7 @@ C/C++：
 - [SICP.md](SICP.md)：SICP学习笔记，兼Scheme语法入门。
 - [IoLanguage.md](IoLanguage.md)：编程语言IO入门，非常粗浅无甚参考价值。
 - [Ruby.md](Ruby.md)：Ruby语言入门，很粗浅无甚参考价值。
+- [Lua.md](Lua.md)：脚本语言Lua入门。
 
 领域特定语言：
 - [BatchScript.md](BatchScript.md)：Windows批处理脚本了解。
